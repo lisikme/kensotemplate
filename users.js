@@ -7,9 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
         discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
     };
-
-    
-    // Функция для повторных попыток с экспоненциальной задержкой
     async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
         try {
             const response = await fetch(url, options);
@@ -24,8 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
             throw error;
         }
     }
-    
-    // Функции для работы с пользователями
     function getUserRole(discordId, adminList) {
         if (discordId === '470573716711931905') {
             return 'creator'; 
@@ -44,8 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
     }
-    
-    // Асинхронная очередь для загрузки аватаров с ограничением параллелизма
     class AvatarQueue {
         constructor(maxConcurrent = 3) {
             this.maxConcurrent = maxConcurrent;
@@ -59,13 +52,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.run();
             });
         }
-        
         async run() {
             if (this.current >= this.maxConcurrent || this.queue.length === 0) return;
-            
             this.current++;
             const { task, resolve, reject } = this.queue.shift();
-            
             try {
                 const result = await task();
                 resolve(result);
@@ -77,23 +67,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    
-    // Создаем очередь для аватаров
     const avatarQueue = new AvatarQueue(3);
-    
     async function loadDiscordAvatar(discordId, elementId, username) {
         if (!discordId) return;
-        
         return avatarQueue.add(async () => {
             try {
                 const userData = await fetchWithRetry(`${config.discordApiBase}${discordId}`);
-                
                 if (userData.avatar) {
                     const avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png?size=128`;
                     const avatarElement = document.getElementById(elementId);
-                    
                     if (avatarElement) {
-                        // Создаем изображение для предварительной загрузки
                         const img = new Image();
                         img.onload = function() {
                             avatarElement.src = avatarUrl;
@@ -104,8 +87,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         };
                         img.src = avatarUrl;
                     }
-                    
-                    // Возвращаем данные пользователя для отображения ника
                     return {
                         discordId: discordId,
                         username: userData.username || username,
@@ -116,8 +97,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 console.warn(`Не удалось загрузить аватар для ${discordId}:`, error.message);
-                
-                // Устанавливаем fallback аватар
                 const avatarElement = document.getElementById(elementId);
                 if (avatarElement) {
                     avatarElement.setAttribute('data-fallback', 'true');
@@ -127,8 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         letterElement.style.display = 'flex';
                     }
                 }
-                
-                // Возвращаем данные с исходным ником
                 return {
                     discordId: discordId,
                     username: username,
@@ -146,15 +123,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetchJsonData(config.tempJsonUrl),
                 fetchJsonData(config.discordJsonUrl)
             ]);
-
             // Обработка результатов
             const admins = adminsData.status === 'fulfilled' ? adminsData.value : { Admins: [] };
             const hwid = hwidData.status === 'fulfilled' ? hwidData.value : { users: [], banned: [] };
             const temp = tempData.status === 'fulfilled' ? tempData.value : {};
             const discord = discordData.status === 'fulfilled' ? discordData.value : { hwids: [] };
-            
             const adminDiscordIds = admins.Admins || [];
-            
             // Функция для поиска Discord ID по HWID
             function getDiscordIdByHwid(hwid, discordData) {
                 if (discordData.hwids && Array.isArray(discordData.hwids)) {
@@ -166,21 +140,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return null;
             }
-            
-            // Подготавливаем массив с информацией о пользователях
             const usersList = [];
             const activeUsers = hwid.users || [];
             const bannedUsers = hwid.banned || [];
-            
-            // Сначала добавляем активных пользователей
             activeUsers.forEach((username, index) => {
                 userhwid = username
                 const discordId = getDiscordIdByHwid(username, discord);
                 const endTime = temp[username] || 0;
                 let isBanned = false;
                 let banReason = '';
-                
-                // Проверяем, есть ли пользователь в банах
                 for (const bannedUser of bannedUsers) {
                     if (Array.isArray(bannedUser)) {
                         if (bannedUser.User === username) {
@@ -194,7 +162,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         break;
                     }
                 }
-                
                 usersList.push({
                     id: index + 1,
                     sid: discordId,
@@ -212,19 +179,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     is_active: true
                 });
             });
-            
-            // Теперь добавляем забаненных пользователей, которых нет в активных
             const bannedOnlyUsers = [];
             bannedUsers.forEach(bannedUser => {
                 const username = Array.isArray(bannedUser) ? bannedUser.User : bannedUser;
                 const banReason = Array.isArray(bannedUser) ? bannedUser.Reason : 'Причина не указана';
-                
-                // Проверяем, есть ли уже этот пользователь в основном списке
                 const exists = usersList.some(user => user.name === username);
-                
                 if (!exists) {
                     const discordId = getDiscordIdByHwid(username, discord);
-                    
                     bannedOnlyUsers.push({
                         id: usersList.length + bannedOnlyUsers.length + 1,
                         sid: discordId,
@@ -242,54 +203,37 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
             });
-            
-            // Объединяем оба списка
             const allUsers = [...usersList, ...bannedOnlyUsers];
-            
-            // Сортируем пользователей по ролям
             allUsers.sort((a, b) => {
                 const aRole = getUserRole(a.sid, adminDiscordIds);
                 const bRole = getUserRole(b.sid, adminDiscordIds);
-                
                 if (aRole === 'creator') return -1;
                 if (bRole === 'creator') return 1;
-                
                 if (aRole === 'bot') return -1;
                 if (bRole === 'bot') return 1;
-                
                 if (aRole === 'admin' && bRole !== 'admin') return -1;
                 if (bRole === 'admin' && aRole !== 'admin') return 1;
-                
                 return 0;
             });
-            
-            // Отображаем пользователей
             displayUsers(allUsers, adminDiscordIds);
-            
         } catch (error) {
             console.error('Ошибка загрузки данных пользователей:', error);
             document.getElementById('adminListTitle').textContent = 'Ошибка загрузки данных';
         }
     }
-    
     function displayUsers(users, adminDiscordIds) {
         const adminListTitle = document.getElementById('adminListTitle');
         const adminListBlocks = document.getElementById('adminListBlocks');
-        
         adminListTitle.textContent = `Subscribers: ${users.length}`;
         adminListBlocks.innerHTML = '';
-        
         const avatarPromises = [];
         const userDiscordData = {}; // Для хранения данных Discord пользователей
-        
         users.forEach(user => {
             const userRole = getUserRole(user.sid, adminDiscordIds);
             const isBanned = user.ban_reason && user.ban_reason !== '';
-            
             const userCard = document.createElement('div');
             userCard.className = 'admin_card';
             userCard.id = `block-${isBanned ? 'banned' : userRole}`;
-            
             let endText = 'Не указано';
             if (user.end === 0) {
                 endText = 'Навсегда';
@@ -299,8 +243,6 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (user.end > 0 && user.end * 1000 <= Date.now()) {
                 endText = 'Истек';
             }
-            
-            // Создаем элемент с временным значением для Discord ника
             userCard.innerHTML = `
                 <div id="admins_card">
                     <div class="adminlist_info">
@@ -346,10 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             `;
-            
             adminListBlocks.appendChild(userCard);
-            
-            // Если есть Discord ID, добавляем в очередь загрузку аватара
             if (user.sid) {
                 const avatarPromise = loadDiscordAvatar(
                     user.sid, 
@@ -370,27 +309,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }).catch(error => {
                     console.warn(`Ошибка загрузки данных Discord для ${user.sid}:`, error);
                 });
-                
                 avatarPromises.push(avatarPromise);
             }
         });
-        
-        // Ждем завершения всех загрузок аватаров
         Promise.allSettled(avatarPromises).then(() => {
             console.log('Все аватары загружены');
         });
     }
-    
     // Инициализация
     function init() {
-        
         // Загрузка данных пользователей
         loadUsersData();
-        
         // Инициализация индикаторов прокрутки
         setTimeout(updateScrollIndicators, 100);
     }
-    
     // Запуск инициализации
     init();
 });
