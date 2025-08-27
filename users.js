@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
         discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
     };
-    async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
+    async function fetchWithRetry(url, options = {}, retries = 10, delay = 1000) {
         try {
             const response = await fetch(url, options);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
