@@ -1,0 +1,503 @@
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap');
+body {
+    background-color: #0e0e0e;
+    color: #e0e0e0;
+    font-family: "Unbounded", sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px;
+}
+
+.col-md-12 {
+    width: 100%;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.screenshots-section {
+    margin-bottom: 30px;
+    background: #181818;
+    padding: 20px;
+    border-radius: 10px;
+    border: #3278ff solid 1px;
+}
+
+h2 {
+    font-size: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #d7fe7b;
+}
+
+.screenshots-gallery {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.screenshots-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 10px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.screenshots-container::-webkit-scrollbar {
+    display: none;
+}
+
+.scroll-indicator {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.5);
+    color: white;
+    width: 30px;
+    height: 60px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    z-index: 10;
+}
+
+.scroll-indicator.left {
+    left: 0;
+    border-radius: 0 5px 5px 0;
+}
+
+.scroll-indicator.right {
+    right: 0;
+    border-radius: 5px 0 0 5px;
+}
+
+.scroll-indicator:hover {
+    opacity: 1;
+    background: rgba(0,0,0,0.7);
+}
+
+.product-info {
+    border-radius: 5px;
+    text-align: center;
+    color: #e0e0e0;
+    background: #111111;
+    padding: 1px;
+    margin-bottom: 15px;
+}
+
+.product-info h3 {
+    color: white;
+    margin: 10px;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.product-info p {
+    margin: 0px;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.action-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 25px;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+#screenshotModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+}
+
+#modalImage {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+#closeModal {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+    z-index: 10001;
+}
+
+.modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.5);
+    color: white;
+    width: 40px;
+    height: 60px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    z-index: 10001;
+}
+
+.modal-nav:hover {
+    opacity: 1;
+    background: rgba(0,0,0,0.7);
+}
+
+#modalPrev {
+    left: -50px;
+}
+
+#modalNext {
+    right: -50px;
+}
+
+.screenshot-item {
+    min-width: 280px;
+    height: 180px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.screenshot-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.screenshot-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.adminlist_title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 10px 0;
+    text-align: center;
+    color: #d7fe7b;
+}
+
+.adminlist_blocks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.admin_card {
+    background: #1a1a1a;
+    border-radius: 8px;
+        line-break: anywhere;
+    padding: 5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    /* height: 105px; */
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+#block-creator {
+    border: 1px solid #ff86b8;
+}
+
+#block-bot {
+    border: 1px solid #ba94ff;
+}
+
+#block-admin {
+    border: 1px solid #ccffa2;
+}
+
+#block-player {
+    border: 1px solid #303030;
+}
+
+#block-banned {
+    border: 1px solid #ff5757;
+}
+
+.admins_card {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.adminlist_info {
+    display: flex;
+    gap: 10px;
+}
+
+.avatar_block {
+    position: relative;
+}
+
+.admins_avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 5px;
+    object-fit: cover;
+}
+
+.avatar_letter {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
+    text-transform: uppercase;
+    border-radius: 5px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.adminlist_button {
+    position: absolute;
+    right: 0px;
+    left: 0px;
+    padding: 4px 5px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+#tag-creator {
+    background: linear-gradient(45deg, rgb(176, 90, 36), rgb(210, 79, 188));
+    color: #ffffff;
+}
+
+#tag-bot {
+    background: linear-gradient(45deg, rgb(84, 65, 255), rgb(169, 132, 255));
+    color: #ffffff;
+}
+
+#tag-admin {
+    background: linear-gradient(45deg, rgb(0, 99, 16), rgb(0, 146, 32));
+    color: #ffffff;
+}
+
+#tag-player {
+    background: linear-gradient(45deg, rgb(4, 37, 61), rgb(10, 81, 119));
+    color: white;
+}
+
+#tag-banned {
+    background: #ff5757;
+    color: white;
+}
+
+.adminlist_buttons {
+    flex: 1;
+}
+
+#admins_info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.admin_nickname {
+    font-weight: bold;
+    font-size: 16px;
+    color: white;
+}
+
+.admin_group, .admin_term {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}
+.admin_group_text {
+    color: #e8ff7f !important;
+}
+
+.admin_group_icon {
+    width: 16px;
+    height: 16px;
+}
+
+.admin_group_text, .admin_term_text {
+    color: #b0b0b0;
+    font-size: 12px;
+}
+
+
+#link_prof {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #3278ff;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+#link_prof:hover {
+    text-decoration: underline;
+}
+
+#link_prof svg {
+    width: 20px;
+    height: 20px;
+}
+
+#no-link {
+    color: #7a7a7a;
+    font-size: 12px;
+    margin: 0px 0;
+}
+
+#b_reason {
+    font-size: 12px;
+    color: #7a7a7a;
+    margin-bottom: 5px;
+}
+
+.banned_reason {
+    color: #ff5757 !important;
+    font-size: 12px;
+    margin: 0;
+}
+#link_block{
+    padding-left: 90px;
+    /* position: absolute; */
+    height: 20px;
+}
+
+
+
+
+
+
+.avatar_letter{
+    /* z-index: 0 !important; */
+    background: linear-gradient(45deg, rgb(0, 0, 0), rgb(5, 0, 49));
+    font-size: 35px;
+    border-radius: 3px;
+    
+}
+.admins_avatar{
+    border-radius: 3px;
+    position: relative !important;
+    /* z-index: 1000 !important; */
+
+}
+#link_prof {
+    display: inline-flex;
+    background: #000000;
+    color: #ffffff;
+    padding: 0px 10px;
+    border-radius: 3px;
+    height: 25px !important;
+}
+.adminlist_button{
+    height: 25px !important;
+    padding: 0px 0px;
+}
+#no-link {
+    color: #464646;
+}
+.discord-link svg{
+    fill: #fff;
+}
+#link_block{
+    display: flex;
+    height: 25px !important;
+    align-content: center;
+    align-items: center;
+}
+.adminlist_button{
+    border-radius: 3px;
+    position: absolute;
+    right: 0px;
+    left: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+}
+img[src=""], 
+img:not([src]), 
+img[src*="null"],
+img[src*="undefined"] {
+    visibility: hidden !important;
+}
+.admin_card {
+    height: 109px;
+    border-radius: 5px;
+}
+.screenshots-section{
+    border-radius: 5px;
+}
+.screenshots-container{
+    background: #111111;
+    border-radius: 5px;
+}
