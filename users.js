@@ -2,12 +2,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Конфигурация
     const config = {
         adminsJsonUrl: 'https://lisikme.github.io/Nixware-allowed/admins.json',
-        hwidJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwidweb.json',
+        hwidJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwid2.json',
         tempJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/temps.json',
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
         discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
     };
-    async function fetchWithRetry(url, options = {}, retries = 500, delay = 1000) {
+    
+    async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
         try {
             const response = await fetch(url, options);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
             throw error;
         }
     }
+    
     function getUserRole(discordId, adminList) {
         if (discordId === '470573716711931905') {
             return 'creator'; 
@@ -39,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
     }
+    
     class AvatarQueue {
         constructor(maxConcurrent = 3) {
             this.maxConcurrent = maxConcurrent;
@@ -52,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.run();
             });
         }
+        
         async run() {
             if (this.current >= this.maxConcurrent || this.queue.length === 0) return;
             this.current++;
@@ -67,7 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+    
     const avatarQueue = new AvatarQueue(3);
+    
     async function loadDiscordAvatar(discordId, elementId, username) {
         if (!discordId) return;
         return avatarQueue.add(async () => {
@@ -115,6 +121,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Функция для преобразования даты в timestamp
+    function parseDateToTimestamp(dateString) {
+        try {
+            // Пробуем разные форматы дат
+            if (typeof dateString === 'number') {
+                return dateString;
+            }
+            
+            if (dateString.includes('T')) {
+                // ISO формат: "2026-02-21T08:10:37.000000"
+                return Math.floor(new Date(dateString).getTime() / 1000);
+            } else {
+                // Другие форматы, пробуем распарсить
+                return Math.floor(new Date(dateString).getTime() / 1000);
+            }
+        } catch (e) {
+            console.warn(`Не удалось распарсить дату: ${dateString}`, e);
+            return 0;
+        }
+    }
+    
     async function loadUsersData() {
         try {
             const [adminsData, hwidData, tempData, discordData] = await Promise.allSettled([
@@ -123,12 +150,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetchJsonData(config.tempJsonUrl),
                 fetchJsonData(config.discordJsonUrl)
             ]);
+            
             // Обработка результатов
             const admins = adminsData.status === 'fulfilled' ? adminsData.value : { Admins: [] };
-            const hwid = hwidData.status === 'fulfilled' ? hwidData.value : { users: [], banned: [] };
+            const hwid = hwidData.status === 'fulfilled' ? hwidData.value : { "users:": [] };
             const temp = tempData.status === 'fulfilled' ? tempData.value : {};
             const discord = discordData.status === 'fulfilled' ? discordData.value : { hwids: [] };
+            
             const adminDiscordIds = admins.Admins || [];
+            
             // Функция для поиска Discord ID по HWID
             function getDiscordIdByHwid(hwid, discordData) {
                 if (discordData.hwids && Array.isArray(discordData.hwids)) {
@@ -140,28 +170,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return null;
             }
+            
             const usersList = [];
-            const activeUsers = hwid.users || [];
-            const bannedUsers = hwid.banned || [];
+            // Исправляем: используем поле "users:" вместо "users"
+            const activeUsers = hwid["users:"] || hwid.users || [];
+            
             activeUsers.forEach((username, index) => {
-                userhwid = username
+                const userhwid = username;
                 const discordId = getDiscordIdByHwid(username, discord);
                 const endTime = temp[username] || 0;
-                let isBanned = false;
-                let banReason = '';
-                for (const bannedUser of bannedUsers) {
-                    if (Array.isArray(bannedUser)) {
-                        if (bannedUser.User === username) {
-                            isBanned = true;
-                            banReason = bannedUser.Reason;
-                            break;
-                        }
-                    } else if (bannedUser === username) {
-                        isBanned = true;
-                        banReason = 'Причина не указана';
-                        break;
-                    }
-                }
+                
                 usersList.push({
                     id: index + 1,
                     sid: discordId,
@@ -170,40 +188,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     flags: '999',
                     immunity: 0,
                     group_id: 'Активная подписка',
-                    end: typeof endTime === 'number' ? endTime : (new Date(endTime)).getTime() / 1000,
+                    end: parseDateToTimestamp(endTime),
                     server_id: 0,
-                    bans_count: isBanned ? 1 : 0,
-                    ban_reason: banReason,
-                    mutes_count: 0,
-                    gags_count: 0,
                     is_active: true
                 });
             });
-            const bannedOnlyUsers = [];
-            bannedUsers.forEach(bannedUser => {
-                const username = Array.isArray(bannedUser) ? bannedUser.User : bannedUser;
-                const banReason = Array.isArray(bannedUser) ? bannedUser.Reason : 'Причина не указана';
-                const exists = usersList.some(user => user.name === username);
-                if (!exists) {
-                    const discordId = getDiscordIdByHwid(username, discord);
-                    bannedOnlyUsers.push({
-                        id: usersList.length + bannedOnlyUsers.length + 1,
-                        sid: discordId,
-                        name: username,
-                        flags: '0',
-                        immunity: 0,
-                        group_id: 'Блокировка',
-                        end: -1,
-                        server_id: 0,
-                        bans_count: 1,
-                        ban_reason: banReason,
-                        mutes_count: 0,
-                        gags_count: 0,
-                        is_active: false
-                    });
-                }
-            });
-            const allUsers = [...usersList, ...bannedOnlyUsers];
+            
+            const allUsers = [...usersList];
             allUsers.sort((a, b) => {
                 const aRole = getUserRole(a.sid, adminDiscordIds);
                 const bRole = getUserRole(b.sid, adminDiscordIds);
@@ -215,25 +206,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (bRole === 'admin' && aRole !== 'admin') return 1;
                 return 0;
             });
+            
             displayUsers(allUsers, adminDiscordIds);
         } catch (error) {
             console.error('Ошибка загрузки данных пользователей:', error);
             document.getElementById('adminListTitle').textContent = 'Ошибка загрузки данных';
         }
     }
+    
     function displayUsers(users, adminDiscordIds) {
         const adminListTitle = document.getElementById('adminListTitle');
         const adminListBlocks = document.getElementById('adminListBlocks');
         adminListTitle.textContent = `Subscribers: ${users.length}`;
         adminListBlocks.innerHTML = '';
+        
         const avatarPromises = [];
         const userDiscordData = {}; // Для хранения данных Discord пользователей
+        
         users.forEach(user => {
             const userRole = getUserRole(user.sid, adminDiscordIds);
-            const isBanned = user.ban_reason && user.ban_reason !== '';
+            
             const userCard = document.createElement('div');
             userCard.className = 'admin_card';
-            userCard.id = `block-${isBanned ? 'banned' : userRole}`;
+            userCard.id = `block-${userRole}`;
+            
             let endText = 'Не указано';
             if (user.end === 0) {
                 endText = 'Навсегда';
@@ -243,6 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (user.end > 0 && user.end * 1000 <= Date.now()) {
                 endText = 'Истек';
             }
+            
             userCard.innerHTML = `
                 <div id="admins_card">
                     <div class="adminlist_info">
@@ -251,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <img class="admins_avatar" id="user-${user.sid}-avatar" src="" alt="" 
                                 data-username="${user.name}"
                                 onerror="this.setAttribute('data-fallback', 'true');">
-                            <div class="adminlist_button steam_button" data-tippy-content="Роль" data-tippy-placement="bottom" id="tag-${isBanned ? 'banned' : userRole}">
+                            <div class="adminlist_button steam_button" data-tippy-content="Роль" data-tippy-placement="bottom" id="tag-${userRole}">
                                 ${
                                     userRole === 'creator' ? 'Создатель' : (
                                         userRole === 'admin' ? 'Партнёр' : (
@@ -268,7 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="admin_term">
                                     <span class="admin_term_text">${endText}</span>
                                 </div>
-                                ${isBanned ? `<p class="banned_reason">Причина бана: ${user.ban_reason}</p>` : ''}
                             </div>
                         </div>
                     </div>
@@ -282,13 +278,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             </a>` : 
                             
                             `<a target="_blank" id="link_prof" class="discord-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
-                                <p id="no-link">Нет данных</p>
+                                <p id="no-link">Discord не привязан</p>
                             </a>`
                         }
                     </div>
                 </div>
             `;
+            
             adminListBlocks.appendChild(userCard);
+            
             if (user.sid) {
                 const avatarPromise = loadDiscordAvatar(
                     user.sid, 
@@ -309,13 +307,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }).catch(error => {
                     console.warn(`Ошибка загрузки данных Discord для ${user.sid}:`, error);
                 });
+                
                 avatarPromises.push(avatarPromise);
             }
         });
+        
         Promise.allSettled(avatarPromises).then(() => {
             console.log('Все аватары загружены');
         });
     }
+    
     // Инициализация
     function init() {
         // Загрузка данных пользователей
@@ -323,6 +324,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Инициализация индикаторов прокрутки
         setTimeout(updateScrollIndicators, 100);
     }
+    
+    // Функция для обновления индикаторов прокрутки (если нужна)
+    function updateScrollIndicators() {
+        // Ваша реализация здесь
+    }
+    
     // Запуск инициализации
     init();
 });
