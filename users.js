@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (discordId === '1393856315067203635') {
             return 'bot'; 
         }
+        if (discordId === '405841853934469132') {
+            return 'admin'; 
+        }
         return adminList.includes(discordId) ? 'admin' : 'player';
     }
     
