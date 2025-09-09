@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Конфигурация
     const config = {
         adminsJsonUrl: 'https://lisikme.github.io/Nixware-allowed/admins.json',
-        hwidJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwid2.json',
+        hwidJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwid3.json',
         tempJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/temps.json',
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
         discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
