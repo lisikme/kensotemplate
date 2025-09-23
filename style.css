@@ -242,7 +242,7 @@ h2 {
 
 .adminlist_blocks {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
     gap: 10px;
     margin-bottom: 30px;
 }
@@ -250,7 +250,7 @@ h2 {
 .admin_card {
     background: #1a1a1a;
     border-radius: 8px;
-        line-break: anywhere;
+    line-break: anywhere;
     padding: 5px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     /* height: 105px; */

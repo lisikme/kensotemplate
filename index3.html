@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KensoLUA (by Kelix.me)</title>
+    <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="screenshots-section">
+                <h2>KensoLUA (by Kelix.me)</h2>
+                
+                <div class="screenshots-gallery">
+                    <div class="screenshots-container" id="screenshotsContainer"></div>
+                    <div class="scroll-indicator left">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="scroll-indicator right">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 18L15 12L9 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="product-info">
+                    <h3>Информация о проекте</h3>
+                    <p>✨ Уникальные функции и возможности</p>
+                    <p>✈️ Самая быстрая автозакупка оружия</p>
+                    <p>➖ Рабочие трассера высрелов после обновления</p>
+                    <p>📦 Регулярные обновления и улучшения</p>
+                    <p>⚡ Поддержка 24/7 от нашей команды</p>
+                    <p>✅ Безопасность и анонимность</p>
+                    <p style="font-weight: bold; color:rgb(113, 236, 255); font-size: 18px; margin: 15px 0px;">Цена: от 150 руб</p>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="https://t.me/KensoHWID_Bot" target="_blank" class="action-button" style="background: linear-gradient(45deg, #25D366, #128C7E); box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
+                        Купить LUA
+                    </a>
+                    
+                    <a href="https://t.me/lisikme" target="_blank" class="action-button" style="background: linear-gradient(45deg, #0088cc, #005580); box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);">
+                        Тех-поддержка
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="screenshotModal">
+        <div class="modal-content">
+            <img id="modalImage" src="" alt="">
+            <button id="closeModal">×</button>
+            
+            <div class="modal-nav" id="modalPrev">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="modal-nav" id="modalNext">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="adminlist_title" id="adminListTitle"></div>
+    <div class="adminlist_blocks" id="adminListBlocks"></div>
+    
+    <script>
+        // Функция для получения параметров из URL
+        function getQueryParams() {
+            const params = {};
+            const queryString = window.location.search.substring(1);
+            const regex = /([^&=]+)=([^&]*)/g;
+            let m;
+            
+            while (m = regex.exec(queryString)) {
+                params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+            }
+            
+            return params;
+        }
+        
+        // Функция для обработки параметров страницы
+        function handlePageParams() {
+            const params = getQueryParams();
+            const actionButtons = document.querySelector('.action-buttons');
+            
+            if (params.page === 'login') {
+                // Скрываем существующие кнопки
+                actionButtons.innerHTML = '<style>.product-info{margin-bottom: 0px;}</style>';
+                
+                // // Создаем кнопку авторизации
+                // const authButton = document.createElement('');
+                // // authButton.href = '#';
+                // authButton.className = 'auth-button';
+                // authButton.textContent = 'Авторизация';
+                
+                // Добавляем кнопку в контейнер
+                // actionButtons.appendChild(authButton);
+            }
+            // Для page=main ничего не меняем - показываем стандартный интерфейс
+        }
+        
+        // Вызываем функцию при загрузке страницы
+        document.addEventListener('DOMContentLoaded', handlePageParams);
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

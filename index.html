@@ -5,112 +5,1461 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KensoLUA (by Kelix.me)</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* KetaRu ScrollBars */
+        :root{
+            --Background: #0f0f0f;
+            --Fon: #0d1218;
+            --ColorNone: #d7fe7b;
+            --ColorCursor: #95b940;
+            --Width: 7px;
+            --Border: 2px;
+            --Radius: 0px;
+        } 
+        /* Дизайн скрол-бара */
+        .element::-webkit-scrollbar{
+            width: 0;
+        }
+        ::-webkit-scrollbar{
+            width: var(--Width);
+            background-color: var(--Background);
+        }
+        ::-webkit-scrollbar-thumb{
+            background-color: var(--ColorNone);
+            border-radius: var(--Radius);
+            min-height: 30px;
+            width: var(--Width);
+            border: var(--Border) solid var(--Background);
+        }
+        ::-webkit-scrollbar-thumb:hover{
+            background-color: var(--ColorCursor);
+        }
+        .scroll-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+        .scroll-container{
+            transition: opacity 0.4s ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin: 0px;
+            border-radius: 5px;
+            height: 100%;
+            overflow: auto;
+        }
+        #adminListBlocks {
+            padding: 10px 10px;
+            margin: 0px;
+            overflow: auto;
+            height: 520px;
+            position: relative;
+        }
+        .scroll-gradient {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 40px;
+            pointer-events: none;
+            z-index: 2;
+            transition: opacity 0.4s ease;
+        }
+        .scroll-gradient.top {
+            top: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0));
+        }
+        .scroll-gradient.bottom {
+            bottom: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0));
+        }
+        .scroll-gradient.hidden {
+            opacity: 0;
+        }
+        .scroll-arrow {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 3;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .scroll-arrow:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+        .scroll-arrow.up {
+            top: 10px;
+        }
+        .scroll-arrow.down {
+            bottom: 10px;
+        }
+        .scroll-arrow.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* Стили для нового блока */
+        .product-header {
+            margin-bottom: 30px;
+        }
+        .product-gallery {
+            background: #0e0e0e;
+            padding: 20px;
+            border-radius: 5px;
+            border: #575757 solid 1px;
+            margin-bottom: 20px;
+        }
+        .gallery-title {
+            font-size: 30px;
+            text-align: center;
+            margin: 0px;
+            margin-bottom: 10px;
+            color: #d7fe7b;
+        }
+        .gallery-wrapper {
+            position: relative;
+        }
+        .gallery-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 10px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            /* border: #303030 solid 1px; */
+            background: #010101;
+            scroll-behavior: smooth;
+            cursor: grab;
+        }
+        .gallery-container::-webkit-scrollbar {
+            display: none;
+        }
+        .gallery-container:active {
+            cursor: grabbing;
+        }
+        .gallery-item {
+            border: #303030 solid 1px;
+            width: 350px;
+            aspect-ratio: 16/9;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            transition: transform 0.3s ease;
+            background: #0b0b0b;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+            background: #0b0b0b;
+        }
+        .gallery-item:hover img {
+            transform: scale(1.03);
+        }
+        .gallery-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            /* backdrop-filter: blur(2px); */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            pointer-events: none;
+        }
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+        .product-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 25px;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        .btn-buy {
+            background: linear-gradient(45deg, #3278ff, #6a11cb);
+        }
+        .btn-support {
+            background: linear-gradient(45deg, #d7fe7b, #95b940);
+            color: #0e0e0e;
+        }
+        
+        /* Стили для скроллбара галереи */
+        .gallery-scroll-container {
+            border: #303030 solid 1px;
+            position: relative;
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            /* overflow: hidden; */
+            overflow: hidden;
+        }
+        .gallery-scroll-gradient {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            pointer-events: none;
+            z-index: 2;
+            transition: opacity 0.4s ease;
+        }
+        .gallery-scroll-gradient.left {
+            left: 0;
+            background: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0));
+        }
+        .gallery-scroll-gradient.right {
+            right: 0;
+            background: linear-gradient(to left, rgba(0,0,0,0.6), rgba(0,0,0,0));
+        }
+        .gallery-scroll-gradient.hidden {
+            opacity: 0;
+        }
+        .gallery-scroll-arrow {
+            position: absolute;
+            top: 50%; /* Верхний край стрелки будет посередине контейнера */
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px 2px;
+            line-height: 0;
+            font-size: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 3;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-orientation: mixed;
+        }
+        .gallery-scroll-arrow {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            height: fit-content;
+            /* остальные стили */
+        }
+        .gallery-scroll-arrow:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+        .gallery-scroll-arrow.left {
+            left: 10px;
+        }
+        .gallery-scroll-arrow.right {
+            right: 10px;
+        }
+        .gallery-scroll-arrow.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+            /* Модальное окно - ИСПРАВЛЕННЫЙ CSS */
+            #galleryModal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.9);
+                backdrop-filter: blur(5px);
+                z-index: 10000;
+                justify-content: center;
+                align-items: center;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            #galleryModal.active {
+                display: flex;
+                opacity: 1;
+            }
+        .modal-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* background: #000000; */
+            border-radius: 5px;
+            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #modalImage {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            background: #000000;
+            display: block;
+        }
+        #closeModal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 10001;
+            /* background: rgba(0,0,0,0.7); */
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            opacity: 1;
+        }
+        #closeModal:hover {
+            background: rgba(255,0,0,0.7);
+            /* transform: scale(1.1); */
+        }
+        .modal-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            /* background: rgba(0,0,0,0.7); */
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            /* width: 60px; */
+            /* height: 80px; */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            cursor: pointer;
+            opacity: 1;
+            transition: all 0.3s ease;
+            z-index: 10001;
+            /* border: none; */
+            font-size: 30px;
+            font-weight: bold;
+        }
+        .modal-nav:hover {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.8);
+            /* transform: translateY(-50%) scale(1.1); */
+        }
+        .modal-nav:focus-visible {
+            opacity: 1;
+            transform: translateY(-50%) scale(1.1);
+        }
+        /* Полностью убирает обводку для видимого фокуса */
+        *:focus-visible {
+            outline: none;
+        }
+        #modalPrev {
+            left: 20px;
+        }
+        #modalNext {
+            right: 20px;
+        }
+        .modal-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 20px;
+            border-radius: 5px;
+            font-size: 15px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Блокировка прокрутки фона при открытом модальном окне */
+        body.modal-open {
+            overflow: hidden;
+            height: 100vh;
+        }
+        body{
+            margin: 30px 0px;
+        }
+        .gallery-item.video-item::before {
+            content: '▶';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px;
+            /* color: rgba(255, 28, 28, 0.382); */
+            /* text-shadow: 0 2px 10px rgba(0,0,0,0.7); */
+            z-index: 2;
+            opacity: 1;
+            /* backdrop-filter: blur(5px); */
+            transition: all 0.3s ease;
+            background: linear-gradient(20deg, #006eff, #00ff81 52%, #fff 50%, #93cbff);
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow:  0 0 5px #00ffcf80;
+        }
 
+        .gallery-item.video-item:hover::before {
+            /* transform: translate(-50%, -50%) scale(1.1); */
+            opacity: 0;
+        }
+
+        .video-label {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff2d2d;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 2;
+        }
+        .modal-video-container {
+            width: 90vw;
+            /* height: 90vh; */
+            /* max-width: 90vw; */
+            /* max-height: 90vh; */
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .modal-video {
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 16/9;
+            border: none;
+        }
+    </style>
 </head>
+
 <body>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="screenshots-section">
-                <h2>KensoLUA (by Kelix.me)</h2>
-                
-                <div class="screenshots-gallery">
-                    <div class="screenshots-container" id="screenshotsContainer"></div>
-                    <div class="scroll-indicator left">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+    <!-- Новый блок с галереей и кнопками -->
+    <div class="product-header">
+        <div class="product-gallery">
+            <h2 class="gallery-title">KensoUltra+</h2>
+            
+            <div class="gallery-scroll-container">
+                <div class="gallery-scroll-gradient left" id="galleryGradientLeft"></div>
+                <div class="gallery-scroll-gradient right" id="galleryGradientRight"></div>
+                <div class="gallery-scroll-arrow left hidden" id="galleryScrollLeft">
+                    <svg width="16" height="16" viewBox="8 8 16 16" fill="currentColor">
+                        <path d="M19 10L13 16L19 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                    </svg>
+                </div>
+                <div class="gallery-wrapper">
+                    <div class="gallery-container" id="galleryContainer">
+                        <div class="gallery-item video-item" data-index="2" data-type="video" data-youtube-id="Lch7Ve9ntsA">
+                            <img src="./images/1.png" alt="Видео демонстрация">
+                            <div class="video-label">ВИДЕО</div>
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <!-- <div class="gallery-item" data-index="0">
+                            <img src="./images/1.png" alt="Скриншот 1">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div> -->
+                        <div class="gallery-item" data-index="1">
+                            <img src="./images/2.png" alt="Скриншот 2">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="2">
+                            <img src="./images/3.png" alt="Скриншот 3">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="3">
+                            <img src="./images/4.png" alt="Скриншот 4">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="4">
+                            <img src="./images/5.png" alt="Скриншот 5">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="5">
+                            <img src="./images/6.png" alt="Скриншот 6">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="6">
+                            <img src="./images/7.png" alt="Скриншот 7">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="7">
+                            <img src="./images/8.png" alt="Скриншот 8">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="8">
+                            <img src="./images/9.png" alt="Скриншот 9">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="9">
+                            <img src="./images/10.png" alt="Скриншот 10">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="10">
+                            <img src="./images/11.png" alt="Скриншот 11">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="11">
+                            <img src="./images/12.png" alt="Скриншот 12">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="12">
+                            <img src="./images/13.png" alt="Скриншот 13">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="13">
+                            <img src="./images/14.png" alt="Скриншот 14">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="14">
+                            <img src="./images/15.png" alt="Скриншот 15">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="15">
+                            <img src="./images/16.png" alt="Скриншот 16">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
+                        <div class="gallery-item" data-index="16">
+                            <img src="./images/17.png" alt="Скриншот 17">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
                     </div>
-                    <div class="scroll-indicator right">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 18L15 12L9 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
                 </div>
-                
-                <div class="product-info">
-                    <h3>Информация о проекте</h3>
-                    <p>✨ Уникальные функции и возможности</p>
-                    <p>✈️ Самая быстрая автозакупка оружия</p>
-                    <p>➖ Рабочие трассера высрелов после обновления</p>
-                    <p>📦 Регулярные обновления и улучшения</p>
-                    <p>⚡ Поддержка 24/7 от нашей команды</p>
-                    <p>✅ Безопасность и анонимность</p>
-                    <p style="font-weight: bold; color:rgb(113, 236, 255); font-size: 18px; margin: 15px 0px;">Цена: от 150 руб</p>
+                <div class="gallery-scroll-arrow right" id="galleryScrollRight">
+                    <svg width="16" height="16" viewBox="8 8 16 16" fill="currentColor">
+                        <path d="M13 10L19 16L13 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                    </svg>
                 </div>
-                
-                <div class="action-buttons">
-                    <a href="https://t.me/KensoHWID_Bot" target="_blank" class="action-button" style="background: linear-gradient(45deg, #25D366, #128C7E); box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
-                        Купить LUA
-                    </a>
-                    
-                    <a href="https://t.me/lisikme" target="_blank" class="action-button" style="background: linear-gradient(45deg, #0088cc, #005580); box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);">
-                        Тех-поддержка
-                    </a>
-                </div>
+            </div>
+
+
+<div class="product-table">
+    <div class="table-container">
+        <div class="product-header-text">
+            <!-- <h1 class="product-title">KensoUltra+</h1> -->
+            <p class="product-discord">
+                <span class="discord-label">Discord сервер: </span>
+                <a href="https://discord.gg/5BM4XD3qxM" class="contact-link">https://discord.gg/5BM4XD3qxM</a>
+            </p>
+        </div>
+
+        <div class="subscription-header">
+            <h2 class="subscription-title">Гибкая система подписки</h2>
+            <p class="payment-methods">YooMoney | СБП "Озон банк" | CloudTips</p>
+        </div>
+
+        <div class="pricing-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th><span>СТОИМОСТЬ</span></th>
+                        <th><span>СРОК ДОСТУПА</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>100 РУБ</strong></td>
+                        <td>30 дней (1 месяц)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>150 РУБ</strong></td>
+                        <td>90 дней (3 месяца)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>350 РУБ</strong></td>
+                        <td>180 дней (6 месяцев)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>999 РУБ</strong></td>
+                        <td><span class="forever">НАВСЕГДА</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="price-note">
+            <p>*Актуальную цену и условия акций уточняйте при покупке</p>
+        </div>
+
+        <div class="product-tagline">
+            <h2>✨ МОЩНЫЙ И УНИВЕРСАЛЬНЫЙ LUA-МОДУЛЬ ДЛЯ CS2 ✨</h2>
+        </div>
+
+        <div class="product-description">
+            <p class="description-main">Погрузись в игру с новым уровнем контроля и кастомизации!</p>
+            <p class="description-sub">Это не просто скрипт, это комплексное решение, которое раскроет весь потенциал игры, предоставит тебе невероятные визуальные и игровые преимущества, а также полный контроль над процессом.</p>
+        </div>
+
+        <div class="features-intro">
+            <h2>🎯 ОСНОВНЫЕ ВОЗМОЖНОСТИ И ПРЕИМУЩЕСТВА</h2>
+        </div>
+
+        <div class="features-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th><span>КАТЕГОРИЯ</span></th>
+                        <th><span>ФУНКЦИОНАЛ</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>ГЕЙМПЛЕЙ</strong></td>
+                        <td>
+                            <ul>
+                                <li>Принудительное 3-е лицо в наблюдателях</li>
+                                <li>Отключение колизии от 3-го лица</li>
+                                <li>АвтоРеспавн с привилегией</li>
+                                <li>Респавн по бинду</li>
+                                <li>Автозакупка оружия с таймером</li>
+                                <li>Закупка всего арсенала (Deagle, R8, AWP, AutoSnipers, Scout, Zeus)</li>
+                                <li>Закупка гранат (дымы, осколочные, молотовы/зажигательные)</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>СТАТИСТИКА, ТРЕКИНГ</strong></td>
+                        <td>
+                            <ul>
+                                <li>StatTrack: Интерфейс</li>
+                                <li>StatTrack: Сообщение в чат</li>
+                                <li>Сохранение списка убийств</li>
+                                <li>Кастомный Kill-Feed</li>
+                                <li>Детальные логи попаданий по игрокам</li>
+                                <li>MVP уведомления</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>СТИЛЬ УБИЙСТВ, СТАТУСЫ</strong></td>
+                        <td>
+                            <ul>
+                                <li>Убийство в голову</li>
+                                <li>Убийство с ослеплением</li>
+                                <li>Убийство без прицела</li>
+                                <li>Убийство с прострелами</li>
+                                <li>Убийство через дым</li>
+                                <li>Реванш</li>
+                                <li>Доминирование</li>
+                                <li>Убийство в воздухе</li>
+                                <li>Убийство с ножа</li>
+                                <li>Уничтожение отряда</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>АУДИО, ЗВУКИ</strong></td>
+                        <td>
+                            <ul>
+                                <li>Звуки попаданий и убийств</li>
+                                <li>Режимы работы звуков (Game/Auto/Custom)</li>
+                                <li>Настройка громкости попаданий и убийств</li>
+                                <li>MVP музыка в конце раунда</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>ANTI-AIM, РАБОТА С PITCH</strong></td>
+                        <td>
+                            <ul>
+                                <li>FakePitch</li>
+                                <li>Custom Pitch (Экспериментально)</li>
+                                <li>Random Yaw Offset</li>
+                                <li>Manual AA</li>
+                                <li>Air Flick</li>
+                                <li>Pitch Jitter on Manuals</li>
+                                <li>Duck Peek Assist</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>РЕЙДЖ, АИММОД</strong></td>
+                        <td>
+                            <ul>
+                                <li>Минимальный урон</li>
+                                <li>Отключение Rage в воздухе</li>
+                                <li>AI Peek</li>
+                                <li>Визуализация эймбота</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>ВИЗУАЛЬНЫЕ ЭФФЕКТЫ, ИНДИКАТОРЫ</strong></td>
+                        <td>
+                            <ul>
+                                <li>Многофункциональный индикатор (FPS, PING, TIME, KILLS, USERNAME)</li>
+                                <li>Индикатор скорости</li>
+                                <li>Manual AA текстовый индикатор</li>
+                                <li>Отображение HP возле прицела</li>
+                                <li>Список игроков</li>
+                                <li>Настройка угла и дальности обзора</li>
+                                <li>ESP линии до игроков</li>
+                                <li>Пользовательская контрастность</li>
+                                <li>Трассера выстрелов</li>
+                                <li>Трассера GLOW</li>
+                                <li>Трейлы (след от игрока)</li>
+                                <li>Радужный RGB режим трейла</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>ДИЗАЙН, ИНТЕРФЕЙС</strong></td>
+                        <td>
+                            <ul>
+                                <li>Полная кастомизация цветов меню</li>
+                                <li>Кастомный цвет рамки</li>
+                                <li>RGB линия в меню</li>
+                                <li>Экран загрузки меню</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>СЕТЕВЫЕ ФУНКЦИИ, МОНИТОРИНГ</strong></td>
+                        <td>
+                            <ul>
+                                <li>Мониторинг серверов HVH</li>
+                                <li>Авто загрузка данных мониторинга</li>
+                                <li>Админ меню (IKS)</li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .product-table {
+        margin-bottom: 20px;
+        padding: 20px;
+        background: rgba(14, 14, 14, 0.8);
+        border-radius: 5px;
+        /* border: 1px solid #575757; */
+        border: #303030 solid 1px;
+        background: #010101;
+    }
+
+    .product-header-text {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .product-title {
+        color: #c4e870;
+        /* font-size: 3.5rem; */
+        margin: 0 0 15px 0;
+        text-shadow: 0 0 10px rgba(196, 232, 112, 0.3);
+    }
+
+    .product-discord, .product-contact {
+        margin: 0px 0;
+        font-weight: bold;
+    }
+
+    .discord-label {
+        color: #54acd2;
+    }
+
+    .discord-link, .contact-link {
+        color: #efefef;
+        text-decoration: none;
+    }
+
+    .discord-link:hover, .contact-link:hover {
+        color: #d7fe7b;
+        text-decoration: underline;
+    }
+
+    .subscription-header {
+        text-align: center;
+        margin: 0px 0;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 5px;
+    }
+
+    .subscription-title {
+        color: #fac51c;
+        /* font-size: 3rem; */
+        font-size: 16px;
+        margin: 0 0 10px 0;
+    }
+
+    .payment-methods {
+        color: #9365b8;
+        /* font-size: 1.5rem; */
+        font-size: 10px;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .pricing-table {
+        margin: 15px 0;
+        font-size: 12px;
+    }
+
+    .pricing-table table {
+        width: 100%;
+        border-collapse: collapse;
+        background: rgba(26, 26, 26, 0.8);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .pricing-table th {
+        background: linear-gradient(45deg, #ffa500, #ff8c00);
+        color: #000;
+        padding: 5px;
+        font-size: 16px;
+        text-align: center;
+    }
+    
+    .pricing-table td {
+        padding: 5px 15px;
+        text-align: center;
+        border-bottom: 1px solid #333;
+        color: #efefef;
+    }
+    
+    .pricing-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .pricing-table strong {
+        color: #d7fe7b;
+    }
+
+    .forever {
+        color: #66ff66 !important;
+        font-weight: bold;
+    }
+
+    .price-note {
+        text-align: center;
+        color: #d1d5d8;
+        font-size: 10px;
+        margin: 15px 0 20px 0;
+    }
+
+    .product-tagline {
+        text-align: center;
+        margin: 0px 0 10px 0;
+    }
+
+    .product-tagline h2 {
+        color: #ffd700;
+        /* font-size: 2.2rem; */
+        font-size: 16px;
+        margin: 0;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    }
+
+    .product-description {
+        text-align: center;
+        margin: 0px 0;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 5px;
+        border-left: 4px solid #d7fe7b;
+    }
+
+    .description-main {
+        color: #cccccc;
+        /* font-size: 2rem; */
+        font-size: 16px;
+        font-weight: bold;
+        margin: 0 0 5px 0;
+    }
+
+    .description-sub {
+        color: #fba026;
+        /* font-size: 1.2rem; */
+        font-size: 12px;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .features-intro {
+        text-align: center;
+        margin: 20px 0 10px 0;
+    }
+
+    .features-intro h2 {
+        color: #54acd2;
+        /* font-size: 2.2rem; */
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .features-table {
+        /* margin: 30px 0; */
+        font-size: 12px;
+    }
+
+    .features-table table {
+        width: 100%;
+        border-collapse: collapse;
+        background: rgba(26, 26, 26, 0.8);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .features-table th {
+        background: linear-gradient(45deg, #ffa500, #ff8c00);
+        color: #000;
+        padding: 5px;
+        /* font-size: 1.2rem; */
+        font-size: 16px;
+        text-align: center;
+    }
+
+    .features-table td {
+        padding: 5px 10px;
+        vertical-align: top;
+        border-bottom: 1px solid #333;
+    }
+
+    .features-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .features-table td:first-child {
+        background: rgba(198, 102, 102, 0.1);
+        border-right: 2px solid #c66666;
+        font-size: 10px;
+        margin: auto 0;
+        align-content: center;
+        width: 200px;
+        text-align: center;
+        font-weight: bold;
+        color: #c66666;
+    }
+
+    .features-table ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .features-table li {
+        color: #c3e66f;
+        padding: 2px 0;
+        border-bottom: 1px dashed rgba(195, 230, 111, 0.3);
+    }
+
+    .features-table li:last-child {
+        border-bottom: none;
+    }
+
+    /* @media (max-width: 768px) {
+        .product-title {
+            font-size: 2.5rem;
+        }
+        
+        .subscription-title {
+            font-size: 2rem;
+        }
+        
+        .payment-methods {
+            font-size: 1.2rem;
+        }
+        
+        .product-tagline h2, .features-intro h2 {
+            font-size: 1.8rem;
+        }
+        
+        .description-main {
+            font-size: 1.5rem;
+        }
+        
+        .features-table td:first-child {
+            width: 150px;
+        }
+    } */
+</style>
+
+            <div class="product-actions">
+                <a href="https://t.me/lisikme" class="action-btn btn-buy">
+                    🛒Купить
+                </a>
+                <a href="https://nixware.cc/threads/29483/" class="action-btn btn-support">
+                    📦Узнать больше
+                </a>
             </div>
         </div>
     </div>
 
-    <div id="screenshotModal">
+    <!-- Существующий блок со списком пользователей -->
+    <div class="adminlist_title" id="adminListTitle"></div>
+    <div class="scroll-container">
+        <div class="scroll-gradient top" id="gradientTop"></div>
+        <div class="scroll-gradient bottom" id="gradientBottom"></div>
+
+        <div class="scroll-arrow up hidden" id="scrollUp">Scroll up</div>
+        <div class="adminlist_blocks" id="adminListBlocks"></div>
+        <div class="scroll-arrow down" id="scrollDown">Scroll down</div>
+    </div>
+
+    <!-- Модальное окно для галереи - ИСПРАВЛЕННЫЙ HTML -->
+    <div id="galleryModal">
+        <button id="closeModal">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </svg>
+        </button>
+        <button class="modal-nav" id="modalPrev">
+            <svg width="16" height="16" viewBox="8 8 16 16" fill="currentColor">
+                <path d="M19 10L13 16L19 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+            </svg>
+        </button>
         <div class="modal-content">
             <img id="modalImage" src="" alt="">
-            <button id="closeModal">×</button>
-            
-            <div class="modal-nav" id="modalPrev">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
-            <div class="modal-nav" id="modalNext">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 18L15 12L9 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+            <div id="modalVideo" class="modal-video-container" style="display: none;">
+                <iframe id="youtubePlayer" class="modal-video" 
+                        src="" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                </iframe>
             </div>
         </div>
+        <div class="modal-counter">
+            <span id="modalCounter">1 / 5</span>
+        </div>
+        <button class="modal-nav" id="modalNext">                    
+            <svg width="16" height="16" viewBox="8 8 16 16" fill="currentColor">
+                <path d="M13 10L19 16L13 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+            </svg>
+        </button>
     </div>
 
-    <div class="adminlist_title" id="adminListTitle"></div>
-    <div class="adminlist_blocks" id="adminListBlocks"></div>
-    
+    <script src="users.js"></script>
     <script>
-        // Функция для получения параметров из URL
-        function getQueryParams() {
-            const params = {};
-            const queryString = window.location.search.substring(1);
-            const regex = /([^&=]+)=([^&]*)/g;
-            let m;
-            
-            while (m = regex.exec(queryString)) {
-                params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
-            }
-            
-            return params;
+        const adminList = document.getElementById('adminListBlocks');
+        const scrollUp = document.getElementById('scrollUp');
+        const scrollDown = document.getElementById('scrollDown');
+        const gradientTop = document.getElementById('gradientTop');
+        const gradientBottom = document.getElementById('gradientBottom');
+        let scrollInterval;
+        let currentMediaType = 'image'; 
+        const modalVideo = document.getElementById('modalVideo');
+        const youtubePlayer = document.getElementById('youtubePlayer');
+        
+        function startScrolling(direction) {
+            scrollInterval = setInterval(() => {
+                adminList.scrollBy({ top: direction * 520, behavior: 'smooth' });
+                checkScrollEffects();
+            }, 30);
         }
         
-        // Функция для обработки параметров страницы
-        function handlePageParams() {
-            const params = getQueryParams();
-            const actionButtons = document.querySelector('.action-buttons');
-            
-            if (params.page === 'login') {
-                // Скрываем существующие кнопки
-                actionButtons.innerHTML = '<style>.product-info{margin-bottom: 0px;}</style>';
-                
-                // // Создаем кнопку авторизации
-                // const authButton = document.createElement('');
-                // // authButton.href = '#';
-                // authButton.className = 'auth-button';
-                // authButton.textContent = 'Авторизация';
-                
-                // Добавляем кнопку в контейнер
-                // actionButtons.appendChild(authButton);
-            }
-            // Для page=main ничего не меняем - показываем стандартный интерфейс
+        function stopScrolling() {
+            clearInterval(scrollInterval);
         }
         
-        // Вызываем функцию при загрузке страницы
-        document.addEventListener('DOMContentLoaded', handlePageParams);
+        function checkScrollEffects() {
+            const scrollTop = adminList.scrollTop;
+            const scrollHeight = adminList.scrollHeight;
+            const clientHeight = adminList.clientHeight;
+            
+            if (scrollTop <= 0) {
+                scrollUp.classList.add('hidden');
+                gradientTop.classList.add('hidden');
+            } else {
+                scrollUp.classList.remove('hidden');
+                gradientTop.classList.remove('hidden');
+            }
+            
+            if (scrollTop + clientHeight >= scrollHeight - 1) {
+                scrollDown.classList.add('hidden');
+                gradientBottom.classList.add('hidden');
+            } else {
+                scrollDown.classList.remove('hidden');
+                gradientBottom.classList.remove('hidden');
+            }
+        }
+        
+        scrollUp.addEventListener('mousedown', () => startScrolling(-1));
+        scrollDown.addEventListener('mousedown', () => startScrolling(1));
+        scrollUp.addEventListener('mouseup', stopScrolling);
+        scrollDown.addEventListener('mouseup', stopScrolling);
+        scrollUp.addEventListener('mouseleave', stopScrolling);
+        scrollDown.addEventListener('mouseleave', stopScrolling);
+        adminList.addEventListener('scroll', checkScrollEffects);
+        
+        window.addEventListener('load', () => {
+            setTimeout(checkScrollEffects, 500);
+        });
+
+        // Функционал для галереи - ИСПРАВЛЕННЫЙ JS
+        const galleryContainer = document.getElementById('galleryContainer');
+        const galleryModal = document.getElementById('galleryModal');
+        const modalImage = document.getElementById('modalImage');
+        const closeModal = document.getElementById('closeModal');
+        const modalPrev = document.getElementById('modalPrev');
+        const modalNext = document.getElementById('modalNext');
+        const modalCounter = document.getElementById('modalCounter');
+        
+        // Элементы для горизонтального скроллбара галереи
+        const galleryScrollLeft = document.getElementById('galleryScrollLeft');
+        const galleryScrollRight = document.getElementById('galleryScrollRight');
+        const galleryGradientLeft = document.getElementById('galleryGradientLeft');
+        const galleryGradientRight = document.getElementById('galleryGradientRight');
+        
+        const galleryItems = document.querySelectorAll('.gallery-item');
+        let currentImageIndex = 0;
+        let galleryScrollInterval;
+        
+        // Функции для горизонтального скроллбара галереи
+        function startGalleryScrolling(direction) {
+            galleryScrollInterval = setInterval(() => {
+                galleryContainer.scrollBy({ left: direction * 300, behavior: 'smooth' });
+                checkGalleryScrollEffects();
+            }, 30);
+        }
+        
+        function stopGalleryScrolling() {
+            clearInterval(galleryScrollInterval);
+        }
+        
+        function checkGalleryScrollEffects() {
+            const scrollLeft = galleryContainer.scrollLeft;
+            const scrollWidth = galleryContainer.scrollWidth;
+            const clientWidth = galleryContainer.clientWidth;
+            
+            if (scrollLeft <= 0) {
+                galleryScrollLeft.classList.add('hidden');
+                galleryGradientLeft.classList.add('hidden');
+            } else {
+                galleryScrollLeft.classList.remove('hidden');
+                galleryGradientLeft.classList.remove('hidden');
+            }
+            
+            if (scrollLeft + clientWidth >= scrollWidth - 1) {
+                galleryScrollRight.classList.add('hidden');
+                galleryGradientRight.classList.add('hidden');
+            } else {
+                galleryScrollRight.classList.remove('hidden');
+                galleryGradientRight.classList.remove('hidden');
+            }
+        }
+        
+        // Обработчики для горизонтального скроллбара галереи
+        galleryScrollLeft.addEventListener('mousedown', () => startGalleryScrolling(-1));
+        galleryScrollRight.addEventListener('mousedown', () => startGalleryScrolling(1));
+        galleryScrollLeft.addEventListener('mouseup', stopGalleryScrolling);
+        galleryScrollRight.addEventListener('mouseup', stopGalleryScrolling);
+        galleryScrollLeft.addEventListener('mouseleave', stopGalleryScrolling);
+        galleryScrollRight.addEventListener('mouseleave', stopGalleryScrolling);
+        galleryContainer.addEventListener('scroll', checkGalleryScrollEffects);
+        
+        // Предзагрузка изображений для лучшего UX
+        function preloadImages() {
+            galleryItems.forEach(item => {
+                const img = item.querySelector('img');
+                if (img) {
+                    const preloadImg = new Image();
+                    preloadImg.src = img.src;
+                }
+            });
+        }
+        
+        // Открытие модального окна
+        galleryItems.forEach((item, index) => {
+            item.addEventListener('click', () => {
+                currentImageIndex = index;
+                openModal();
+            });
+        });
+        
+        function openModal() {
+            const imgSrc = galleryItems[currentImageIndex].querySelector('img').src;
+            modalImage.src = imgSrc;
+            updateModalCounter();
+            
+            // Сначала показываем модальное окно
+            galleryModal.style.display = 'flex';
+            const currentItem = galleryItems[currentImageIndex];
+            const mediaType = currentItem.getAttribute('data-type');
+            currentMediaType = mediaType;
+            
+            // Затем даем время для применения display: flex и запускаем анимацию
+            setTimeout(() => {
+                galleryModal.classList.add('active');
+                document.body.classList.add('modal-open'); // Блокируем прокрутку фона
+            }, 10);
+            
+            if (mediaType === 'video') {
+                const youtubeId = currentItem.getAttribute('data-youtube-id');
+                const videoUrl = `https://www.youtube.com/embed/${youtubeId}?autoplay=0&modestbranding=1&rel=0&controls=1&showinfo=0`;
+                
+                modalImage.style.display = 'none';
+                modalVideo.style.display = 'block';
+                youtubePlayer.src = videoUrl;
+            } else {
+                modalImage.style.opacity = '1';
+                modalImage.style.display = 'block';
+            }
+        }
+
+        function closeModalFunc() {
+            galleryModal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+            
+            setTimeout(() => {
+                galleryModal.style.display = 'none';
+                // Останавливаем видео при закрытии
+                if (currentMediaType === 'video') {
+                    youtubePlayer.src = youtubePlayer.src.replace('autoplay=1', 'autoplay=0');
+                }
+            }, 300);
+        }
+                
+        function updateModalCounter() {
+            modalCounter.textContent = `${currentImageIndex + 1} / ${galleryItems.length}`;
+        }
+        
+        // Исправленные функции навигации
+        function showNextImage(e) {
+            if (e) e.stopPropagation();
+            currentImageIndex = (currentImageIndex + 1) % galleryItems.length;
+            updateModalContent();
+        }
+
+        function showPrevImage(e) {
+            if (e) e.stopPropagation();
+            currentImageIndex = (currentImageIndex - 1 + galleryItems.length) % galleryItems.length;
+            updateModalContent();
+        }
+
+        function updateModalContent() {
+            const currentItem = galleryItems[currentImageIndex];
+            const mediaType = currentItem.getAttribute('data-type');
+            
+            // Скрываем оба типа контента сначала
+            modalImage.style.display = 'none';
+            modalVideo.style.display = 'none';
+            
+            if (mediaType === 'video') {
+                // Показываем видео
+                const youtubeId = currentItem.getAttribute('data-youtube-id');
+                const videoUrl = `https://www.youtube.com/embed/${youtubeId}?autoplay=0&modestbranding=1&rel=0&controls=1&showinfo=0`;
+                
+                modalVideo.style.display = 'block';
+                youtubePlayer.src = videoUrl;
+            } else {
+                // Показываем изображение
+                const imgSrc = currentItem.querySelector('img').src;
+                modalImage.style.display = 'block';
+                modalImage.src = imgSrc;
+                youtubePlayer.src = '';
+            }
+            
+            updateModalCounter();
+        }
+
+        // Также нужно исправить функцию openModal
+        function openModal() {
+            currentMediaType = galleryItems[currentImageIndex].getAttribute('data-type');
+            
+            // Сначала показываем модальное окно
+            galleryModal.style.display = 'flex';
+            
+            // Затем даем время для применения display: flex и запускаем анимацию
+            setTimeout(() => {
+                galleryModal.classList.add('active');
+                document.body.classList.add('modal-open');
+            }, 10);
+            
+            // Обновляем содержимое модального окна
+            updateModalContent();
+        }
+        
+        // Закрытие модального окна
+        closeModal.addEventListener('click', function(e) {
+            e.stopPropagation(); // Предотвращаем всплытие
+            closeModalFunc();
+        });
+        
+        modalNext.addEventListener('click', showNextImage);
+        modalPrev.addEventListener('click', showPrevImage);
+        
+        // Закрытие по клику на фон
+        galleryModal.addEventListener('click', (e) => {
+            if (e.target === galleryModal) {
+                closeModalFunc();
+            }
+        });
+        
+        // Навигация клавишами
+        document.addEventListener('keydown', (e) => {
+            if (galleryModal.classList.contains('active')) {
+                e.preventDefault(); // Предотвращаем прокрутку фона
+                e.stopPropagation(); // Предотвращаем всплытие
+                
+                if (e.key === 'Escape') closeModalFunc();
+                if (e.key === 'ArrowRight') showNextImage();
+                if (e.key === 'ArrowLeft') showPrevImage();
+            }
+        });
+        
+        // Блокируем прокрутку фона при открытом модальном окне
+        galleryModal.addEventListener('wheel', (e) => {
+            if (galleryModal.classList.contains('active')) {
+                e.stopPropagation(); // Блокируем всплытие события прокрутки
+            }
+        });
+        
+        // Горизонтальная прокрутка колесиком мыши в галерее (только когда модальное окно закрыто)
+        galleryContainer.addEventListener('wheel', (e) => {
+            if (!galleryModal.classList.contains('active') && e.deltaY !== 0) {
+                e.preventDefault();
+                galleryContainer.scrollLeft += e.deltaY * 5;
+                checkGalleryScrollEffects();
+            }
+        });
+        
+        // Плавное перетаскивание
+        let isDragging = false;
+        let startX;
+        let scrollLeft;
+        
+        galleryContainer.addEventListener('mousedown', (e) => {
+            if (galleryModal.classList.contains('active')) return; // Блокируем перетаскивание при открытом модальном окне
+            
+            isDragging = true;
+            galleryContainer.style.cursor = 'grabbing';
+            startX = e.pageX - galleryContainer.offsetLeft;
+            scrollLeft = galleryContainer.scrollLeft;
+        });
+        
+        galleryContainer.addEventListener('mouseleave', () => {
+            isDragging = false;
+            galleryContainer.style.cursor = 'grab';
+        });
+        
+        galleryContainer.addEventListener('mouseup', () => {
+            isDragging = false;
+            galleryContainer.style.cursor = 'grab';
+        });
+        
+        galleryContainer.addEventListener('mousemove', (e) => {
+            if (!isDragging || galleryModal.classList.contains('active')) return;
+            e.preventDefault();
+            const x = e.pageX - galleryContainer.offsetLeft;
+            const walk = (x - startX) * 2;
+            galleryContainer.scrollLeft = scrollLeft - walk;
+            checkGalleryScrollEffects();
+        });
+        
+        // Свайп на мобильных устройствах
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        galleryContainer.addEventListener('touchstart', (e) => {
+            if (galleryModal.classList.contains('active')) return;
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        galleryContainer.addEventListener('touchend', (e) => {
+            if (galleryModal.classList.contains('active')) return;
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            if (touchStartX - touchEndX > 50) {
+                // Свайп влево
+                galleryContainer.scrollBy({ left: 300, behavior: 'smooth' });
+            } else if (touchEndX - touchStartX > 50) {
+                // Свайп вправо
+                galleryContainer.scrollBy({ left: -300, behavior: 'smooth' });
+            }
+            setTimeout(checkGalleryScrollEffects, 100);
+        }
+        
+        // Предзагрузка изображений при загрузке страницы
+        window.addEventListener('load', () => {
+            preloadImages();
+            setTimeout(checkGalleryScrollEffects, 500);
+        });
+        
+        // Убедимся, что у изображения есть правильные стили
+        modalImage.style.transition = 'opacity 0.3s ease';
+
+    let lastWheelTime = 0;
+    const WHEEL_DELAY = 50;
+
+    // Прокрутка колёсиком мыши в модальном окне
+    galleryModal.addEventListener('wheel', (e) => {
+        if (galleryModal.classList.contains('active')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const currentTime = Date.now();
+            if (currentTime - lastWheelTime < WHEEL_DELAY) {
+                return;
+            }
+            
+            lastWheelTime = currentTime;
+            
+            // Определяем направление прокрутки
+            const isVerticalScroll = Math.abs(e.deltaY) > Math.abs(e.deltaX);
+            const isHorizontalScroll = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+            
+            if (isVerticalScroll) {
+                // Вертикальная прокрутка
+                if (e.deltaY > 0) {
+                    showNextImage();
+                } else if (e.deltaY < 0) {
+                    showPrevImage();
+                }
+            } else if (isHorizontalScroll) {
+                // Горизонтальная прокрутка
+                if (e.deltaX > 0) {
+                    showNextImage();
+                } else if (e.deltaX < 0) {
+                    showPrevImage();
+                }
+            }
+        }
+    });
     </script>
-    <script src="script.js"></script>
 </body>
 </html>
