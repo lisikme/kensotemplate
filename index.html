@@ -188,7 +188,8 @@
         .product-actions {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 10px;
+            margin-bottom: 70px;
             flex-wrap: wrap;
         }
         .action-btn {
@@ -618,6 +619,15 @@
             <p>*Актуальную цену и условия акций уточняйте при покупке</p>
         </div>
 
+            <div class="product-actions">
+                <a href="https://t.me/lisikme" class="action-btn btn-buy">
+                    🛒Купить
+                </a>
+                <a href="https://nixware.cc/threads/29483/" class="action-btn btn-support">
+                    📦Узнать больше
+                </a>
+            </div>
+
         <div class="product-tagline">
             <h2>✨ МОЩНЫЙ И УНИВЕРСАЛЬНЫЙ LUA-МОДУЛЬ ДЛЯ CS2 ✨</h2>
         </div>
@@ -768,7 +778,7 @@
 
 <style>
     .product-table {
-        margin-bottom: 20px;
+        /* margin-bottom: 20px; */
         padding: 20px;
         background: rgba(14, 14, 14, 0.8);
         border-radius: 5px;
@@ -1016,14 +1026,6 @@
     } */
 </style>
 
-            <div class="product-actions">
-                <a href="https://t.me/lisikme" class="action-btn btn-buy">
-                    🛒Купить
-                </a>
-                <a href="https://nixware.cc/threads/29483/" class="action-btn btn-support">
-                    📦Узнать больше
-                </a>
-            </div>
         </div>
     </div>
 
@@ -1247,7 +1249,8 @@
                 galleryModal.style.display = 'none';
                 // Останавливаем видео при закрытии
                 if (currentMediaType === 'video') {
-                    youtubePlayer.src = youtubePlayer.src.replace('autoplay=1', 'autoplay=0');
+                    youtubePlayer.src = '';
+                    // youtubePlayer.src = youtubePlayer.src.replace('autoplay=1', 'autoplay=0');
                 }
             }, 300);
         }
