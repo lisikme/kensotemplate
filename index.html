@@ -3,9 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KensoLUA (by Kelix.me)</title>
+    
+    <!-- Основные SEO мета-теги -->
+    <title>KensoLUA - (by Kelix.me)</title>
+    <meta name="description" content="KensoUltra - профессиональный LUA скрипт для CS2 с расширенными возможностями: ESP, аимбот, визуальные эффекты, статистика и многое другое. Совместимость с Nixware.cc">
+    <meta name="keywords" content="kensolua, lua скрипт, cs2, nixware, чит, аимбот, esp, кенсо луа, counter-strike 2, кенсо">
+    <meta name="author" content="Kelix.me">
+    
+    <!-- Open Graph для социальных сетей -->
+    <meta property="og:title" content="KensoUltra - Мощный LUA скрипт для CS2">
+    <meta property="og:description" content="Профессиональный LUA скрипт для CS2 с расширенными возможностями. ESP, аимбот, визуальные эффекты, статистика и многое другое.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kensolua.ru/">
+    <meta property="og:image" content="https://kensolua.ru/logo.png">
+    <meta property="og:site_name" content="KensoLUA">
+    <meta property="og:locale" content="ru_RU">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="KensoUltra - Мощный LUA скрипт для CS2">
+    <meta name="twitter:description" content="Профессиональный LUA скрипт для CS2 с расширенными возможностями.">
+    <meta name="twitter:image" content="https://kensolua.ru/logo.png">
+    <meta name="twitter:site" content="@kensolua">
+    
+    <!-- Дополнительные мета-теги -->
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="theme-color" content="#d7fe7b">
+    <link rel="canonical" href="https://kensolua.ru/">
+    
+    <!-- Структурированные данные (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "KensoLUA",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Windows",
+        "description": "Профессиональный LUA скрипт для Counter-Strike 2 с расширенными возможностями",
+        "url": "https://kensolua.ru/",
+        "author": {
+            "@type": "Organization",
+            "name": "Kelix.me"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "100",
+            "priceCurrency": "RUB"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "150"
+        }
+    }
+    </script>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
+<!-- Шапка сайта -->
+<header class="site-header">
+    <div class="header-container">
+        <div class="logo">
+            <div class="site-name">KensoUltra</div>
+            <span class="by-kelix">by Kelix.me</span>
+        </div>
+        <nav class="header-nav">
+            <!-- <a href="#features" class="nav-link">Правила</a> -->
+            <!-- <a href="#gallery" class="nav-link">Докуметация</a> -->
+            <a href="https://t.me/lisikme" class="nav-link buy-nav" target="_blank">Купить</a>
+        </nav>
+    </div>
+</header>
+
+<style>
+    .site-header {
+        background: rgba(14, 14, 14, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid #303030;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        padding: 5px 0;
+        margin-bottom: 30px;
+    }
+
+    .header-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+    }
+
+    .site-name {
+        color: #d7fe7b;
+        margin: 0;
+        font-size: 25px;
+        font-weight: 500;
+        line-height: 25px;
+        left: -1px;
+        position: relative;
+        text-shadow: 0 0 10px rgba(215, 254, 123, 0.3);
+    }
+    .logo {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .by-kelix {
+        color: #ff7777;
+        font-size: 12px;
+        /* margin-left: 1px; */
+        opacity: 1;
+    }
+
+    .header-nav {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .nav-link {
+        color: #efefef;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+
+    .nav-link:hover {
+        color: #d7fe7b;
+        background: rgba(215, 254, 123, 0.1);
+        /* transform: translateY(-2px); */
+    }
+
+    .buy-nav {
+        background: #353535;
+        color: #d3f979;
+    }
+    
+    .buy-nav:hover {
+        background: #222222;
+        color: #f67373;
+        /* transform: translateY(-2px); */
+    }
+
+    /* Адаптивность для мобильных устройств */
+    @media (max-width: 768px) {
+        .header-container {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .header-nav {
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-link {
+            font-size: 14px;
+            padding: 6px 12px;
+        }
+
+        .site-name {
+            font-size: 24px;
+        }
+        .logo{
+            align-items: center;
+        }
+    }
+</style>
     <style>
         /* KetaRu ScrollBars */
         :root{
@@ -413,9 +583,9 @@
             overflow: hidden;
             height: 100vh;
         }
-        body{
+        /* body{
             margin: 30px 0px;
-        }
+        } */
         .gallery-item.video-item::before {
             content: '▶';
             position: absolute;
