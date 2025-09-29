@@ -8,9 +8,16 @@ document.addEventListener('DOMContentLoaded', function() {
         discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
     };
     
+    // Функция для добавления параметра обхода кеша
+    function addCacheBuster(url) {
+        const timestamp = new Date().getTime();
+        return url + (url.includes('?') ? '&' : '?') + 't=' + timestamp;
+    }
+    
     async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
         try {
-            const response = await fetch(url, options);
+            const cacheBustedUrl = addCacheBuster(url);
+            const response = await fetch(cacheBustedUrl, options);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return await response.json();
         } catch (error) {
@@ -78,7 +85,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!discordId) return;
         return avatarQueue.add(async () => {
             try {
-                const userData = await fetchWithRetry(`${config.discordApiBase}${discordId}`);
+                const cacheBustedUrl = addCacheBuster(`${config.discordApiBase}${discordId}`);
+                const userData = await fetchWithRetry(cacheBustedUrl);
                 if (userData.avatar) {
                     const avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png?size=128`;
                     const avatarElement = document.getElementById(elementId);
