@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
         hwidJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwid4.json',
         tempJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/temps.json',
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
-        telegramJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/telegrams.json',
         discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
     };
     
@@ -153,20 +152,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     async function loadUsersData() {
         try {
-            const [adminsData, hwidData, tempData, discordData, telegramData] = await Promise.allSettled([
+            const [adminsData, hwidData, tempData, discordData] = await Promise.allSettled([
                 fetchJsonData(config.adminsJsonUrl),
                 fetchJsonData(config.hwidJsonUrl),
                 fetchJsonData(config.tempJsonUrl),
-                fetchJsonData(config.discordJsonUrl),
-                fetchJsonData(config.telegramJsonUrl)
+                fetchJsonData(config.discordJsonUrl)
             ]);
             
             // Обработка результатов
-            const admins = adminsData.status === 'fulfilled' ? adminsData.value : { "Admins": [] };
+            const admins = adminsData.status === 'fulfilled' ? adminsData.value : { Admins: [] };
             const hwid = hwidData.status === 'fulfilled' ? hwidData.value : { "users:": [] };
             const temp = tempData.status === 'fulfilled' ? tempData.value : {};
-            const discord = discordData.status === 'fulfilled' ? discordData.value : { "hwids": [] };
-            const telegram = telegramData.status === 'fulfilled' ? telegramData.value : { "bindings": [] };
+            const discord = discordData.status === 'fulfilled' ? discordData.value : { hwids: [] };
             
             const adminDiscordIds = admins.Admins || [];
             
@@ -182,18 +179,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return null;
             }
             
-            // Функция для поиска Telegram ID по HWID
-            function getTelegramIdByHwid(hwid, telegramData) {
-                if (telegramData.bindings && Array.isArray(telegramData.bindings)) {
-                    for (const entry of telegramData.bindings) {
-                        if (entry.HWID === hwid) {
-                            return `${entry.TELEGRAM}`;
-                        }
-                    }
-                }
-                return null;
-            }
-            
             const usersList = [];
             // Исправляем: используем поле "users:" вместо "users"
             const activeUsers = hwid["users:"] || hwid.users || [];
@@ -201,13 +186,11 @@ document.addEventListener('DOMContentLoaded', function() {
             activeUsers.forEach((username, index) => {
                 const userhwid = username;
                 const discordId = getDiscordIdByHwid(username, discord);
-                const telegramId = getTelegramIdByHwid(username, telegram);
                 const endTime = temp[username] || 0;
                 
                 usersList.push({
                     id: index + 1,
                     sid: discordId,
-                    telegramId: telegramId,
                     hwid: userhwid,
                     name: username,
                     flags: '999',
@@ -293,29 +276,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                     </div>
-                    
                     <div id="link_block">
-                        ${user.sid || user.telegramId ? 
-                            `${user.sid ? 
-                                `<a href="https://discord.com/users/${user.sid}" target="_blank" id="link_prof" class="discord-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M14.82 4.26a10.14 10.14 0 0 0-.53 1.1 14.66 14.66 0 0 0-4.58 0 10.14 10.14 0 0 0-.53-1.1 16 16 0 0 0-4.13 1.3 17.33 17.33 0 0 0-3 11.59 16.6 16.6 0 0 0 5.07 2.59A12.89 12.89 0 0 0 8.23 18a9.65 9.65 0 0 1-1.71-.83 3.39 3.39 0 0 0 .42-.33 11.66 11.66 0 0 0 10.12 0c.14.09.28.19.42.33a10.14 10.14 0 0 1-1.71.83 12.89 12.89 0 0 0 1.08 1.78 16.44 16.44 0 0 0 5.06-2.59 17.22 17.22 0 0 0-3-11.59 16.09 16.09 0 0 0-4.09-1.35zM8.68 14.81a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.93 1.93 0 0 1 1.8 2 1.93 1.93 0 0 1-1.8 2zm6.64 0a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.92 1.92 0 0 1 1.8 2 1.92 1.92 0 0 1-1.8 2z"/>
-                                    </svg>
-                                    <span class="discord-username">${user.name}</span>
-                                </a>` : 
-                                ''
-                            }
-                            ${user.telegramId ? 
-                                `<a target="_blank" id="link_prof" class="discord-link telegram-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
-                                    <svg viewBox="0 0 100 100">
-                                        <path d="M89.442 11.418c-12.533 5.19-66.27 27.449-81.118 33.516-9.958 3.886-4.129 7.529-4.129 7.529s8.5 2.914 15.786 5.1 11.172-.243 11.172-.243l34.244-23.073c12.143-8.257 9.229-1.457 6.315 1.457-6.315 6.315-16.758 16.272-25.501 24.287-3.886 3.4-1.943 6.315-.243 7.772 6.315 5.343 23.558 16.272 24.53 17.001 5.131 3.632 15.223 8.861 16.758-2.186l6.072-38.13c1.943-12.872 3.886-24.773 4.129-28.173.728-8.257-8.015-4.857-8.015-4.857z"></path>
-                                    </svg>
-                                    <span class="discord-username">ID: ${user.telegramId}</span>
-                                </a>` : 
-                                ''
-                            }` : 
+                        ${user.sid ? 
+                            `<a href="https://discord.com/users/${user.sid}" target="_blank" id="link_prof" class="discord-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M14.82 4.26a10.14 10.14 0 0 0-.53 1.1 14.66 14.66 0 0 0-4.58 0 10.14 10.14 0 0 0-.53-1.1 16 16 0 0 0-4.13 1.3 17.33 17.33 0 0 0-3 11.59 16.6 16.6 0 0 0 5.07 2.59A12.89 12.89 0 0 0 8.23 18a9.65 9.65 0 0 1-1.71-.83 3.39 3.39 0 0 0 .42-.33 11.66 11.66 0 0 0 10.12 0c.14.09.28.19.42.33a10.14 10.14 0 0 1-1.71.83 12.89 12.89 0 0 0 1.08 1.78 16.44 16.44 0 0 0 5.06-2.59 17.22 17.22 0 0 0-3-11.59 16.09 16.09 0 0 0-4.09-1.35zM8.68 14.81a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.93 1.93 0 0 1 1.8 2 1.93 1.93 0 0 1-1.8 2zm6.64 0a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.92 1.92 0 0 1 1.8 2 1.92 1.92 0 0 1-1.8 2z"/>
+                                </svg>
+                                <span class="discord-username">${user.name}</span>
+                            </a>` : 
                             `<a target="_blank" id="link_prof" class="discord-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
-                                <p id="no-link">Без привязки</p>
+                                <p id="no-link">Discord не привязан</p>
                             </a>`
                         }
                     </div>

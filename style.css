@@ -430,6 +430,8 @@ h2 {
 #link_block{
     padding-left: 90px;
     /* position: absolute; */
+    display: flex;
+    gap: 5px;
     height: 20px;
 }
 
@@ -559,7 +561,7 @@ a:link, a:visited, a:hover, a:active {
     background: #303030 !important;
 }
 .discord-link svg {
-    fill: #5577e9 !important;
+    fill: #5662f6 !important;
 }
 #no-link{
     transition: all 0.3s ease !important;
@@ -572,6 +574,43 @@ a:link, a:visited, a:hover, a:active {
     height: 19px;
 }
 
+
+
+
+#link_prof {
+    display: inline-flex;
+    align-items: center;
+    /* text-decoration: none; */
+    color: inherit;
+    background-color: #36393f;
+    /* border-radius: 4px; */
+    /* padding: 4px 8px; */
+    transition: all 0.3s ease;
+    max-width: 20px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+#link_prof:hover {
+    max-width: 200px;
+    /* padding: 4px 12px; */
+}
+#link_prof svg {
+    flex-shrink: 0;
+}
+.discord-username {
+    opacity: 0;
+    color: #ffffff;
+    transition: opacity 0.2s ease 0.1s;
+}
+#link_prof:hover .discord-username {
+    opacity: 1;
+}
+.telegram-link svg {
+    fill: #30a3e6 !important;
+    width: 19px !important;
+    height: 15px !important;
+}
 #link_prof {
     display: inline-flex;
     background: #000000;
@@ -580,6 +619,8 @@ a:link, a:visited, a:hover, a:active {
     border-radius: 3px;
     height: 23px !important;
 }
+
+
 .scroll-arrow {
     backdrop-filter: blur(10px) !important;
     left: 0 !important;
@@ -593,4 +634,3 @@ a:link, a:visited, a:hover, a:active {
     font-weight: 500 !important;
     transform: unset !important;
 }
-
