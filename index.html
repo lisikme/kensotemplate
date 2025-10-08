@@ -87,7 +87,7 @@
     }
 
     .header-container {
-        max-width: 1200px;
+        max-width: 1600px;
         margin: 0 auto;
         display: flex;
         justify-content: space-between;
@@ -223,7 +223,7 @@
             padding: 10px 10px;
             margin: 0px;
             overflow: auto;
-            height: 520px;
+            height: 720px;
             position: relative;
         }
         .scroll-gradient {
@@ -944,6 +944,84 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Кнопка показать/скрыть преимущества -->
+        <div class="toggle-features-container">
+            <button id="toggleFeaturesBtn" class="toggle-features-btn">
+                <span class="btn-text">Показать преимущества</span>
+            </button>
+        </div>
+
+        <style>
+            .toggle-features-container {
+                text-align: center;
+                margin: 20px 0;
+            }
+
+            .toggle-features-btn {
+                background: linear-gradient(45deg, #3278ff, #6a11cb);
+                color: white;
+                border: none;
+                padding: 12px 25px;
+                border-radius: 5px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                font-family: "Unbounded", sans-serif;
+            }
+
+            .toggle-features-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+                /* background: linear-gradient(45deg, #6a11cb, #3278ff); */
+            }
+
+            .btn-icon {
+                transition: transform 0.3s ease;
+                font-size: 14px;
+            }
+
+            .btn-icon.rotated {
+                transform: rotate(180deg);
+            }
+
+            .features-table {
+                transition: all 0.3s ease;
+                overflow: hidden;
+            }
+
+            .features-table.hidden {
+                display: none;
+            }
+        </style>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const toggleBtn = document.getElementById('toggleFeaturesBtn');
+                const featuresTable = document.querySelector('.features-table');
+                const btnText = toggleBtn.querySelector('.btn-text');
+                const btnIcon = toggleBtn.querySelector('.btn-icon');
+
+                // Скрываем таблицу при загрузке
+                featuresTable.classList.add('hidden');
+                
+                toggleBtn.addEventListener('click', function() {
+                    const isHidden = featuresTable.classList.toggle('hidden');
+                    
+                    if (isHidden) {
+                        btnText.textContent = 'Показать преимущества';
+                        btnIcon.classList.remove('rotated');
+                    } else {
+                        btnText.textContent = 'Скрыть преимущества';
+                        btnIcon.classList.add('rotated');
+                    }
+                });
+            });
+        </script>
     </div>
 </div>
 
@@ -1195,6 +1273,14 @@
             width: 150px;
         }
     } */
+    .product-header{
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    .scroll-container{
+        max-width: 1600px;
+        margin: 0 auto;
+    }
 </style>
 
         </div>

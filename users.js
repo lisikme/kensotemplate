@@ -295,8 +295,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     
                     <div id="link_block">
-                        <a href="/profile?hwid=${user.name}" style="max-width: 100%;" target="_blank" id="link_prof" class="discord-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
-                            <span>Профиль</span>
+                        <a href="/profile?hwid=${user.name}" target="_blank" id="link_prof" class="discord-link profil-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
+                            <svg x="0" y="0" viewBox="0 0 24 24" xml:space="preserve" fill-rule="evenodd" class="">
+								<g>
+									<circle cx="11.5" cy="6.744" r="5.5"></circle>
+									<path d="M12.925 21.756A6.226 6.226 0 0 1 11.25 17.5c0-1.683.667-3.212 1.751-4.336-.49-.038-.991-.058-1.501-.058-3.322 0-6.263.831-8.089 2.076-1.393.95-2.161 2.157-2.161 3.424v1.45a1.697 1.697 0 0 0 1.7 1.7z">
+									</path>
+									<path d="M17.5 12.25c-2.898 0-5.25 2.352-5.25 5.25s2.352 5.25 5.25 5.25 5.25-2.352 5.25-5.25-2.352-5.25-5.25-5.25zm-.75 5.25V20a.75.75 0 0 0 1.5 0v-2.5a.75.75 0 0 0-1.5 0zm.75-3.25a1 1 0 1 1 0 2 1 1 0 0 1 0-2z">
+									</path>
+								</g>
+							</svg>
                         </a>
                         ${user.sid || user.telegramId ? 
                             `${user.sid ? 

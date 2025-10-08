@@ -242,7 +242,7 @@ h2 {
 
 .adminlist_blocks {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
     gap: 10px;
     margin-bottom: 30px;
 }
@@ -610,6 +610,11 @@ a:link, a:visited, a:hover, a:active {
     fill: #30a3e6 !important;
     width: 19px !important;
     height: 15px !important;
+}
+.profil-link svg {
+    fill: #fe7b7b !important;
+    width: 19px !important;
+    height: 16px !important;
 }
 #link_prof {
     display: inline-flex;
