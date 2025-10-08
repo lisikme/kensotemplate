@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль пользователя - KensoLUA</title>
+    
+    <!-- Подключение стилей -->
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Дополнительные стили для страницы профиля */
+        .profile-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(14, 14, 14, 0.8);
+            border-radius: 5px;
+            border: 1px solid #303030;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        
+        .avatar-letter {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, #000000, #050031);
+            border-radius: 5px;
+        }
+        
+        .profile-info {
+            flex: 1;
+        }
+        
+        .profile-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #d7fe7b;
+            margin: 0 0 5px 0;
+        }
+        
+        .profile-role {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .profile-role.creator {
+            background: linear-gradient(45deg, rgb(176, 90, 36), rgb(210, 79, 188));
+            color: #ffffff;
+        }
+        
+        .profile-role.bot {
+            background: linear-gradient(45deg, rgb(84, 65, 255), rgb(169, 132, 255));
+            color: #ffffff;
+        }
+        
+        .profile-role.admin {
+            background: linear-gradient(45deg, rgb(0, 99, 16), rgb(0, 146, 32));
+            color: #ffffff;
+        }
+        
+        .profile-role.player {
+            background: linear-gradient(45deg, rgb(4, 37, 61), rgb(10, 81, 119));
+            color: white;
+        }
+        
+        .profile-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .profile-card {
+            background: rgba(14, 14, 14, 0.8);
+            border-radius: 5px;
+            border: 1px solid #303030;
+            padding: 20px;
+        }
+        
+        .profile-card h3 {
+            margin-top: 0;
+            color: #d7fe7b;
+            border-bottom: 1px solid #303030;
+            padding-bottom: 10px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #b0b0b0;
+        }
+        
+        .info-value {
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
+        .subscription-status.active {
+            color: #66ff66;
+        }
+        
+        .subscription-status.expired {
+            color: #ff5757;
+        }
+        
+        .subscription-status.forever {
+            color: #d7fe7b;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #3278ff;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #d7fe7b;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #d7fe7b;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #ff5757;
+        }
+        
+        .profile-links {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .profile-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #000000;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 3px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .profile-link:hover {
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: #303030;
+        }
+        
+        .profile-link svg {
+            width: 16px;
+            height: 16px;
+            fill: #5662f6;
+        }
+        
+        .telegram-link svg {
+            fill: #30a3e6 !important;
+        }
+        
+        .no-link {
+            color: #7a7a7a;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .profile-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <style>
+    .site-header {
+        background: rgba(14, 14, 14, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid #303030;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        padding: 5px 0;
+        margin-bottom: 30px;
+    }
+
+    .header-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+    }
+
+    .site-name {
+        color: #d7fe7b;
+        margin: 0;
+        font-size: 25px;
+        font-weight: 500;
+        line-height: 25px;
+        left: -1px;
+        position: relative;
+        text-shadow: 0 0 10px rgba(215, 254, 123, 0.3);
+    }
+    .logo {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .by-kelix {
+        color: #ff7777;
+        font-size: 12px;
+        /* margin-left: 1px; */
+        opacity: 1;
+    }
+
+    .header-nav {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .nav-link {
+        color: #efefef;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+
+    .nav-link:hover {
+        color: #d7fe7b;
+        background: rgba(215, 254, 123, 0.1);
+        /* transform: translateY(-2px); */
+    }
+
+    .buy-nav {
+        background: #353535;
+        color: #d3f979;
+    }
+    
+    .buy-nav:hover {
+        background: #222222;
+        color: #f67373;
+        /* transform: translateY(-2px); */
+    }
+
+    /* Адаптивность для мобильных устройств */
+    @media (max-width: 768px) {
+        .header-container {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .header-nav {
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-link {
+            font-size: 14px;
+            padding: 6px 12px;
+        }
+
+        .site-name {
+            font-size: 24px;
+        }
+        .logo{
+            align-items: center;
+        }
+    }
+</style>
+</head>
+<body>
+    <!-- Шапка сайта -->
+    <header class="site-header">
+        <div class="header-container">
+            <div class="logo">
+                <div class="site-name">KensoUltra</div>
+                <span class="by-kelix">by Kelix.me</span>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">Главная</a>
+                <a href="https://t.me/lisikme" class="nav-link buy-nav" target="_blank">Купить</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="profile-container">
+        <a href="index.html" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </svg>
+            Назад к списку пользователей
+        </a>
+        
+        <div id="profileContent">
+            <div class="loading">
+                <p>Загрузка данных профиля...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация
+        const config = {
+            adminsJsonUrl: 'https://lisikme.github.io/Nixware-allowed/admins.json',
+            hwidJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwid4.json',
+            tempJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/temps.json',
+            discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
+            telegramJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/telegrams.json',
+            discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
+        };
+        
+        // Функция для добавления параметра обхода кеша
+        function addCacheBuster(url) {
+            const timestamp = new Date().getTime();
+            return url + (url.includes('?') ? '&' : '?') + 't=' + timestamp;
+        }
+        
+        async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
+            try {
+                const cacheBustedUrl = addCacheBuster(url);
+                const response = await fetch(cacheBustedUrl, options);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                if (retries > 0) {
+                    console.log(`Повторная попытка загрузки (${4-retries}/${3}): ${url}`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+        
+        function getUserRole(discordId, adminList) {
+            if (discordId === '470573716711931905') {
+                return 'creator'; 
+            }
+            if (discordId === '1393856315067203635') {
+                return 'bot'; 
+            }
+            return adminList.includes(discordId) ? 'admin' : 'player';
+        }
+        
+        async function fetchJsonData(url) {
+            try {
+                return await fetchWithRetry(url);
+            } catch (error) {
+                console.error(`Ошибка загрузки данных из ${url}:`, error);
+                return null;
+            }
+        }
+        
+        // Функция для преобразования даты в timestamp
+        function parseDateToTimestamp(dateString) {
+            try {
+                if (typeof dateString === 'number') {
+                    return dateString;
+                }
+                
+                if (dateString.includes('T')) {
+                    return Math.floor(new Date(dateString).getTime() / 1000);
+                } else {
+                    return Math.floor(new Date(dateString).getTime() / 1000);
+                }
+            } catch (e) {
+                console.warn(`Не удалось распарсить дату: ${dateString}`, e);
+                return 0;
+            }
+        }
+        
+        // Функция для форматирования даты
+        function formatDate(timestamp) {
+            if (timestamp === 0) return 'Навсегда';
+            
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleDateString('ru-RU') + ' ' + date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+        }
+        
+        // Функция для получения статуса подписки
+        function getSubscriptionStatus(endTime) {
+            if (endTime === 0) return { status: 'forever', text: 'Безлимит' };
+            
+            const now = Math.floor(Date.now() / 1000);
+            if (endTime > now) {
+                const daysLeft = Math.ceil((endTime - now) / (60 * 60 * 24));
+                return { status: 'active', text: `${daysLeft} дн.` };
+            } else {
+                return { status: 'expired', text: 'Истекла' };
+            }
+        }
+        
+        // Функция для загрузки аватара Discord
+        async function loadDiscordAvatar(discordId, username) {
+            if (!discordId) return null;
+            
+            try {
+                const cacheBustedUrl = addCacheBuster(`${config.discordApiBase}${discordId}`);
+                const userData = await fetchWithRetry(cacheBustedUrl);
+                if (userData.avatar) {
+                    return {
+                        avatarUrl: `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png?size=256`,
+                        username: userData.username || username,
+                        global_name: userData.global_name || username
+                    };
+                } else {
+                    throw new Error('Аватар не найден');
+                }
+            } catch (error) {
+                console.warn(`Не удалось загрузить аватар для ${discordId}:`, error.message);
+                return null;
+            }
+        }
+        
+        // Функция для поиска Discord ID по HWID
+        function getDiscordIdByHwid(hwid, discordData) {
+            if (discordData.hwids && Array.isArray(discordData.hwids)) {
+                for (const entry of discordData.hwids) {
+                    if (entry.HWID === hwid) {
+                        return `${entry.DISCORD}`;
+                    }
+                }
+            }
+            return null;
+        }
+        
+        // Функция для поиска Telegram ID по HWID
+        function getTelegramIdByHwid(hwid, telegramData) {
+            if (telegramData.bindings && Array.isArray(telegramData.bindings)) {
+                for (const entry of telegramData.bindings) {
+                    if (entry.HWID === hwid) {
+                        return `${entry.TELEGRAM}`;
+                    }
+                }
+            }
+            return null;
+        }
+        
+        // Функция для отображения профиля
+        function displayProfile(userData) {
+            const profileContent = document.getElementById('profileContent');
+            
+            if (!userData) {
+                profileContent.innerHTML = `
+                    <div class="error">
+                        <p>Пользователь не найден</p>
+                        <p>Проверьте правильность HWID в URL</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const subscriptionStatus = getSubscriptionStatus(userData.end);
+            const roleClass = `profile-role ${userData.role}`;
+            const roleText = userData.role === 'creator' ? 'Создатель' : 
+                            userData.role === 'admin' ? 'Партнёр' : 
+                            userData.role === 'bot' ? 'Служба' : 'Игрок';
+            
+            profileContent.innerHTML = `
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        ${userData.avatarUrl ? 
+                            `<img src="${userData.avatarUrl}" alt="${userData.name}" id="profileAvatar">` : 
+                            `<div class="avatar-letter">${userData.name.charAt(0).toUpperCase()}</div>`
+                        }
+                    </div>
+                    <div class="profile-info">
+                        <h1 class="profile-name">${userData.name}</h1>
+                        <div class="${roleClass}">${roleText}</div>
+                        <div class="profile-links">
+                            ${userData.discordId ? 
+                                `<a href="https://discord.com/users/${userData.discordId}" target="_blank" class="profile-link">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M14.82 4.26a10.14 10.14 0 0 0-.53 1.1 14.66 14.66 0 0 0-4.58 0 10.14 10.14 0 0 0-.53-1.1 16 16 0 0 0-4.13 1.3 17.33 17.33 0 0 0-3 11.59 16.6 16.6 0 0 0 5.07 2.59A12.89 12.89 0 0 0 8.23 18a9.65 9.65 0 0 1-1.71-.83 3.39 3.39 0 0 0 .42-.33 11.66 11.66 0 0 0 10.12 0c.14.09.28.19.42.33a10.14 10.14 0 0 1-1.71.83 12.89 12.89 0 0 0 1.08 1.78 16.44 16.44 0 0 0 5.06-2.59 17.22 17.22 0 0 0-3-11.59 16.09 16.09 0 0 0-4.09-1.35zM8.68 14.81a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.93 1.93 0 0 1 1.8 2 1.93 1.93 0 0 1-1.8 2zm6.64 0a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.92 1.92 0 0 1 1.8 2 1.92 1.92 0 0 1-1.8 2z"/>
+                                    </svg>
+                                    <span>${userData.discordUsername || 'Discord'}</span>
+                                </a>` : 
+                                ''
+                            }
+                            ${userData.telegramId ? 
+                                `<a href="#" class="profile-link telegram-link">
+                                    <svg viewBox="0 0 100 100">
+                                        <path d="M89.442 11.418c-12.533 5.19-66.27 27.449-81.118 33.516-9.958 3.886-4.129 7.529-4.129 7.529s8.5 2.914 15.786 5.1 11.172-.243 11.172-.243l34.244-23.073c12.143-8.257 9.229-1.457 6.315 1.457-6.315 6.315-16.758 16.272-25.501 24.287-3.886 3.4-1.943 6.315-.243 7.772 6.315 5.343 23.558 16.272 24.53 17.001 5.131 3.632 15.223 8.861 16.758-2.186l6.072-38.13c1.943-12.872 3.886-24.773 4.129-28.173.728-8.257-8.015-4.857-8.015-4.857z"></path>
+                                    </svg>
+                                    <span>ID: ${userData.telegramId}</span>
+                                </a>` : 
+                                ''
+                            }
+                            ${!userData.discordId && !userData.telegramId ? 
+                                `<span class="no-link">Без привязки</span>` : 
+                                ''
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-details">
+                    <div class="profile-card">
+                        <h3>Основная информация</h3>
+                        <div class="info-row">
+                            <span class="info-label">HWID:</span>
+                            <span class="info-value">${userData.hwid}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Статус:</span>
+                            <span class="info-value">${userData.group_id}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">До окончания:</span>
+                            <span class="info-value subscription-status ${subscriptionStatus.status}">${subscriptionStatus.text}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Срок подписки:</span>
+                            <span class="info-value">${formatDate(userData.end)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-card">
+                        <h3>Привязки аккаунтов</h3>
+                        <div class="info-row">
+                            <span class="info-label">Discord ID:</span>
+                            <span class="info-value">${userData.discordId || 'Не привязан'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Telegram ID:</span>
+                            <span class="info-value">${userData.telegramId || 'Не привязан'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Загружаем аватар, если он доступен
+            if (userData.avatarUrl) {
+                const img = new Image();
+                img.onload = function() {
+                    const avatarElement = document.getElementById('profileAvatar');
+                    if (avatarElement) {
+                        avatarElement.style.opacity = '1';
+                    }
+                };
+                img.onerror = function() {
+                    // Если аватар не загрузился, показываем букву
+                    const avatarElement = document.getElementById('profileAvatar');
+                    if (avatarElement) {
+                        avatarElement.style.display = 'none';
+                        const avatarContainer = document.querySelector('.profile-avatar');
+                        if (avatarContainer && !avatarContainer.querySelector('.avatar-letter')) {
+                            const letterElement = document.createElement('div');
+                            letterElement.className = 'avatar-letter';
+                            letterElement.textContent = userData.name.charAt(0).toUpperCase();
+                            avatarContainer.appendChild(letterElement);
+                        }
+                    }
+                };
+                img.src = userData.avatarUrl;
+            }
+        }
+        
+        // Основная функция загрузки данных профиля
+        async function loadProfileData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const hwid = urlParams.get('hwid');
+            
+            if (!hwid) {
+                displayProfile(null);
+                return;
+            }
+            
+            try {
+                const [adminsData, hwidData, tempData, discordData, telegramData] = await Promise.allSettled([
+                    fetchJsonData(config.adminsJsonUrl),
+                    fetchJsonData(config.hwidJsonUrl),
+                    fetchJsonData(config.tempJsonUrl),
+                    fetchJsonData(config.discordJsonUrl),
+                    fetchJsonData(config.telegramJsonUrl)
+                ]);
+                
+                // Обработка результатов
+                const admins = adminsData.status === 'fulfilled' ? adminsData.value : { "Admins": [] };
+                const hwidList = hwidData.status === 'fulfilled' ? hwidData.value : { "users:": [] };
+                const temp = tempData.status === 'fulfilled' ? tempData.value : {};
+                const discord = discordData.status === 'fulfilled' ? discordData.value : { "hwids": [] };
+                const telegram = telegramData.status === 'fulfilled' ? telegramData.value : { "bindings": [] };
+                
+                const adminDiscordIds = admins.Admins || [];
+                
+                // Поиск пользователя по HWID
+                const activeUsers = hwidList["users:"] || hwidList.users || [];
+                const userIndex = activeUsers.findIndex(username => username === hwid);
+                
+                if (userIndex === -1) {
+                    displayProfile(null);
+                    return;
+                }
+                
+                const username = activeUsers[userIndex];
+                const discordId = getDiscordIdByHwid(username, discord);
+                const telegramId = getTelegramIdByHwid(username, telegram);
+                const endTime = temp[username] || 0;
+                
+                const userData = {
+                    id: userIndex + 1,
+                    hwid: username,
+                    name: username,
+                    discordId: discordId,
+                    telegramId: telegramId,
+                    end: parseDateToTimestamp(endTime),
+                    group_id: 'Активная подписка',
+                    flags: '999',
+                    immunity: 0,
+                    role: getUserRole(discordId, adminDiscordIds)
+                };
+                
+                // Загружаем данные Discord, если есть ID
+                if (discordId) {
+                    const discordInfo = await loadDiscordAvatar(discordId, username);
+                    if (discordInfo) {
+                        userData.avatarUrl = discordInfo.avatarUrl;
+                        userData.discordUsername = discordInfo.username;
+                    }
+                }
+                
+                displayProfile(userData);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки данных профиля:', error);
+                document.getElementById('profileContent').innerHTML = `
+                    <div class="error">
+                        <p>Ошибка загрузки данных профиля</p>
+                        <p>Попробуйте обновить страницу</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Запуск загрузки данных при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProfileData();
+        });
+    </script>
+</body>
+</html>

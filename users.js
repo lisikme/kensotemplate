@@ -295,6 +295,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     
                     <div id="link_block">
+                        <a href="/profile?hwid=${user.name}" style="max-width: 100%;" target="_blank" id="link_prof" class="discord-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
+                            <span>Профиль</span>
+                        </a>
                         ${user.sid || user.telegramId ? 
                             `${user.sid ? 
                                 `<a href="https://discord.com/users/${user.sid}" target="_blank" id="link_prof" class="discord-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
@@ -314,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </a>` : 
                                 ''
                             }` : 
-                            `<a target="_blank" id="link_prof" class="discord-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
+                            `<a target="_blank" id="link_prof" style="max-width: 100%;" class="discord-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
                                 <p id="no-link">Без привязки</p>
                             </a>`
                         }
