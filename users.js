@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             let endText = 'Не указано';
             if (user.end === 0) {
-                endText = user.is_active ? 'Навсегда' : 'Неактивен';
+                endText = user.is_active ? 'Навсегда' : 'Навсегда';
             } else if (user.end > 0 && user.end * 1000 > Date.now()) {
                 const endDate = new Date(user.end * 1000);
                 endText = `До ${endDate.toLocaleDateString('ru-RU')}`;
