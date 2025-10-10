@@ -619,8 +619,8 @@
             // Определяем роль и статус пользователя
             let userRole = userData.role;
             let roleText = userRole === 'creator' ? 'Создатель' : 
-                          userRole === 'admin' ? 'Партнёр' : 
-                          userRole === 'bot' ? 'Служба' : 'Игрок';
+                userRole === 'admin' ? 'Партнёр' : 
+                userRole === 'bot' ? 'Служба' : 'Игрок';
             
             const roleClass = `profile-role ${userRole}`;
             

@@ -333,26 +333,36 @@ h2 {
 #tag-creator {
     background: linear-gradient(45deg, rgb(176, 90, 36), rgb(210, 79, 188));
     color: #ffffff;
+    display: flex;
+    align-items: flex-end;
 }
 
 #tag-bot {
     background: linear-gradient(45deg, rgb(84, 65, 255), rgb(169, 132, 255));
     color: #ffffff;
+    display: flex;
+    align-items: flex-end;
 }
 
 #tag-admin {
     background: linear-gradient(45deg, rgb(0, 99, 16), rgb(0, 146, 32));
     color: #ffffff;
+    display: flex;
+    align-items: flex-end;
 }
 
 #tag-player {
     background: linear-gradient(45deg, rgb(4, 37, 61), rgb(10, 81, 119));
     color: white;
+    display: flex;
+    align-items: flex-end;
 }
 
 #tag-banned {
-    background: #ff5757;
+    background: linear-gradient(45deg, rgb(92, 14, 14), rgb(196, 40, 40));
     color: white;
+    display: flex;
+    align-items: flex-end;
 }
 
 .adminlist_buttons {
@@ -532,16 +542,18 @@ img[src*="undefined"] {
     --Fon: #0d1218;
     --ColorNone: #d7fe7b;
     --ColorCursor: #95b940;
-    --Width: 7px;
+    --Width: 2px;
     --Border: 2px;
     --Radius: 0px;
 } 
 /* Дизайн скрол-бара */
 .element::-webkit-scrollbar{
+    background-color: var(--Background);
     width: 0;
 }
 ::-webkit-scrollbar{
     width: var(--Width);
+    height: 7px;
     background-color: var(--Background);
 }
 ::-webkit-scrollbar-thumb{

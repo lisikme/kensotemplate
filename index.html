@@ -188,23 +188,7 @@
             --Radius: 0px;
         } 
         /* Дизайн скрол-бара */
-        .element::-webkit-scrollbar{
-            width: 0;
-        }
-        ::-webkit-scrollbar{
-            width: var(--Width);
-            background-color: var(--Background);
-        }
-        ::-webkit-scrollbar-thumb{
-            background-color: var(--ColorNone);
-            border-radius: var(--Radius);
-            min-height: 30px;
-            width: var(--Width);
-            border: var(--Border) solid var(--Background);
-        }
-        ::-webkit-scrollbar-thumb:hover{
-            background-color: var(--ColorCursor);
-        }
+
         .scroll-container {
             position: relative;
             width: 100%;
@@ -822,87 +806,115 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>ГЕЙМПЛЕЙ</strong></td>
+                        <td><strong>Утилиты</strong></td>
                         <td>
                             <ul>
                                 <li>Утилиты для работы с 3-е лицом</li>
-                                <li>АвтоРеспавн на серверах командой !respawn</li>
-                                <li>Автозакупка оружия</li>
+                                <li>АвтоРеспавн с командой !respawn</li>
+                                <li>Встроенный мониторинг</li>
                             </ul>
                         </td>
                     </tr>
                     <tr>
-                        <td><strong>СТАТИСТИКА, ТРЕКИНГ</strong></td>
+                        <td><strong>Закупка</strong></td>
                         <td>
                             <ul>
-                                <li>StatTrack в интерфейс и сообщение в чат</li>
-                                <li>Утилиты для Kill-Feed</li>
-                                <li>Детальные логи попаданий по игрокам</li>
+                                <li>Закупка пистолетов снайперок гранат и прочего</li>
+                                <li>Поддерживается настройка времени закупки</li>
                             </ul>
                         </td>
                     </tr>
                     <tr>
-                        <td><strong>АУДИО, ЗВУКИ</strong></td>
+                        <td><strong>Убийства</strong></td>
                         <td>
                             <ul>
-                                <li>Звуки попаданий и убийств</li> 
+                                <li>Сохраниение Kill-Feed</li> 
+                                <li>Визуальный кастомный Kill-Feed</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Звуки</strong></td>
+                        <td>
+                            <ul>
+                                <li>Функия HIT/KILL/MVP звуков</li>
                                 <li>Режимы работы звуков (Game/Auto/Custom)</li>
-                                <li>MVP музыка в конце раунда</li>
+                                <li>Настройка громкости</li>
                             </ul>
                         </td>
                     </tr>
                     <tr>
-                        <td><strong>ANTI-AIM, РАБОТА С PITCH</strong></td>
+                        <td><strong>АнтиАим</strong></td>
                         <td>
                             <ul>
-                                <li>FakePitch, CustomPitch</li>
-                                <li>Manual AA</li>
-                                <li>Air Flick</li>
+                                <li>FakePitch и CustomPitch</li>
+                                <li>Random Yaw Offset</li>
+                                <li>ManualAA</li>
+                                <li>AirFlick</li>
+                                <li>Pitch Jitter On Maluals</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Рейдж</strong></td>
+                        <td>
+                            <ul>
                                 <li>Duck Peek Assist</li>
-                            </ul>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>РЕЙДЖ, АИММОД</strong></td>
-                        <td>
-                            <ul>
-                                <li>Минимальный урон</li>
-                                <li>Отключение Rage в воздухе</li>
                                 <li>AI Peek</li>
-                                <li>Визуализация эймбота</li>
                             </ul>
                         </td>
                     </tr>
                     <tr>
-                        <td><strong>ВИЗУАЛЬНЫЕ ЭФФЕКТЫ, ИНДИКАТОРЫ</strong></td>
+                        <td><strong>Интерфейс</strong></td>
                         <td>
                             <ul>
-                                <li>Многофункциональный индикатор и список игроков</li>
-                                <li>Индикатор скорости и индикаторы возле прицела</li>
+                                <li>Индикатор права сверху</li>
+                                <li>Индикатор скорости</li>
+                                <li>Логи попаданий</li>
+                                <li>Индикатор ManualAA (Текст)</li>
+                                <li>Индикаторы возле прицела</li>
+                                <li>Индикатор списка игроков</li>
+                                <li>MVP уведомления</li>
+                                <li>Мини версии индикаторов</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Визуалы</strong></td>
+                        <td>
+                            <ul>
                                 <li>Настройка угла и дальности обзора</li>
-                                <li>ESP линии, трассера и трейлы</li>
                                 <li>Пользовательская контрастность</li>
+                                <li>ESP линию до игроков</li>
                             </ul>
                         </td>
                     </tr>
                     <tr>
-                        <td><strong>ДИЗАЙН, ИНТЕРФЕЙС</strong></td>
+                        <td><strong>Трассера</strong></td>
                         <td>
                             <ul>
-                                <li>Полная кастомизация цветов меню</li>
-                                <li>Кастомный цвет рамки</li>
-                                <li>RGB линия в меню</li>
-                                <li>Экран загрузки меню</li>
+                                <li>Трассера выстрелов</li>
+                                <li>Есть тонкая настройка</li>
                             </ul>
                         </td>
                     </tr>
                     <tr>
-                        <td><strong>СЕТЕВЫЕ ФУНКЦИИ, МОНИТОРИНГ</strong></td>
+                        <td><strong>Трейлы</strong></td>
                         <td>
                             <ul>
-                                <li>Мониторинг серверов HVH</li>
-                                <li>Авто загрузка данных мониторинга</li>
-                                <li>Админ меню (IKS)</li>
+                                <li>Трейлы следы от игроков</li>
+                                <li>Есть тонкая настройка</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Настройки</strong></td>
+                        <td>
+                            <ul>
+                                <li>Кастомизациия цветов меню</li>
+                                <li>RGB линии</li>
+                                <li>Загрузочный экран (декоративный элемент)</li>
+                                <li>Авто загрузка данных мониторинга при первом запуске</li>
                             </ul>
                         </td>
                     </tr>
@@ -1063,23 +1075,57 @@
     .pricing-table table {
         width: 100%;
         border-collapse: collapse;
-        background: rgba(26, 26, 26, 0.8);
+        background: #0e0e0e;
         border-radius: 5px;
         overflow: hidden;
     }
+    table{
+        border: 2px solid #c66666;
+    }
 
     .pricing-table th {
-        background: linear-gradient(45deg, #ffa500, #ff8c00);
-        color: #000;
-        padding: 5px;
-        font-size: 16px;
+        border-right: 1px solid #080808;
+    }
+    .pricing-table th {
+        background: #000000;
+        color: #ffffff;
+        padding: 4px 10px;
+        font-size: 12px;
         text-align: center;
+    }
+    .pricing-table td:first-child {
+        background: #181818;
+        border-right: 1px solid #c66666;
+        border-right: 1px solid #000000;
+        font-size: 10px;
+        margin: auto 0;
+        align-content: center;
+        width: 40px;
+        text-align: center;
+        font-weight: bold;
+        color: #c66666;
+        font-size: 10px;
+    }
+    .pricing-table th:first-child
+    .pricing-table td:first-child {
+        width: 40px !important;
+        display: flex !important;
+    }
+    .pricing-table td:last-child {
+        align-content: center;
+        text-align: center;
+        font-weight: 500;
+        color: #90ffff;
+    }
+    .pricing-table strong {
+        color: #b5ff83;
+        font-weight: 500;
     }
     
     .pricing-table td {
-        padding: 5px 15px;
+        padding: 5px 0px;
         text-align: center;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid #000000;
         color: #efefef;
     }
     
@@ -1087,13 +1133,9 @@
         border-bottom: none;
     }
     
-    .pricing-table strong {
-        color: #d7fe7b;
-    }
 
     .forever {
         color: #66ff66 !important;
-        font-weight: bold;
     }
 
     .price-note {
@@ -1161,37 +1203,41 @@
     .features-table table {
         width: 100%;
         border-collapse: collapse;
-        background: rgba(26, 26, 26, 0.8);
+        background: #0e0e0e;
         border-radius: 5px;
         overflow: hidden;
     }
 
     .features-table th {
-        background: linear-gradient(45deg, #ffa500, #ff8c00);
-        color: #000;
-        padding: 5px;
-        /* font-size: 1.2rem; */
-        font-size: 16px;
+        background: #000000;
+        color: #ffffff;
+        padding: 4px 10px;
+        font-size: 12px;
         text-align: center;
     }
 
     .features-table td {
-        padding: 5px 10px;
-        vertical-align: top;
-        border-bottom: 1px solid #333;
+        padding:3px 5px;
+        /* text-align: center; */
+        border-bottom: 1px solid #000000;
+        color: #efefef;
     }
 
     .features-table tr:last-child td {
         border-bottom: none;
     }
-
+    .features-table th:first-child,
+    .pricing-table th:first-child {
+        border-right: 1px solid #080808;
+    }
     .features-table td:first-child {
         background: rgba(198, 102, 102, 0.1);
-        border-right: 2px solid #c66666;
+        border-right: 1px solid #000000;
         font-size: 10px;
+        font-weight: 500 !important;
         margin: auto 0;
         align-content: center;
-        width: 200px;
+        width: 40px;
         text-align: center;
         font-weight: bold;
         color: #c66666;
@@ -1205,7 +1251,8 @@
 
     .features-table li {
         color: #c3e66f;
-        padding: 2px 0;
+        padding: 3px 0;
+        font-size: 10px;
         border-bottom: 1px dashed rgba(195, 230, 111, 0.3);
     }
 

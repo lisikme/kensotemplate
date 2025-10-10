@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 end: 0,
                                 server_id: 0,
                                 is_active: false,
-                                banStatus: banStatus
+                                banStatus: 'banned'
                             };
                             
                             bannedUsersList.push(bannedUserData);
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <img class="admins_avatar" id="user-${user.sid}-avatar" src="" alt="" 
                                 data-username="${user.name}"
                                 onerror="this.setAttribute('data-fallback', 'true');">
-                            <div class="adminlist_button steam_button" data-tippy-content="Роль" data-tippy-placement="bottom" id="tag-${userRole}">
+                            <div class="adminlist_button steam_button" data-tippy-content="Роль" data-tippy-placement="bottom" id="tag-${banStatus && !banStatus.wasBanned ? 'banned' : userRole}">
                                 ${
                                     userRole === 'creator' ? 'Создатель' : (
                                     userRole === 'admin' ? 'Партнёр' : (
