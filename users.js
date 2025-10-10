@@ -322,11 +322,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 name: bannedHwid,
                                 flags: '0',
                                 immunity: 0,
-                                group_id: 'Забанен',
+                                group_id: 'Блокировка',
                                 end: 0,
                                 server_id: 0,
                                 is_active: false,
-                                banStatus: 'banned'
+                                banStatus: banStatus
                             };
                             
                             bannedUsersList.push(bannedUserData);
@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     userRole === 'creator' ? 'Создатель' : (
                                     userRole === 'admin' ? 'Партнёр' : (
                                     userRole === 'bot' ? 'Служба' : (
-                                    user.is_active ? 'Игрок' : 'Забанен')))
+                                    banStatus && !banStatus.wasBanned ? 'Забанен': 'Игрок')))
                                 }
                             </div>
                         </div>
@@ -448,8 +448,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="admin_nickname">${user.name}</span>
                                 <div class="admin_term">
                                     <div class="admin_group">
-                                        ${
-                                            banStatus && !banStatus.wasBanned ?
+                                    ${
+                                            banStatus && !banStatus.wasBanned ? 
                                                 banText ? 
                                                 `<span class="admin_group_text_ban">${banText}</span>` : 
                                                 `<span class="admin_group_text">${user.group_id}</span>` : 
