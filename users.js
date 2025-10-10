@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tempJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/temps.json',
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
         telegramJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/telegrams.json',
+        bansJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/bans.json',
         discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
     };
     
@@ -150,15 +151,81 @@ document.addEventListener('DOMContentLoaded', function() {
             return 0;
         }
     }
+
+    // Функция для проверки статуса бана
+    function getBanStatus(userHwid, bansData) {
+        if (!bansData || typeof bansData !== 'object') {
+            return null;
+        }
+        
+        const banInfo = bansData[userHwid];
+        if (!banInfo) {
+            return null;
+        }
+        
+        const now = new Date();
+        const banTime = new Date(banInfo.ban_time);
+        const banTemp = banInfo.ban_temp;
+        
+        // Проверяем, является ли бан вечным
+        if (banTemp === "-1") {
+            return {
+                isBanned: true,
+                isPermanent: true,
+                reason: banInfo.ban_reason || 'Причина не указана',
+                banTime: banTime,
+                remainingTime: null,
+                banInfo: banInfo
+            };
+        }
+        
+        // Проверяем временный бан
+        const banEnd = new Date(banTemp);
+        if (banEnd > now) {
+            // Бан еще активен
+            const remainingMs = banEnd - now;
+            const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+            
+            return {
+                isBanned: true,
+                isPermanent: false,
+                reason: banInfo.ban_reason || 'Причина не указана',
+                banTime: banTime,
+                banEnd: banEnd,
+                remainingTime: remainingDays,
+                banInfo: banInfo
+            };
+        } else {
+            // Бан истек
+            return {
+                isBanned: false,
+                wasBanned: true,
+                reason: banInfo.ban_reason,
+                banTime: banTime,
+                banEnd: banEnd,
+                banInfo: banInfo
+            };
+        }
+    }
+
+    // Функция для форматирования даты
+    function formatDate(date) {
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    }
     
     async function loadUsersData() {
         try {
-            const [adminsData, hwidData, tempData, discordData, telegramData] = await Promise.allSettled([
+            const [adminsData, hwidData, tempData, discordData, telegramData, bansData] = await Promise.allSettled([
                 fetchJsonData(config.adminsJsonUrl),
                 fetchJsonData(config.hwidJsonUrl),
                 fetchJsonData(config.tempJsonUrl),
                 fetchJsonData(config.discordJsonUrl),
-                fetchJsonData(config.telegramJsonUrl)
+                fetchJsonData(config.telegramJsonUrl),
+                fetchJsonData(config.bansJsonUrl)
             ]);
             
             // Обработка результатов
@@ -167,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const temp = tempData.status === 'fulfilled' ? tempData.value : {};
             const discord = discordData.status === 'fulfilled' ? discordData.value : { "hwids": [] };
             const telegram = telegramData.status === 'fulfilled' ? telegramData.value : { "bindings": [] };
+            const bans = bansData.status === 'fulfilled' ? bansData.value : {};
             
             const adminDiscordIds = admins.Admins || [];
             
@@ -195,7 +263,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const usersList = [];
-            // Исправляем: используем поле "users:" вместо "users"
+            const bannedUsersList = [];
+            
+            // Сначала обрабатываем активных пользователей из hwid4.json
             const activeUsers = hwid["users:"] || hwid.users || [];
             
             activeUsers.forEach((username, index) => {
@@ -203,8 +273,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const discordId = getDiscordIdByHwid(username, discord);
                 const telegramId = getTelegramIdByHwid(username, telegram);
                 const endTime = temp[username] || 0;
+                const banStatus = getBanStatus(username, bans);
                 
-                usersList.push({
+                const userData = {
                     id: index + 1,
                     sid: discordId,
                     telegramId: telegramId,
@@ -212,23 +283,81 @@ document.addEventListener('DOMContentLoaded', function() {
                     name: username,
                     flags: '999',
                     immunity: 0,
-                    group_id: 'Активная подписка',
+                    group_id: 'Подписка',
                     end: parseDateToTimestamp(endTime),
                     server_id: 0,
-                    is_active: true
-                });
+                    is_active: true,
+                    banStatus: banStatus
+                };
+                
+                // Разделяем пользователей на забаненных и активных
+                if (banStatus && banStatus.isBanned) {
+                    bannedUsersList.push(userData);
+                } else {
+                    usersList.push(userData);
+                }
             });
             
-            const allUsers = [...usersList];
+            // Теперь добавляем пользователей из bans.json, которых нет в hwid4.json
+            // но только тех, у кого бан еще активен
+            if (bans && typeof bans === 'object') {
+                Object.keys(bans).forEach(bannedHwid => {
+                    // Проверяем, есть ли уже этот пользователь в списке
+                    const alreadyExists = [...usersList, ...bannedUsersList].some(user => user.hwid === bannedHwid);
+                    
+                    if (!alreadyExists) {
+                        const banInfo = bans[bannedHwid];
+                        const banStatus = getBanStatus(bannedHwid, bans);
+                        
+                        // Добавляем только если бан активен (не истек)
+                        if (banStatus && banStatus.isBanned) {
+                            const discordId = getDiscordIdByHwid(bannedHwid, discord);
+                            const telegramId = getTelegramIdByHwid(bannedHwid, telegram);
+                            
+                            const bannedUserData = {
+                                id: usersList.length + bannedUsersList.length + 1,
+                                sid: discordId,
+                                telegramId: telegramId,
+                                hwid: bannedHwid,
+                                name: bannedHwid,
+                                flags: '0',
+                                immunity: 0,
+                                group_id: 'Забанен',
+                                end: 0,
+                                server_id: 0,
+                                is_active: false,
+                                banStatus: banStatus
+                            };
+                            
+                            bannedUsersList.push(bannedUserData);
+                        }
+                    }
+                });
+            }
+            
+            // Сначала показываем активных пользователей, потом забаненных
+            const allUsers = [...usersList, ...bannedUsersList];
+            
             allUsers.sort((a, b) => {
+                // Сначала сортируем по роли
                 const aRole = getUserRole(a.sid, adminDiscordIds);
                 const bRole = getUserRole(b.sid, adminDiscordIds);
+                
                 if (aRole === 'creator') return -1;
                 if (bRole === 'creator') return 1;
                 if (aRole === 'bot') return -1;
                 if (bRole === 'bot') return 1;
                 if (aRole === 'admin' && bRole !== 'admin') return -1;
                 if (bRole === 'admin' && aRole !== 'admin') return 1;
+                
+                // Затем по статусу бана (активные выше забаненных)
+                if (a.banStatus && a.banStatus.isBanned && !(b.banStatus && b.banStatus.isBanned)) return 1;
+                if (!(a.banStatus && a.banStatus.isBanned) && b.banStatus && b.banStatus.isBanned) return -1;
+                
+                // Затем по активности (активные выше неактивных)
+                if (a.is_active && !b.is_active) return -1;
+                if (!a.is_active && b.is_active) return 1;
+                
                 return 0;
             });
             
@@ -242,7 +371,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayUsers(users, adminDiscordIds) {
         const adminListTitle = document.getElementById('adminListTitle');
         const adminListBlocks = document.getElementById('adminListBlocks');
-        adminListTitle.textContent = `Subscribers: ${users.length}`;
+        
+        const activeUsers = users.filter(user => user.is_active && (!user.banStatus || !user.banStatus.isBanned));
+        const bannedUsers = users.filter(user => user.banStatus && user.banStatus.isBanned);
+        
+        adminListTitle.textContent = `Subscribers: ${activeUsers.length} | Banned: ${bannedUsers.length}`;
         adminListBlocks.innerHTML = '';
         
         const avatarPromises = [];
@@ -250,19 +383,47 @@ document.addEventListener('DOMContentLoaded', function() {
         
         users.forEach(user => {
             const userRole = getUserRole(user.sid, adminDiscordIds);
+            const banStatus = user.banStatus;
             
             const userCard = document.createElement('div');
             userCard.className = 'admin_card';
             userCard.id = `block-${userRole}`;
             
+            // Добавляем класс для забаненных пользователей
+            if (banStatus && banStatus.isBanned) {
+                userCard.classList.add('banned-user');
+            }
+            
             let endText = 'Не указано';
             if (user.end === 0) {
-                endText = 'Навсегда';
+                endText = user.is_active ? 'Навсегда' : 'Неактивен';
             } else if (user.end > 0 && user.end * 1000 > Date.now()) {
                 const endDate = new Date(user.end * 1000);
                 endText = `До ${endDate.toLocaleDateString('ru-RU')}`;
             } else if (user.end > 0 && user.end * 1000 <= Date.now()) {
                 endText = 'Истек';
+            }
+            
+            // Формируем текст бана
+            let banText = '';
+            let banEnd = '';
+            let banReason = '';
+            if (banStatus) {
+                if (banStatus.isBanned) {
+                    if (banStatus.isPermanent) {
+                        banText = `Блокировка`;
+                        banEnd = 'Навсегда';
+                        banReason = `Причина: ${banStatus.reason}`;
+                    } else {
+                        banText = `Блокировка`;
+                        banEnd = `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
+                        banReason = `Причина: ${banStatus.reason}`;
+                    }
+                } else if (banStatus.wasBanned) {
+                    banText = `Блокировка истекла`;
+                    banEnd = `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
+                    banReason = `Причина: ${banStatus.reason}`;
+                }
             }
             
             userCard.innerHTML = `
@@ -276,24 +437,43 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="adminlist_button steam_button" data-tippy-content="Роль" data-tippy-placement="bottom" id="tag-${userRole}">
                                 ${
                                     userRole === 'creator' ? 'Создатель' : (
-                                        userRole === 'admin' ? 'Партнёр' : (
-                                            userRole === 'bot' ? 'Служба' : 
-                                            'Игрок'))}
+                                    userRole === 'admin' ? 'Партнёр' : (
+                                    userRole === 'bot' ? 'Служба' : (
+                                    user.is_active ? 'Игрок' : 'Забанен')))
+                                }
                             </div>
                         </div>
                         <div class="adminlist_buttons">
                             <div id="admins_info">
                                 <span class="admin_nickname">${user.name}</span>
-                                <div class="admin_group">
-                                    <span class="admin_group_text">${user.group_id}</span>
-                                </div>
                                 <div class="admin_term">
-                                    <span class="admin_term_text">${endText}</span>
+                                    <div class="admin_group">
+                                        ${
+                                            banStatus && !banStatus.wasBanned ?
+                                                banText ? 
+                                                `<span class="admin_group_text_ban">${banText}</span>` : 
+                                                `<span class="admin_group_text">${user.group_id}</span>` : 
+                                                `<span class="admin_group_text">${user.group_id}</span>`
+                                        }
+                                    </div>-
+                                    <span class="admin_term_text">
+                                        ${
+                                            banText ? 
+                                            banEnd : 
+                                            endText
+                                        }
+                                    </span>
                                 </div>
+                                ${
+                                    banStatus && !banStatus.wasBanned ?
+                                        banText ? 
+                                        `<span class="admin_term_reason">${banStatus.reason}</span>` : 
+                                        `` : 
+                                        ``
+                                }
                             </div>
                         </div>
                     </div>
-                    
                     <div id="link_block">
                         <a href="/profile?hwid=${user.name}" target="_blank" id="link_prof" class="discord-link profil-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
                             <svg x="0" y="0" viewBox="0 0 24 24" xml:space="preserve" fill-rule="evenodd" class="">

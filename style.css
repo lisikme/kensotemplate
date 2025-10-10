@@ -362,7 +362,7 @@ h2 {
 #admins_info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0px;
 }
 
 .admin_nickname {
@@ -377,21 +377,37 @@ h2 {
     gap: 5px;
     font-size: 14px;
 }
+
+
 .admin_group_text {
-    color: #e8ff7f !important;
+    color: #e8ff7f;
+    border-radius: 3px;
+    font-size: 12px;
 }
+.admin_group_text_ban {
+    color: #ff5f5f;
+    border-radius: 3px;
+    font-size: 12px;
+}
+.admin_term_text {
+    color: #b0b0b0;
+    border-radius: 3px;
+    font-size: 12px;
+}
+.admin_term_reason {
+    color: #ffbec2;
+    background: #000000;
+    padding: 2px 5px;
+    margin-top: 1px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
 
 .admin_group_icon {
     width: 16px;
     height: 16px;
 }
-
-.admin_group_text, .admin_term_text {
-    color: #b0b0b0;
-    font-size: 12px;
-}
-
-
 #link_prof {
     display: flex;
     align-items: center;
