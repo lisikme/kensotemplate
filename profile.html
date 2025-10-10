@@ -98,6 +98,11 @@
             color: white;
         }
         
+        .profile-role.banned {
+            background: #ff5757;
+            color: white;
+        }
+        
         .profile-details {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -150,6 +155,19 @@
         
         .subscription-status.forever {
             color: #d7fe7b;
+        }
+        
+        .ban-status {
+            color: #ff5757;
+            font-weight: bold;
+        }
+        
+        .ban-status.permanent {
+            color: #ff2d2d;
+        }
+        
+        .ban-status.expired {
+            color: #ffa500;
         }
         
         .back-link {
@@ -219,6 +237,19 @@
             font-size: 14px;
         }
         
+        .ban-info-card {
+            grid-column: 1 / -1;
+            border-color: #ff5757 !important;
+        }
+        
+        .ban-reason {
+            background: rgba(255, 87, 87, 0.1);
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+            border-left: 3px solid #ff5757;
+        }
+        
         @media (max-width: 768px) {
             .profile-header {
                 flex-direction: column;
@@ -227,6 +258,10 @@
             
             .profile-details {
                 grid-template-columns: 1fr;
+            }
+            
+            .ban-info-card {
+                grid-column: 1;
             }
         }
     </style>
@@ -269,7 +304,6 @@
     .by-kelix {
         color: #ff7777;
         font-size: 12px;
-        /* margin-left: 1px; */
         opacity: 1;
     }
 
@@ -292,7 +326,6 @@
     .nav-link:hover {
         color: #d7fe7b;
         background: rgba(215, 254, 123, 0.1);
-        /* transform: translateY(-2px); */
     }
 
     .buy-nav {
@@ -303,7 +336,6 @@
     .buy-nav:hover {
         background: #222222;
         color: #f67373;
-        /* transform: translateY(-2px); */
     }
 
     /* Адаптивность для мобильных устройств */
@@ -371,6 +403,7 @@
             tempJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/temps.json',
             discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
             telegramJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/telegrams.json',
+            bansJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/bans.json',
             discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
         };
         
@@ -454,6 +487,73 @@
             }
         }
         
+        // Функция для проверки статуса бана
+        function getBanStatus(userHwid, bansData) {
+            if (!bansData || typeof bansData !== 'object') {
+                return null;
+            }
+            
+            const banInfo = bansData[userHwid];
+            if (!banInfo) {
+                return null;
+            }
+            
+            const now = new Date();
+            const banTime = new Date(banInfo.ban_time);
+            const banTemp = banInfo.ban_temp;
+            
+            // Проверяем, является ли бан вечным
+            if (banTemp === "-1") {
+                return {
+                    isBanned: true,
+                    isPermanent: true,
+                    reason: banInfo.ban_reason || 'Причина не указана',
+                    banTime: banTime,
+                    remainingTime: null,
+                    banInfo: banInfo
+                };
+            }
+            
+            // Проверяем временный бан
+            const banEnd = new Date(banTemp);
+            if (banEnd > now) {
+                // Бан еще активен
+                const remainingMs = banEnd - now;
+                const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+                
+                return {
+                    isBanned: true,
+                    isPermanent: false,
+                    reason: banInfo.ban_reason || 'Причина не указана',
+                    banTime: banTime,
+                    banEnd: banEnd,
+                    remainingTime: remainingDays,
+                    banInfo: banInfo
+                };
+            } else {
+                // Бан истек
+                return {
+                    isBanned: false,
+                    wasBanned: true,
+                    reason: banInfo.ban_reason,
+                    banTime: banTime,
+                    banEnd: banEnd,
+                    banInfo: banInfo
+                };
+            }
+        }
+        
+        // Функция для форматирования даты бана
+        function formatBanDate(date) {
+            return date.toLocaleDateString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
         // Функция для загрузки аватара Discord
         async function loadDiscordAvatar(discordId, username) {
             if (!discordId) return null;
@@ -501,7 +601,7 @@
         }
         
         // Функция для отображения профиля
-        function displayProfile(userData) {
+        function displayProfile(userData, banStatus) {
             const profileContent = document.getElementById('profileContent');
             
             if (!userData) {
@@ -515,10 +615,14 @@
             }
             
             const subscriptionStatus = getSubscriptionStatus(userData.end);
-            const roleClass = `profile-role ${userData.role}`;
-            const roleText = userData.role === 'creator' ? 'Создатель' : 
-                            userData.role === 'admin' ? 'Партнёр' : 
-                            userData.role === 'bot' ? 'Служба' : 'Игрок';
+            
+            // Определяем роль и статус пользователя
+            let userRole = userData.role;
+            let roleText = userRole === 'creator' ? 'Создатель' : 
+                          userRole === 'admin' ? 'Партнёр' : 
+                          userRole === 'bot' ? 'Служба' : 'Игрок';
+            
+            const roleClass = `profile-role ${userRole}`;
             
             profileContent.innerHTML = `
                 <div class="profile-header">
@@ -559,6 +663,61 @@
                 </div>
                 
                 <div class="profile-details">
+                    ${banStatus && banStatus.isBanned ? `
+                    <div class="profile-card ban-info-card">
+                        <h3>Информация о блокировке</h3>
+                        <div class="info-row">
+                            <span class="info-label">Статус:</span>
+                            <span class="info-value ban-status ${banStatus.isPermanent ? 'permanent' : ''}">
+                                ${banStatus.isPermanent ? 'Блокировка' : 'Блокировка'}
+                            </span>
+                        </div>
+                        ${!banStatus.isPermanent ? `
+                        <div class="info-row">
+                            <span class="info-label">До окончания:</span>
+                            <span class="info-value subscription-status active">${banStatus.remainingTime} дн.</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Срок блокировки:</span>
+                            <span class="info-value">До ${formatBanDate(banStatus.banEnd)}</span>
+                        </div>
+                        ` : `
+                        <div class="info-row">
+                            <span class="info-label">До окончания:</span>
+                            <span class="info-value subscription-status forever">Безлимит</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Срок блокировки:</span>
+                            <span class="info-value">Навсегда</span>
+                        </div>
+                        `}
+                        <div class="ban-reason">
+                            <strong style='color: #ff6666'>Причина:</strong><br>${banStatus.reason}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${banStatus && banStatus.wasBanned ? `
+                    <div class="profile-card ban-info-card">
+                        <h3>ℹ️ История блокировок</h3>
+                        <div class="info-row">
+                            <span class="info-label">Статус:</span>
+                            <span class="info-value ban-status expired">Блокировка истекла</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Дата блокировки:</span>
+                            <span class="info-value">${formatBanDate(banStatus.banTime)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Дата окончания:</span>
+                            <span class="info-value">${formatBanDate(banStatus.banEnd)}</span>
+                        </div>
+                        <div class="ban-reason">
+                            <strong>Причина:</strong> ${banStatus.reason}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
                     <div class="profile-card">
                         <h3>Основная информация</h3>
                         <div class="info-row">
@@ -631,12 +790,13 @@
             }
             
             try {
-                const [adminsData, hwidData, tempData, discordData, telegramData] = await Promise.allSettled([
+                const [adminsData, hwidData, tempData, discordData, telegramData, bansData] = await Promise.allSettled([
                     fetchJsonData(config.adminsJsonUrl),
                     fetchJsonData(config.hwidJsonUrl),
                     fetchJsonData(config.tempJsonUrl),
                     fetchJsonData(config.discordJsonUrl),
-                    fetchJsonData(config.telegramJsonUrl)
+                    fetchJsonData(config.telegramJsonUrl),
+                    fetchJsonData(config.bansJsonUrl)
                 ]);
                 
                 // Обработка результатов
@@ -645,6 +805,7 @@
                 const temp = tempData.status === 'fulfilled' ? tempData.value : {};
                 const discord = discordData.status === 'fulfilled' ? discordData.value : { "hwids": [] };
                 const telegram = telegramData.status === 'fulfilled' ? telegramData.value : { "bindings": [] };
+                const bans = bansData.status === 'fulfilled' ? bansData.value : {};
                 
                 const adminDiscordIds = admins.Admins || [];
                 
@@ -652,39 +813,65 @@
                 const activeUsers = hwidList["users:"] || hwidList.users || [];
                 const userIndex = activeUsers.findIndex(username => username === hwid);
                 
-                if (userIndex === -1) {
-                    displayProfile(null);
-                    return;
+                // Проверяем статус бана
+                const banStatus = getBanStatus(hwid, bans);
+                
+                let userData;
+                
+                if (userIndex !== -1) {
+                    // Пользователь найден в активных
+                    const username = activeUsers[userIndex];
+                    const discordId = getDiscordIdByHwid(username, discord);
+                    const telegramId = getTelegramIdByHwid(username, telegram);
+                    const endTime = temp[username] || 0;
+                    
+                    userData = {
+                        id: userIndex + 1,
+                        hwid: username,
+                        name: username,
+                        discordId: discordId,
+                        telegramId: telegramId,
+                        end: parseDateToTimestamp(endTime),
+                        group_id: 'Активная подписка',
+                        flags: '999',
+                        immunity: 0,
+                        role: getUserRole(discordId, adminDiscordIds)
+                    };
+                } else {
+                    // Пользователь не найден в активных, но может быть в банах
+                    if (banStatus && banStatus.isBanned) {
+                        const discordId = getDiscordIdByHwid(hwid, discord);
+                        const telegramId = getTelegramIdByHwid(hwid, telegram);
+                        
+                        userData = {
+                            id: 0,
+                            hwid: hwid,
+                            name: hwid,
+                            discordId: discordId,
+                            telegramId: telegramId,
+                            end: 0,
+                            group_id: 'Забанен',
+                            flags: '0',
+                            immunity: 0,
+                            role: getUserRole(discordId, adminDiscordIds)
+                        };
+                    } else {
+                        // Пользователь не найден вообще
+                        displayProfile(null);
+                        return;
+                    }
                 }
                 
-                const username = activeUsers[userIndex];
-                const discordId = getDiscordIdByHwid(username, discord);
-                const telegramId = getTelegramIdByHwid(username, telegram);
-                const endTime = temp[username] || 0;
-                
-                const userData = {
-                    id: userIndex + 1,
-                    hwid: username,
-                    name: username,
-                    discordId: discordId,
-                    telegramId: telegramId,
-                    end: parseDateToTimestamp(endTime),
-                    group_id: 'Активная подписка',
-                    flags: '999',
-                    immunity: 0,
-                    role: getUserRole(discordId, adminDiscordIds)
-                };
-                
                 // Загружаем данные Discord, если есть ID
-                if (discordId) {
-                    const discordInfo = await loadDiscordAvatar(discordId, username);
+                if (userData.discordId) {
+                    const discordInfo = await loadDiscordAvatar(userData.discordId, userData.name);
                     if (discordInfo) {
                         userData.avatarUrl = discordInfo.avatarUrl;
                         userData.discordUsername = discordInfo.username;
                     }
                 }
                 
-                displayProfile(userData);
+                displayProfile(userData, banStatus);
                 
             } catch (error) {
                 console.error('Ошибка загрузки данных профиля:', error);
