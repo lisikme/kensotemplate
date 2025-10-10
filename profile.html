@@ -666,12 +666,6 @@
                     ${banStatus && banStatus.isBanned ? `
                     <div class="profile-card ban-info-card">
                         <h3>Информация о блокировке</h3>
-                        <div class="info-row">
-                            <span class="info-label">Статус:</span>
-                            <span class="info-value ban-status ${banStatus.isPermanent ? 'permanent' : ''}">
-                                ${banStatus.isPermanent ? 'Блокировка' : 'Блокировка'}
-                            </span>
-                        </div>
                         ${!banStatus.isPermanent ? `
                         <div class="info-row">
                             <span class="info-label">До окончания:</span>
