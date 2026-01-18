@@ -445,7 +445,8 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0,0,0,0.9);
+                background: rgba(29, 29, 29, 0.8);
+                /* background: rgba(14, 14, 14, 0.7); */
                 backdrop-filter: blur(5px);
                 z-index: 10000;
                 justify-content: center;
@@ -475,7 +476,7 @@
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            background: #000000;
+            /* background: #000000; */
             display: block;
         }
         #closeModal {
@@ -717,6 +718,10 @@
                             <img src="./images/17.png" alt="Скриншот 17">
                             <div class="gallery-overlay">Нажмите для просмотра</div>
                         </div>
+                        <div class="gallery-item" data-index="16">
+                            <img src="./images/18.png" alt="Скриншот 17">
+                            <div class="gallery-overlay">Нажмите для просмотра</div>
+                        </div>
                     </div>
                 </div>
                 <div class="gallery-scroll-arrow right" id="galleryScrollRight">
@@ -751,19 +756,23 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>100 РУБ</strong></td>
+                        <td><strong>50 РУБ</strong></td>
                         <td>30 дней (1 месяц)</td>
                     </tr>
                     <tr>
-                        <td><strong>150 РУБ</strong></td>
+                        <td><strong>100 РУБ</strong></td>
                         <td>90 дней (3 месяца)</td>
                     </tr>
                     <tr>
-                        <td><strong>350 РУБ</strong></td>
+                        <td><strong>250 РУБ</strong></td>
                         <td>180 дней (6 месяцев)</td>
                     </tr>
                     <tr>
-                        <td><strong>999 РУБ</strong></td>
+                        <td><strong>700 РУБ</strong></td>
+                        <td>365 дней (1 год)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>1450 РУБ</strong></td>
                         <td><span class="forever">НАВСЕГДА</span></td>
                     </tr>
                 </tbody>
@@ -1047,16 +1056,18 @@
     .subscription-header {
         text-align: center;
         margin: 0px 0;
-        padding: 10px;
+        padding: 5px 0;
         background: rgba(255, 255, 255, 0.05);
         border-radius: 5px;
+        margin: 0 auto;
+        max-width: 400px;
     }
 
     .subscription-title {
         color: #fac51c;
         /* font-size: 3rem; */
         font-size: 16px;
-        margin: 0 0 10px 0;
+        margin: 0 0 1px 0;
     }
 
     .payment-methods {
@@ -1065,11 +1076,14 @@
         font-size: 10px;
         font-weight: bold;
         margin: 0;
+        margin-bottom: 3px;
     }
 
     .pricing-table {
-        margin: 15px 0;
         font-size: 12px;
+        max-width: 400px;
+        margin: 0 auto;
+        margin-top: 15px;
     }
 
     .pricing-table table {
