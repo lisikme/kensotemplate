@@ -9,6 +9,556 @@ body {
     padding: 0 20px;
 }
 
+.site-header {
+    background: rgba(14, 14, 14, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #303030;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding: 5px 0;
+    margin-bottom: 30px;
+}
+
+.header-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.site-name {
+    color: #d7fe7b;
+    margin: 0;
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 25px;
+    left: -1px;
+    position: relative;
+    text-shadow: 0 0 10px rgba(215, 254, 123, 0.3);
+}
+.logo {
+    display: flex;
+    flex-direction: column;
+}
+
+.by-kelix {
+    color: #ff7777;
+    font-size: 12px;
+    /* margin-left: 1px; */
+    opacity: 1;
+}
+
+.header-nav {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.nav-link {
+    color: #efefef;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.nav-link:hover {
+    color: #d7fe7b;
+    background: rgba(215, 254, 123, 0.1);
+    /* transform: translateY(-2px); */
+}
+
+.buy-nav {
+    background: #353535;
+    color: #d3f979;
+}
+
+.buy-nav:hover {
+    background: #222222;
+    color: #f67373;
+    /* transform: translateY(-2px); */
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .header-nav {
+        gap: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .nav-link {
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+
+    .site-name {
+        font-size: 24px;
+    }
+    .logo{
+        align-items: center;
+    }
+}
+:root{
+    --Background: #0f0f0f;
+    --Fon: #0d1218;
+    --ColorNone: #d7fe7b;
+    --ColorCursor: #95b940;
+    --Width: 7px;
+    --Border: 2px;
+    --Radius: 0px;
+} 
+/* Дизайн скрол-бара */
+
+.scroll-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+.scroll-container{
+    transition: opacity 0.4s ease;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin: 0px;
+    border-radius: 5px;
+    height: 100%;
+    overflow: auto;
+}
+#adminListBlocks {
+    padding: 10px 10px;
+    margin: 0px;
+    overflow: auto;
+    height: 720px;
+    position: relative;
+}
+.scroll-gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 40px;
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 0.4s ease;
+}
+.scroll-gradient.top {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0));
+}
+.scroll-gradient.bottom {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0));
+}
+.scroll-gradient.hidden {
+    opacity: 0;
+}
+.scroll-arrow {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    z-index: 3;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.scroll-arrow:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+.scroll-arrow.up {
+    top: 10px;
+}
+.scroll-arrow.down {
+    bottom: 10px;
+}
+.scroll-arrow.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Стили для нового блока */
+.product-header {
+    margin-bottom: 30px;
+}
+.product-gallery {
+    background: #0e0e0e;
+    padding: 20px;
+    border-radius: 5px;
+    border: #575757 solid 1px;
+    margin-bottom: 20px;
+}
+.gallery-title {
+    font-size: 30px;
+    text-align: center;
+    margin: 0px;
+    margin-bottom: 10px;
+    color: #d7fe7b;
+}
+.gallery-wrapper {
+    position: relative;
+}
+.gallery-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 10px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* border: #303030 solid 1px; */
+    background: #010101;
+    scroll-behavior: smooth;
+    cursor: grab;
+}
+.gallery-container::-webkit-scrollbar {
+    display: none;
+}
+.gallery-container:active {
+    cursor: grabbing;
+}
+.gallery-item {
+    border: #303030 solid 1px;
+    width: 350px;
+    aspect-ratio: 16/9;
+    border-radius: 5px;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    transition: transform 0.3s ease;
+    background: #0b0b0b;
+}
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    background: #0b0b0b;
+}
+.gallery-item:hover img {
+    transform: scale(1.03);
+}
+.gallery-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    /* backdrop-filter: blur(2px); */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    pointer-events: none;
+}
+.gallery-item:hover .gallery-overlay {
+    opacity: 1;
+}
+.product-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 70px;
+    flex-wrap: wrap;
+}
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 25px;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+.btn-buy {
+    background: linear-gradient(45deg, #3278ff, #6a11cb);
+}
+.btn-support {
+    background: linear-gradient(45deg, #d7fe7b, #95b940);
+    color: #0e0e0e;
+}
+
+/* Стили для скроллбара галереи */
+.gallery-scroll-container {
+    border: #303030 solid 1px;
+    position: relative;
+    width: 100%;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    /* overflow: hidden; */
+    overflow: hidden;
+}
+.gallery-scroll-gradient {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 0.4s ease;
+}
+.gallery-scroll-gradient.left {
+    left: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0));
+}
+.gallery-scroll-gradient.right {
+    right: 0;
+    background: linear-gradient(to left, rgba(0,0,0,0.6), rgba(0,0,0,0));
+}
+.gallery-scroll-gradient.hidden {
+    opacity: 0;
+}
+.gallery-scroll-arrow {
+    position: absolute;
+    top: 50%; /* Верхний край стрелки будет посередине контейнера */
+    background: rgba(255, 255, 255, 0.2);
+    padding: 15px 2px;
+    line-height: 0;
+    font-size: 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    z-index: 3;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    text-orientation: mixed;
+}
+.gallery-scroll-arrow {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    height: fit-content;
+    /* остальные стили */
+}
+.gallery-scroll-arrow:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+.gallery-scroll-arrow.left {
+    left: 10px;
+}
+.gallery-scroll-arrow.right {
+    right: 10px;
+}
+.gallery-scroll-arrow.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+    /* Модальное окно - ИСПРАВЛЕННЫЙ CSS */
+    #galleryModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(29, 29, 29, 0.8);
+        /* background: rgba(14, 14, 14, 0.7); */
+        backdrop-filter: blur(5px);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    #galleryModal.active {
+        display: flex;
+        opacity: 1;
+    }
+.modal-content {
+    position: relative;
+    /* max-width: 90vw; */
+    height: 90vh;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* background: #000000; */
+    border-radius: 5px;
+    overflow: hidden;
+    padding: 20px;
+    box-sizing: border-box;
+}
+#modalImage {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    /* background: #000000; */
+    display: block;
+}
+#closeModal {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+    z-index: 10001;
+    /* background: rgba(0,0,0,0.7); */
+    width: 40px;
+    height: 40px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    opacity: 1;
+}
+#closeModal:hover {
+    background: rgba(255,0,0,0.7);
+    /* transform: scale(1.1); */
+}
+.modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    /* background: rgba(0,0,0,0.7); */
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    /* width: 60px; */
+    /* height: 80px; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: 1;
+    transition: all 0.3s ease;
+    z-index: 10001;
+    /* border: none; */
+    font-size: 30px;
+    font-weight: bold;
+}
+.modal-nav:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.8);
+    /* transform: translateY(-50%) scale(1.1); */
+}
+.modal-nav:focus-visible {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
+}
+/* Полностью убирает обводку для видимого фокуса */
+*:focus-visible {
+    outline: none;
+}
+#modalPrev {
+    left: 20px;
+}
+#modalNext {
+    right: 20px;
+}
+.modal-counter {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    background: rgba(0,0,0,0.7);
+    padding: 5px 20px;
+    border-radius: 5px;
+    font-size: 15px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Блокировка прокрутки фона при открытом модальном окне */
+body.modal-open {
+    overflow: hidden;
+    height: 100vh;
+}
+body{
+    margin: 30px 0px;
+    margin-top: 0px;
+}
+.gallery-item.video-item::before {
+    content: '▶';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 50px;
+    /* color: rgba(255, 28, 28, 0.382); */
+    /* text-shadow: 0 2px 10px rgba(0,0,0,0.7); */
+    z-index: 2;
+    opacity: 1;
+    /* backdrop-filter: blur(5px); */
+    transition: all 0.3s ease;
+    background: linear-gradient(20deg, #006eff, #00ff81 52%, #fff 50%, #93cbff);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow:  0 0 5px #00ffcf80;
+}
+
+.gallery-item.video-item:hover::before {
+    /* transform: translate(-50%, -50%) scale(1.1); */
+    opacity: 0;
+}
+
+.video-label {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ff2d2d;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 2;
+}
+.modal-video-container {
+    /* width: 90vw; */
+    height: 90vh;
+    /* max-width: 90vw; */
+    /* max-height: 90vh; */
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.modal-video {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16/9;
+    border: none;
+}
+
+
+
 .row {
     display: flex;
     flex-wrap: wrap;
@@ -154,9 +704,9 @@ h2 {
 #modalImage {
     max-width: 100%;
     max-height: 90vh;
-    border-radius: 5px;
-    filter: drop-shadow(0 0 7px rgba(0, 0, 0, 1));
+    border-radius: 8px;
     /* box-shadow: 0 10px 30px rgba(0,0,0,0.5); */
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
 }
 
 #closeModal {
