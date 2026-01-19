@@ -1,5 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
+/* KetaRu ScrollBars */
+:root{
+    --Background: #0f0f0f;
+    --Fon: #0d1218;
+    --ColorNone: #d7fe7b;
+    --ColorCursor: #95b940;
+    --Width: 2px;
+    --Border: 2px;
+    --Radius: 0px;
+} 
+/* Дизайн скрол-бара */
+.element::-webkit-scrollbar{
+    background-color: var(--Background);
+    width: 0;
+}
+::-webkit-scrollbar{
+    width: var(--Width);
+    height: 7px;
+    background-color: var(--Background);
+}
+::-webkit-scrollbar-thumb{
+    background-color: var(--ColorNone);
+    border-radius: var(--Radius);
+    min-height: 30px;
+    width: var(--Width);
+    border: var(--Border) solid var(--Background);
+}
+::-webkit-scrollbar-thumb:hover{
+    background-color: var(--ColorCursor);
+}
+
 body {
     background-color: #0e0e0e;
     color: #e0e0e0;
@@ -1088,37 +1120,6 @@ img[src*="undefined"] {
 .screenshots-container{
     background: #111111;
     border-radius: 5px;
-}
-
-/* KetaRu ScrollBars */
-:root{
-    --Background: #0f0f0f;
-    --Fon: #0d1218;
-    --ColorNone: #d7fe7b;
-    --ColorCursor: #95b940;
-    --Width: 2px;
-    --Border: 2px;
-    --Radius: 0px;
-} 
-/* Дизайн скрол-бара */
-.element::-webkit-scrollbar{
-    background-color: var(--Background);
-    width: 0;
-}
-::-webkit-scrollbar{
-    width: var(--Width);
-    height: 7px;
-    background-color: var(--Background);
-}
-::-webkit-scrollbar-thumb{
-    background-color: var(--ColorNone);
-    border-radius: var(--Radius);
-    min-height: 30px;
-    width: var(--Width);
-    border: var(--Border) solid var(--Background);
-}
-::-webkit-scrollbar-thumb:hover{
-    background-color: var(--ColorCursor);
 }
 
 #link_block {
