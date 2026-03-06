@@ -52,10 +52,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     class AvatarQueue {
-        constructor(maxConcurrent = 3) {
-            this.maxConcurrent = maxConcurrent;
+        constructor(maxConcurrent = 1, delayBetweenBatches = 1000) {
+            this.maxConcurrent = maxConcurrent; // Теперь 5 одновременных загрузок
+            this.delayBetweenBatches = delayBetweenBatches; // Задержка 100ms между батчами
             this.current = 0;
             this.queue = [];
+            this.lastBatchTime = 0;
         }
         
         add(task) {
@@ -66,54 +68,98 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         async run() {
-            if (this.current >= this.maxConcurrent || this.queue.length === 0) return;
-            this.current++;
-            const { task, resolve, reject } = this.queue.shift();
-            try {
-                const result = await task();
-                resolve(result);
-            } catch (error) {
-                reject(error);
-            } finally {
-                this.current--;
-                this.run();
+            const now = Date.now();
+            const timeSinceLastBatch = now - this.lastBatchTime;
+            
+            if (timeSinceLastBatch < this.delayBetweenBatches) {
+                // Ждем оставшееся время перед следующим батчем
+                setTimeout(() => this.run(), this.delayBetweenBatches - timeSinceLastBatch);
+                return;
             }
+            
+            if (this.current >= this.maxConcurrent || this.queue.length === 0) return;
+            
+            this.lastBatchTime = Date.now();
+            
+            // Запускаем до maxConcurrent задач одновременно
+            const batchSize = Math.min(this.maxConcurrent - this.current, this.queue.length);
+            const batch = this.queue.splice(0, batchSize);
+            
+            this.current += batch.length;
+            
+            // Запускаем все задачи в батче параллельно
+            batch.forEach(async ({ task, resolve, reject }) => {
+                try {
+                    const result = await task();
+                    resolve(result);
+                } catch (error) {
+                    reject(error);
+                } finally {
+                    this.current--;
+                    this.run();
+                }
+            });
         }
     }
-    
-    const avatarQueue = new AvatarQueue(3);
-    
+
+    const avatarQueue = new AvatarQueue(1, 100); // 5 одновременных, 100ms задержка между батчами
+
     async function loadDiscordAvatar(discordId, elementId, username) {
         if (!discordId) return;
         return avatarQueue.add(async () => {
             try {
                 const cacheBustedUrl = addCacheBuster(`${config.discordApiBase}${discordId}`);
                 const userData = await fetchWithRetry(cacheBustedUrl);
+                
                 if (userData.avatar) {
-                    const avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png?size=128`;
+                    // Определяем формат аватара (gif если начинается с "a_", иначе png)
+                    const isGif = userData.avatar.startsWith('a_');
+                    const avatarFormat = isGif ? 'gif' : 'png';
+                    
+                    // Используем правильный формат и размер
+                    const avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.${avatarFormat}?size=128`;
+                    
                     const avatarElement = document.getElementById(elementId);
-                    userData.username
                     if (avatarElement) {
-                        const img = new Image();
-                        img.onload = function() {
-                            avatarElement.src = avatarUrl;
-                            avatarElement.style.opacity = '1';
-                        };
-                        img.onerror = function() {
-                            throw new Error('Ошибка загрузки изображения');
-                        };
-                        img.src = `${avatarUrl}`;
+                        // Создаем промис для загрузки изображения
+                        await new Promise((resolve, reject) => {
+                            const img = new Image();
+                            
+                            // Устанавливаем таймаут для загрузки GIF (могут быть большими)
+                            const timeout = setTimeout(() => {
+                                reject(new Error('Таймаут загрузки изображения'));
+                            }, 5000);
+                            
+                            img.onload = function() {
+                                clearTimeout(timeout);
+                                avatarElement.src = avatarUrl;
+                                avatarElement.style.opacity = '1';
+                                resolve();
+                            };
+                            
+                            img.onerror = function() {
+                                clearTimeout(timeout);
+                                reject(new Error('Ошибка загрузки изображения'));
+                            };
+                            
+                            img.src = avatarUrl;
+                        });
                     }
+                    
                     return {
                         discordId: discordId,
                         username: userData.username || username,
-                        global_name: userData.global_name || username
+                        global_name: userData.global_name || username,
+                        avatar: userData.avatar,
+                        isGif: isGif
                     };
                 } else {
                     throw new Error('Аватар не найден');
                 }
             } catch (error) {
                 console.warn(`Не удалось загрузить аватар для ${discordId}:`, error.message);
+                
+                // Показываем букву-заглушку
                 const avatarElement = document.getElementById(elementId);
                 if (avatarElement) {
                     avatarElement.setAttribute('data-fallback', 'true');
@@ -123,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         letterElement.style.display = 'flex';
                     }
                 }
+                
                 return {
                     discordId: discordId,
                     username: username,
@@ -412,51 +459,43 @@ document.addEventListener('DOMContentLoaded', function() {
             if (banStatus) {
                 if (banStatus.isBanned) {
                     if (banStatus.isPermanent) {
-                        banText = `Блокировка`;
+                        banText = `Блок`;
                         banEnd = 'Навсегда';
                         banReason = `Причина: ${banStatus.reason}`;
                     } else {
-                        banText = `Блокировка`;
+                        banText = `Блок`;
                         banEnd = `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
                         banReason = `Причина: ${banStatus.reason}`;
                     }
                 } else if (banStatus.wasBanned) {
-                    banText = `Блокировка истекла`;
+                    banText = `Блок истек`;
                     banEnd = `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
                     banReason = `Причина: ${banStatus.reason}`;
                 }
             }
             
             userCard.innerHTML = `
-                <div id="admins_card">
-                    <div class="adminlist_info">
-                        <div class="avatar_block">
-                            <div class="avatar_letter">${user.name.charAt(0).toUpperCase()}</div>
-                            <img class="admins_avatar" id="user-${user.sid}-avatar" src="" alt="" 
-                                data-username="${user.name}"
-                                onerror="this.setAttribute('data-fallback', 'true');">
-                            <div class="adminlist_button steam_button" data-tippy-content="Роль" data-tippy-placement="bottom" id="tag-${banStatus && !banStatus.wasBanned ? 'banned' : userRole}">
-                                ${
-                                    userRole === 'creator' ? 'Создатель' : (
-                                    userRole === 'admin' ? 'Партнёр' : (
-                                    userRole === 'bot' ? 'Служба' : (
-                                    banStatus && !banStatus.wasBanned ? 'Забанен': 'Игрок')))
-                                }
-                            </div>
-                        </div>
-                        <div class="adminlist_buttons">
-                            <div id="admins_info">
-                                <span class="admin_nickname">${user.name}</span>
-                                <div class="admin_term">
-                                    <div class="admin_group">
-                                    ${
+            <div id="admins_card">
+            <div class="adminlist_info">
+            <div class="avatar_block">
+            <div class="avatar_letter">${user.name.charAt(0).toUpperCase()}</div>
+            <img class="admins_avatar" id="user-${user.sid}-avatar" src="./images/none.png" alt="" 
+            data-username="${user.name}"
+            onerror="this.setAttribute('data-fallback', 'true');">
+            </div>
+            <div class="adminlist_buttons">
+            <div id="admins_info">
+            <span class="admin_nickname">${user.name}</span>
+            <div class="admin_term">
+            <div class="admin_group">
+            ${
                                             banStatus && !banStatus.wasBanned ? 
                                                 banText ? 
                                                 `<span class="admin_group_text_ban">${banText}</span>` : 
                                                 `<span class="admin_group_text">${user.group_id}</span>` : 
                                                 `<span class="admin_group_text">${user.group_id}</span>`
                                         }
-                                    </div>-
+                                    </div>
                                     <span class="admin_term_text">
                                         ${
                                             banText ? 
@@ -476,6 +515,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                     <div id="link_block">
+                        <div class="adminlist_button steam_button" data-tippy-content="Роль" data-tippy-placement="bottom" id="tag-${banStatus && !banStatus.wasBanned ? 'banned' : userRole}">
+                            <span
+                            >${
+                                userRole === 'creator' ? 'Создатель' : (
+                                userRole === 'admin' ? 'Партнёр' : (
+                                userRole === 'bot' ? 'Менеджер' : (
+                                banStatus && !banStatus.wasBanned ? 'Забанен': 'Игрок')))
+                            }</span>
+                        </div>
                         <a href="/profile?hwid=${user.name}" target="_blank" id="link_prof" class="discord-link profil-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
                             <svg x="0" y="0" viewBox="0 0 24 24" xml:space="preserve" fill-rule="evenodd" class="">
 								<g>
@@ -493,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <svg viewBox="0 0 24 24">
                                         <path d="M14.82 4.26a10.14 10.14 0 0 0-.53 1.1 14.66 14.66 0 0 0-4.58 0 10.14 10.14 0 0 0-.53-1.1 16 16 0 0 0-4.13 1.3 17.33 17.33 0 0 0-3 11.59 16.6 16.6 0 0 0 5.07 2.59A12.89 12.89 0 0 0 8.23 18a9.65 9.65 0 0 1-1.71-.83 3.39 3.39 0 0 0 .42-.33 11.66 11.66 0 0 0 10.12 0c.14.09.28.19.42.33a10.14 10.14 0 0 1-1.71.83 12.89 12.89 0 0 0 1.08 1.78 16.44 16.44 0 0 0 5.06-2.59 17.22 17.22 0 0 0-3-11.59 16.09 16.09 0 0 0-4.09-1.35zM8.68 14.81a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.93 1.93 0 0 1 1.8 2 1.93 1.93 0 0 1-1.8 2zm6.64 0a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.92 1.92 0 0 1 1.8 2 1.92 1.92 0 0 1-1.8 2z"/>
                                     </svg>
-                                    <span class="discord-username">${user.sid}</span>
+                                    <span class="discord-username">${user.name}</span>
                                 </a>` : 
                                 ''
                             }
@@ -516,29 +564,44 @@ document.addEventListener('DOMContentLoaded', function() {
             
             adminListBlocks.appendChild(userCard);
             
-            if (user.sid) {
-                const avatarPromise = loadDiscordAvatar(
-                    user.sid, 
-                    `user-${user.sid}-avatar`,
-                    user.name
-                ).then(discordData => {
-                    if (discordData) {
-                        userDiscordData[user.sid] = discordData;
-                        // Обновляем никнейм в ссылке на Discord
-                        const discordLink = userCard.querySelector(`a[data-discord-id="${user.sid}"]`);
-                        if (discordLink) {
-                            const usernameSpan = discordLink.querySelector('.discord-username');
-                            if (usernameSpan) {
-                                usernameSpan.textContent = discordData.username;
-                            }
-                        }
+if (user.sid) {
+    const avatarPromise = loadDiscordAvatar(
+        user.sid, 
+        `user-${user.sid}-avatar`,
+        user.name
+    ).then(discordData => {
+        if (discordData) {
+            userDiscordData[user.sid] = discordData;
+            
+            // Обновляем все элементы, связанные с этим пользователем
+            const userElements = document.querySelectorAll(`[data-discord-id="${user.sid}"]`);
+            userElements.forEach(element => {
+                // Обновляем ссылки Discord
+                if (element.classList.contains('discord-link')) {
+                    const usernameSpan = element.querySelector('.discord-username');
+                    if (usernameSpan) {
+                        usernameSpan.textContent = discordData.username;
                     }
-                }).catch(error => {
-                    console.warn(`Ошибка загрузки данных Discord для ${user.sid}:`, error);
-                });
+                }
                 
-                avatarPromises.push(avatarPromise);
-            }
+                // Обновляем ссылки профиля (с иконкой человечка)
+                if (element.classList.contains('profil-link')) {
+                    const originalName = element.getAttribute('data-original-name');
+                    // Можно добавить логику для обновления, если нужно
+                }
+            });
+        }
+    }).catch(error => {
+        console.warn(`Ошибка загрузки данных Discord для ${user.sid}:`, error);
+        // Если не удалось загрузить, показываем оригинальное имя
+        const usernameSpans = document.querySelectorAll(`[data-discord-id="${user.sid}"] .discord-username`);
+        usernameSpans.forEach(span => {
+            span.textContent = user.name;
+        });
+    });
+    
+    avatarPromises.push(avatarPromise);
+}
         });
         
         Promise.allSettled(avatarPromises).then(() => {
@@ -562,3 +625,4 @@ document.addEventListener('DOMContentLoaded', function() {
     // Запуск инициализации
     init();
 });
+
