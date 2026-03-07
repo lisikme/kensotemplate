@@ -7,7 +7,9 @@ document.addEventListener('DOMContentLoaded', function() {
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
         telegramJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/telegrams.json',
         bansJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/bans.json',
-        discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
+        discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/',
+        proxy: 'https://proxy.ketame.ru/api/proxy?url='
+        // proxy: 'https://v0-proxy-krcorp.vercel.app/api/proxy?url='
     };
     
     // Функция для добавления параметра обхода кеша
@@ -117,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const avatarFormat = isGif ? 'gif' : 'png';
                     
                     // Используем правильный формат и размер
-                    const avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.${avatarFormat}?size=128`;
+                    const avatarUrl = `${config.proxy}https://media.discordapp.net/avatars/${discordId}/${userData.avatar}.${avatarFormat}?size=128`;
                     
                     const avatarElement = document.getElementById(elementId);
                     if (avatarElement) {
