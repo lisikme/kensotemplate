@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const avatarFormat = isGif ? 'gif' : 'png';
                     
                     // Используем правильный формат и размер
-                    const avatarUrl = `${config.proxy}https://media.discordapp.net/avatars/${discordId}/${userData.avatar}.${avatarFormat}?size=128`;
+                    const avatarUrl = `${config.proxy}"https://media.discordapp.net/avatars/${discordId}/${userData.avatar}.${avatarFormat}"`;
                     
                     const avatarElement = document.getElementById(elementId);
                     if (avatarElement) {
