@@ -573,7 +573,7 @@
                 const userData = await fetchWithRetry(cacheBustedUrl);
                 if (userData.avatar) {
                     return {
-                        avatarUrl: `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png?size=256`,
+                        avatarUrl: `${config.proxy}'https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png?size=256'`,
                         username: userData.username || username,
                         global_name: userData.global_name || username
                     };
