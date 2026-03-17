@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
         hwidJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwid4.json',
         tempJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/temps.json',
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
-        discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/'
+        discordApiBase: 'https://dis-api.sakuri.ru/api/discord/user/'
     };
     
     // Функция для добавления параметра обхода кеша
