@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
         telegramJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/telegrams.json',
         bansJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/bans.json',
-        discordApiBase: 'https://discord-api.ketame.ru/api/discord/user/',
-        proxy: 'https://proxy.ketame.ru/api/proxy?url='
+        discordApiBase: 'https://dis-api.sakuri.ru/api/discord/user/',
+        proxy: 'https://proxy.sakuri.ru/api/proxy?url='
         // proxy: 'https://v0-proxy-krcorp.vercel.app/api/proxy?url='
     };
     
