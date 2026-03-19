@@ -52,135 +52,190 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
     }
-    
-    class AvatarQueue {
-        constructor(maxConcurrent = 1, delayBetweenBatches = 1000) {
-            this.maxConcurrent = maxConcurrent; // Теперь 5 одновременных загрузок
-            this.delayBetweenBatches = delayBetweenBatches; // Задержка 100ms между батчами
-            this.current = 0;
-            this.queue = [];
-            this.lastBatchTime = 0;
-        }
-        
-        add(task) {
-            return new Promise((resolve, reject) => {
-                this.queue.push({ task, resolve, reject });
-                this.run();
-            });
-        }
-        
-        async run() {
-            const now = Date.now();
-            const timeSinceLastBatch = now - this.lastBatchTime;
-            
-            if (timeSinceLastBatch < this.delayBetweenBatches) {
-                // Ждем оставшееся время перед следующим батчем
-                setTimeout(() => this.run(), this.delayBetweenBatches - timeSinceLastBatch);
-                return;
-            }
-            
-            if (this.current >= this.maxConcurrent || this.queue.length === 0) return;
-            
-            this.lastBatchTime = Date.now();
-            
-            // Запускаем до maxConcurrent задач одновременно
-            const batchSize = Math.min(this.maxConcurrent - this.current, this.queue.length);
-            const batch = this.queue.splice(0, batchSize);
-            
-            this.current += batch.length;
-            
-            // Запускаем все задачи в батче параллельно
-            batch.forEach(async ({ task, resolve, reject }) => {
-                try {
-                    const result = await task();
-                    resolve(result);
-                } catch (error) {
-                    reject(error);
-                } finally {
-                    this.current--;
-                    this.run();
-                }
-            });
-        }
+class AvatarQueue {
+    constructor(maxConcurrent = 1, delayBetweenBatches = 1000) {
+        this.maxConcurrent = maxConcurrent;
+        this.delayBetweenBatches = delayBetweenBatches;
+        this.current = 0;
+        this.queue = [];
+        this.lastBatchTime = 0;
     }
-
-    const avatarQueue = new AvatarQueue(1, 100); // 5 одновременных, 100ms задержка между батчами
-
-    async function loadDiscordAvatar(discordId, elementId, username) {
-        if (!discordId) return;
-        return avatarQueue.add(async () => {
-            try {
-                const cacheBustedUrl = addCacheBuster(`${config.discordApiBase}${discordId}`);
-                const userData = await fetchWithRetry(cacheBustedUrl);
-                
-                if (userData.avatar) {
-                    // Определяем формат аватара (gif если начинается с "a_", иначе png)
-                    const isGif = userData.avatar.startsWith('a_');
-                    const avatarFormat = isGif ? 'gif' : 'png';
-                    
-                    // Используем правильный формат и размер
-                    const avatarUrl = `${config.proxy}"https://media.discordapp.net/avatars/${discordId}/${userData.avatar}.${avatarFormat}"`;
-                    
-                    const avatarElement = document.getElementById(elementId);
-                    if (avatarElement) {
-                        // Создаем промис для загрузки изображения
-                        await new Promise((resolve, reject) => {
-                            const img = new Image();
-                            
-                            // Устанавливаем таймаут для загрузки GIF (могут быть большими)
-                            const timeout = setTimeout(() => {
-                                reject(new Error('Таймаут загрузки изображения'));
-                            }, 5000);
-                            
-                            img.onload = function() {
-                                clearTimeout(timeout);
-                                avatarElement.src = avatarUrl;
-                                avatarElement.style.opacity = '1';
-                                resolve();
-                            };
-                            
-                            img.onerror = function() {
-                                clearTimeout(timeout);
-                                reject(new Error('Ошибка загрузки изображения'));
-                            };
-                            
-                            img.src = avatarUrl;
-                        });
-                    }
-                    
-                    return {
-                        discordId: discordId,
-                        username: userData.username || username,
-                        global_name: userData.global_name || username,
-                        avatar: userData.avatar,
-                        isGif: isGif
-                    };
-                } else {
-                    throw new Error('Аватар не найден');
-                }
-            } catch (error) {
-                console.warn(`Не удалось загрузить аватар для ${discordId}:`, error.message);
-                
-                // Показываем букву-заглушку
-                const avatarElement = document.getElementById(elementId);
-                if (avatarElement) {
-                    avatarElement.setAttribute('data-fallback', 'true');
-                    const letterElement = avatarElement.nextElementSibling;
-                    if (letterElement && letterElement.classList.contains('avatar_letter')) {
-                        letterElement.textContent = username.charAt(0).toUpperCase();
-                        letterElement.style.display = 'flex';
-                    }
-                }
-                
-                return {
-                    discordId: discordId,
-                    username: username,
-                    global_name: username
-                };
-            }
+    
+    add(task) {
+        return new Promise((resolve, reject) => {
+            this.queue.push({ task, resolve, reject });
+            this.run();
         });
     }
     
+    async run() {
+        const now = Date.now();
+        const timeSinceLastBatch = now - this.lastBatchTime;
+        
+        if (timeSinceLastBatch < this.delayBetweenBatches) {
+            setTimeout(() => this.run(), this.delayBetweenBatches - timeSinceLastBatch);
+            return;
+        }
+        
+        if (this.current >= this.maxConcurrent || this.queue.length === 0) return;
+        
+        this.lastBatchTime = Date.now();
+        
+        const batchSize = Math.min(this.maxConcurrent - this.current, this.queue.length);
+        const batch = this.queue.splice(0, batchSize);
+        
+        this.current += batch.length;
+        
+        batch.forEach(async ({ task, resolve, reject }) => {
+            try {
+                const result = await task();
+                resolve(result);
+            } catch (error) {
+                reject(error);
+            } finally {
+                this.current--;
+                this.run();
+            }
+        });
+    }
+}
+
+// Очередь для кэша (100ms между загрузками)
+const cacheQueue = new AvatarQueue(5, 100);
+// Очередь для обновлений (1000ms между проверками)
+const updateQueue = new AvatarQueue(1, 100);
+
+// Храним промисы для каждого discordId
+const avatarPromises = new Map();
+
+async function loadDiscordAvatar(discordId, elementId, username) {
+    if (!discordId) return;
+    
+    // Если уже загружается, возвращаем существующий промис
+    if (avatarPromises.has(discordId)) {
+        return avatarPromises.get(discordId);
+    }
+    
+    const promise = (async () => {
+        try {
+            const avatarElement = document.getElementById(elementId);
+            const cacheKey = `avatar_${discordId}`;
+            
+            // 1. Сразу показываем заглушку
+            if (avatarElement) {
+                avatarElement.src = '';
+                avatarElement.removeAttribute('src');
+            }
+            
+            // 2. Загружаем из кэша с задержкой 100ms
+            cacheQueue.add(async () => {
+                const cachedAvatar = localStorage.getItem(cacheKey);
+                if (cachedAvatar && avatarElement) {
+                    try {
+                        await tryLoadImage(cachedAvatar, 3000);
+                        avatarElement.src = cachedAvatar;
+                        avatarElement.style.opacity = '1';
+                        console.log(`📦 КЭШ: загружен аватар для ${discordId}`);
+                    } catch (cacheError) {
+                        console.warn(`⚠️ КЭШ: битый кэш для ${discordId}, удаляем`);
+                        localStorage.removeItem(cacheKey);
+                    }
+                }
+            });
+            
+            // 3. Обновляем из сети с задержкой 1000ms
+            updateQueue.add(async () => {
+                try {
+                    const cachedAvatar = localStorage.getItem(cacheKey);
+                    const cacheBustedUrl = addCacheBuster(`${config.discordApiBase}${discordId}`);
+                    const userData = await fetchWithRetry(cacheBustedUrl);
+                    
+                    if (userData.avatar && avatarElement) {
+                        let avatarUrl = null;
+                        const avatarHash = userData.avatar;
+                        
+                        const discord_cdn = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}`;
+                        const isSameAvatar = cachedAvatar && cachedAvatar.includes(avatarHash);
+                        
+                        if (!isSameAvatar) {
+                            try {
+                                const gifUrl = `${config.proxy}"${discord_cdn}.gif"`;
+                                avatarUrl = await tryLoadImage(gifUrl, 8000);
+                            } catch (gifError) {
+                                const pngUrl = `${config.proxy}"${discord_cdn}.png"`;
+                                avatarUrl = await tryLoadImage(pngUrl, 5000);
+                            }
+                            
+                            if (avatarUrl) {
+                                avatarElement.src = avatarUrl;
+                                avatarElement.style.opacity = '1';
+                                localStorage.setItem(cacheKey, avatarUrl);
+                                console.log(`🌐 СЕТЬ: обновлен аватар для ${discordId}`);
+                            }
+                        } else {
+                            console.log(`✅ СЕТЬ: аватар для ${discordId} актуален`);
+                        }
+                    } else if (!userData.avatar) {
+                        console.log(`❌ СЕТЬ: аватар для ${discordId} удален`);
+                        localStorage.removeItem(cacheKey);
+                        if (avatarElement) {
+                            avatarElement.src = '';
+                            avatarElement.removeAttribute('src');
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ СЕТЬ: ошибка для ${discordId}:`, error.message);
+                }
+            });
+            
+        } finally {
+            avatarPromises.delete(discordId);
+        }
+    })();
+    
+    avatarPromises.set(discordId, promise);
+    return promise;
+}
+
+function removeAvatarFromCache(discordId, elementId, username) {
+    const cacheKey = `avatar_${discordId}`;
+    localStorage.removeItem(cacheKey);
+    
+    const avatarElement = document.getElementById(elementId);
+    if (avatarElement) {
+        avatarElement.src = '';
+        avatarElement.removeAttribute('src');
+    }
+}
+
+function tryLoadImage(url, timeoutMs) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        let timeout = setTimeout(() => {
+            cleanup();
+            reject(new Error(`Таймаут загрузки (${timeoutMs}ms)`));
+        }, timeoutMs);
+        
+        function cleanup() {
+            clearTimeout(timeout);
+            img.onload = null;
+            img.onerror = null;
+        }
+        
+        img.onload = function() {
+            cleanup();
+            resolve(url);
+        };
+        
+        img.onerror = function() {
+            cleanup();
+            reject(new Error('Ошибка загрузки изображения'));
+        };
+        
+        const cacheBuster = Date.now();
+        img.src = url.includes('?') ? `${url}&_=${cacheBuster}` : `${url}?_=${cacheBuster}`;
+    });
+}
     // Функция для преобразования даты в timestamp
     function parseDateToTimestamp(dateString) {
         try {

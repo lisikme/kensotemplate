@@ -564,28 +564,130 @@
             });
         }
         
+        // Кэш для аватаров
+        const avatarCache = new Map();
+
         // Функция для загрузки аватара Discord
-        async function loadDiscordAvatar(discordId, username) {
+        async function loadDiscordAvatar(discordId, username, avatarElement = null) {
             if (!discordId) return null;
             
+            // Проверяем кэш
+            const cacheKey = `${discordId}_${username}`;
+            if (avatarCache.has(cacheKey)) {
+                const cached = avatarCache.get(cacheKey);
+                if (cached && avatarElement) {
+                    avatarElement.src = cached.avatarUrl;
+                    avatarElement.style.opacity = '1';
+                }
+                return cached;
+            }
+            
             try {
+                // Получаем данные пользователя
                 const cacheBustedUrl = addCacheBuster(`${config.discordApiBase}${discordId}`);
                 const userData = await fetchWithRetry(cacheBustedUrl);
-                if (userData.avatar) {
-                    return {
-                        avatarUrl: `${config.proxy}'https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png?size=256'`,
-                        username: userData.username || username,
-                        global_name: userData.global_name || username
-                    };
-                } else {
-                    throw new Error('Аватар не найден');
+                
+                if (!userData.avatar) {
+                    console.warn(`User ${discordId} has no avatar`);
+                    return null;
                 }
+                
+                // Пытаемся загрузить аватар
+                let avatarUrl = null;
+                const discord_cdn = `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}`;
+                
+                // Сначала пробуем GIF (для анимированных аватаров)
+                try {
+                    const gifUrl = `${config.proxy}${discord_cdn}.gif?size=256`;
+                    avatarUrl = await tryLoadImage(gifUrl, 8000);
+                } catch (gifError) {
+                    console.log(`GIF не загрузился для ${discordId}, пробуем PNG:`, gifError.message);
+                    // Если GIF не загрузился, пробуем PNG
+                    try {
+                        const pngUrl = `${config.proxy}${discord_cdn}.png?size=256`;
+                        avatarUrl = await tryLoadImage(pngUrl, 5000);
+                    } catch (pngError) {
+                        console.warn(`Не удалось загрузить аватар для ${discordId}:`, pngError.message);
+                        return null;
+                    }
+                }
+                
+                // Формируем результат
+                const result = {
+                    avatarUrl: avatarUrl,
+                    username: userData.username || username,
+                    global_name: userData.global_name || username,
+                    discordId: discordId
+                };
+                
+                // Если передан элемент, устанавливаем аватар
+                if (avatarUrl && avatarElement) {
+                    avatarElement.src = avatarUrl;
+                    avatarElement.style.opacity = '1';
+                }
+                
+                // Сохраняем в кэш
+                avatarCache.set(cacheKey, result);
+                
+                // Очищаем старые записи из кэша (если больше 100)
+                if (avatarCache.size > 100) {
+                    const firstKey = avatarCache.keys().next().value;
+                    avatarCache.delete(firstKey);
+                }
+                
+                return result;
+                
             } catch (error) {
-                console.warn(`Не удалось загрузить аватар для ${discordId}:`, error.message);
+                console.error(`Failed to load avatar for ${discordId}:`, {
+                    message: error.message,
+                    discordId,
+                    username
+                });
                 return null;
             }
         }
-        
+
+        // Вспомогательная функция для попытки загрузки изображения с таймаутом
+        function tryLoadImage(url, timeoutMs) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                let timeout = setTimeout(() => {
+                    cleanup();
+                    reject(new Error(`Таймаут загрузки (${timeoutMs}ms): ${url}`));
+                }, timeoutMs);
+                
+                function cleanup() {
+                    clearTimeout(timeout);
+                    img.onload = null;
+                    img.onerror = null;
+                }
+                
+                img.onload = function() {
+                    cleanup();
+                    resolve(url);
+                };
+                
+                img.onerror = function() {
+                    cleanup();
+                    reject(new Error(`Ошибка загрузки изображения: ${url}`));
+                };
+                
+                img.src = url;
+            });
+        }
+
+        // Функция для обновления аватара с загрузкой
+        async function updateDiscordAvatar(discordId, username, avatarElement) {
+            if (!avatarElement || !discordId) return;
+            try {
+                await loadDiscordAvatar(discordId, username, avatarElement);
+            } catch (error) {
+                console.error('Error updating avatar:', error);
+                avatarElement.style.opacity = '1';
+                avatarElement.src = 'default-avatar.png'; // Опционально: аватар по умолчанию
+            }
+        }
+                
         // Функция для поиска Discord ID по HWID
         function getDiscordIdByHwid(hwid, discordData) {
             if (discordData.hwids && Array.isArray(discordData.hwids)) {

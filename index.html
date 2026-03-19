@@ -1042,6 +1042,8 @@
             height: 80px;
             border-radius: 5px;
             object-fit: cover;
+            opacity: 0;
+            transition: all 0.3s;
         }
 
         .avatar_letter {
@@ -2274,18 +2276,8 @@
         </svg>
     </button>
     <div class="modal-counter">
-        <button class="modal-nav" id="a-modalPrev">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M15 18l-6-6 6-6"/>
-            </svg>
-        </button>
         <!-- Навигация -->
         <span id="modalCounter">0 / 0</span>
-        <button class="a-modal-nav" id="a-modalNext">                    
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 18l6-6-6-6"/>
-            </svg>
-        </button>
     </div>
     <!-- Стрелка ВПЕРЕД (вправо) -->
     <button class="modal-nav" id="modalNext">                    
