@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KensoLUA - Оплата (by Kelix.me)</title>
+    <meta name="description" content="KensoUltra - профессиональный LUA скрипт для CS2">
+    <meta name="author" content="Kelix.me">
+    <meta name="theme-color" content="#d7fe7b">
+    <link rel="shortcut icon" href="favicon.ico">
+    <script src="price.js"></script>
+    
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
+        /* KetaRu ScrollBars */
+        :root{
+            --Background: #0f0f0f;
+            --Fon: #0d1218;
+            --ColorNone: #d7fe7b;
+            --ColorCursor: #95b940;
+            --Width: 2px;
+            --Border: 2px;
+            --Radius: 0px;
+        } 
+        /* Дизайн скрол-бара */
+        .element::-webkit-scrollbar{
+            background-color: var(--Background);
+            width: 0;
+        }
+        ::-webkit-scrollbar{
+            width: var(--Width);
+            height: 7px;
+            background-color: var(--Background);
+        }
+        ::-webkit-scrollbar-thumb{
+            background-color: var(--ColorNone);
+            border-radius: var(--Radius);
+            min-height: 30px;
+            width: var(--Width);
+            border: var(--Border) solid var(--Background);
+        }
+        ::-webkit-scrollbar-thumb:hover{
+            background-color: var(--ColorCursor);
+        }
+
+        body {
+            background-color: #0e0e0e;
+            color: #e0e0e0;
+            font-family: "Unbounded", sans-serif;
+            margin: 0;
+            padding: 20px;
+            padding: 0 20px;
+        }
+
+        .site-header {
+            background: rgba(14, 14, 14, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #303030;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 5px 0;
+            margin-bottom: 30px;
+        }
+
+        .header-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .site-name {
+            color: #d7fe7b;
+            margin: 0;
+            font-size: 25px;
+            font-weight: 500;
+            line-height: 25px;
+            left: -1px;
+            position: relative;
+            text-shadow: 0 0 10px rgba(215, 254, 123, 0.3);
+        }
+        .logo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .by-kelix {
+            color: #ff7777;
+            font-size: 12px;
+            opacity: 1;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #efefef;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .nav-link:hover {
+            color: #d7fe7b;
+            background: rgba(215, 254, 123, 0.1);
+        }
+
+        .buy-nav {
+            background: #353535;
+            color: #d3f979;
+        }
+
+        .buy-nav:hover {
+            background: #222222;
+            color: #f67373;
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .header-nav {
+                gap: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .nav-link {
+                font-size: 14px;
+                padding: 6px 12px;
+            }
+            .site-name {
+                font-size: 24px;
+            }
+            .logo{
+                align-items: center;
+            }
+        }
+        :root{
+            --Background: #0f0f0f;
+            --Fon: #0d1218;
+            --ColorNone: #d7fe7b;
+            --ColorCursor: #95b940;
+            --Width: 7px;
+            --Border: 2px;
+            --Radius: 0px;
+        } 
+
+        /* Основной контент */
+        .payment-container {
+            max-width: 1558px;
+            margin: 0 auto;
+            background: #0e0e0e;
+            padding: 20px;
+            border-radius: 5px;
+            border: #575757 solid 1px;
+            margin-bottom: 20px;
+        }
+
+        .payment-title {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .payment-title h1 {
+            color: #d7fe7b;
+            font-size: 28px;
+            margin-bottom: 0px;
+        }
+        
+        .payment-title p {
+            margin-top: 0px;
+            color: #888;
+            font-size: 13px;
+        }
+
+        /* Сетка кнопок - как adminlist_blocks */
+        .price-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 5px;
+            margin-bottom: 30px;
+        }
+
+        /* Стиль кнопки как карточка */
+        .price-card {
+            background: #1a1a1a;
+            border: 1px solid #303030;
+            border-radius: 5px;
+            padding: 5px 0px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-family: "Unbounded", sans-serif;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .price-card:hover {
+            border-color: #d7fe7b;
+            background: #222222;
+        }
+
+        .price-card.active {
+            border: 1px solid #d7fe7b;
+            background: linear-gradient(135deg, rgba(50, 120, 255, 0.2), rgba(106, 17, 203, 0.2));
+            box-shadow: 0 0 15px rgba(50, 120, 255, 0.2);
+        }
+
+        .price-card.active::before {
+            content: '✓';
+            position: absolute;
+            top: 0px;
+            right: 3px;
+            color: #d7fe7b;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Стили для цены со скидкой в карточке */
+        .price-amount {
+            font-size: 18px;
+            font-weight: bold;
+            color: #d7fe7b;
+        }
+        
+        .price-amount-with-discount {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .price-old {
+            font-size: 12px;
+            color: #888;
+            text-decoration: line-through;
+        }
+        
+        .price-new {
+            font-size: 18px;
+            font-weight: bold;
+            color: #d7fe7b;
+        }
+        
+        .discount-tag {
+            background: #ff4444;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 5px;
+            display: inline-block;
+        }
+
+        .price-term {
+            font-size: 12px;
+            color: #90ffff;
+            opacity: 0.9;
+        }
+
+        /* Блок с iframe */
+        .iframe-section {
+            background: #010101;
+            border: 1px solid #303030;
+            border-radius: 5px;
+            padding: 5px;
+            margin-top: 10px;
+        }
+
+        .iframe-title {
+            text-align: center;
+            margin-bottom: 7px;
+            color: #54acd2;
+            font-size: 13px;
+        }
+
+        .iframe-wrapper {
+            background: #0e0e0e;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #303030;
+            min-height: 550px;
+        }
+
+        .payment-iframe {
+            width: 100%;
+            height: 750px;
+            border: none;
+            background: #fff;
+        }
+
+        .iframe-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 750px;
+            background: #1a1a1a;
+            color: #888;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .iframe-placeholder svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .iframe-placeholder p {
+            font-size: 14px;
+        }
+
+        .iframe-placeholder small {
+            font-size: 11px;
+            color: #555;
+            margin-top: 8px;
+        }
+        
+        /* Стили для элемента скидки в сетке */
+        .discount-badge-card {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #AA1010;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 0 0 0 5px;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="header-container">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <img src="./logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
+            <div class="logo">
+                <div class="site-name">KensoUltra</div>
+                <span class="by-kelix">For nixware.cc - by Kelix.me</span>
+            </div>
+        </div>
+        <nav class="header-nav">
+            <a href="index.html" class="nav-link">На главную</a>
+        </nav>
+    </div>
+</header>
+
+<div class="payment-container">
+    <div class="payment-title">
+        <h1>Выберите товар из списка</h1>
+        <p>Кликните по карточке для выбора услуги</p>
+    </div>
+
+    <!-- Сетка кнопок как adminlist_blocks -->
+    <div class="price-buttons-grid" id="priceButtonsGrid">
+        <!-- Кнопки будут подгружены из JS -->
+        <div style="text-align: center; color: #888; grid-column: 1/-1;">Загрузка тарифов...</div>
+    </div>
+
+    <!-- Блок с iframe -->
+    <div class="iframe-section">
+        <div class="iframe-title">
+            🔒 Безопасная оплата
+            <style>
+                .card-warn{
+                    background: #660000;
+                    color: #ffffff;
+                    width: max-content;
+                    padding: 5px 10px;
+                    margin: 0 auto;
+                    margin-top: 5px;
+                    border-radius: 3px;
+                    border: 1px solid #ff0000;
+                }
+            </style>
+            <div class="card-warn">После оплаты обязателно оповестите продовца!</div>
+        </div>
+        <div class="iframe-wrapper" id="iframeWrapper">
+            <div class="iframe-placeholder" id="iframePlaceholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" stroke-linecap="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor"/>
+                </svg>
+                <p>Выберите тариф для оплаты</p>
+                <small>Нажмите на любую карточку выше</small>
+            </div>
+            <iframe id="paymentIframe" class="payment-iframe" style="display: none;" src="about:blank"></iframe>
+        </div>
+    </div>
+</div>
+
+<script>
+
+let currentSelectedIndex = null;
+
+// Функция для вычисления старой цены на основе скидки
+function getOriginalPrice(currentPrice, discountPercent) {
+    if (!discountPercent || discountPercent === 0) return null;
+    // currentPrice - это строка вида "70 Руб" или "400 РУБ"
+    const priceMatch = currentPrice.match(/(\d+)/);
+    if (!priceMatch) return null;
+    const price = parseInt(priceMatch[0]);
+    const discountedPrice = Math.round(price * (1 - discountPercent / 100));
+    return discountedPrice + ' ' + currentPrice.replace(/\d+/, '').trim();
+}
+
+// Функция отображения карточек-кнопок в сетке
+function renderPriceCards() {
+    const container = document.getElementById('priceButtonsGrid');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    pricelist.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'price-card';
+        if (currentSelectedIndex === index) {
+            card.classList.add('active');
+        }
+        
+        const discount = item.item_discount || 0;
+        const hasDiscount = discount > 0;
+        
+        // Формируем HTML для цены
+        let priceHtml = '';
+        if (hasDiscount) {
+            const originalPrice = getOriginalPrice(item.item_price, discount);
+            priceHtml = `
+                <div class="price-amount-with-discount">
+                    <span class="price-old">${item.item_price}</span>
+                    </div>
+                <span class="price-new">${originalPrice || item.item_price}</span>
+            `;
+        } else {
+            priceHtml = `<div class="price-amount">${item.item_price}</div>`;
+        }
+        
+        card.innerHTML = `
+            ${hasDiscount ? `<div class="discount-badge-card">-${discount}%</div>` : ''}
+            ${priceHtml}
+            <div class="price-term">${item.item_term}</div>
+        `;
+        
+        card.addEventListener('click', () => selectTariff(index));
+        container.appendChild(card);
+    });
+}
+
+// Функция выбора тарифа
+function selectTariff(index) {
+    if (currentSelectedIndex === index) return;
+    
+    currentSelectedIndex = index;
+    
+    // Обновляем активные карточки
+    const cards = document.querySelectorAll('.price-card');
+    cards.forEach((card, i) => {
+        if (i === index) {
+            card.classList.add('active');
+        } else {
+            card.classList.remove('active');
+        }
+    });
+    
+    // Загружаем iframe
+    loadIframe(pricelist[index].pay_link);
+}
+
+// Функция загрузки iframe
+function loadIframe(url) {
+    const iframe = document.getElementById('paymentIframe');
+    const placeholder = document.getElementById('iframePlaceholder');
+    
+    if (!iframe || !placeholder) return;
+    
+    iframe.style.display = 'block';
+    placeholder.style.display = 'none';
+    iframe.src = url;
+}
+
+// При загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    renderPriceCards();
+    // Автоматически выбираем первый тариф
+    if (pricelist.length > 0) {
+        selectTariff(0);
+    }
+});
+</script>
+
+</body>
+</html>
