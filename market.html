@@ -207,7 +207,6 @@
             text-align: center;
             font-family: "Unbounded", sans-serif;
             position: relative;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -227,7 +226,7 @@
         .price-card.active::before {
             content: '✓';
             position: absolute;
-            bottom: 4px;
+            bottom: 3px;
             right: 3px;
             background: #d7fe7b;
             color: #0e0e0e;
@@ -375,22 +374,23 @@
             cursor: not-allowed;
             /* filter: grayscale(1); */
             position: relative;
-            overflow: hidden;
+            /* overflow: hidden; */
             background: rgb(8, 8, 8);
             border-color: #303030;
         }
         
-        .disabled-badge {
-            background: #AA1010;
+        .disabled-method::after {
+            content: 'СКОРО';
+            background: #3b3b3b;
             color: white;
-            font-size: 8px;
+            font-size: 10px;
             position: absolute;
-            right: 0;
-            top: 0;
+            right: -3px;
+            top: -3px;
             font-weight: bold;
             font-weight: 500;
-            padding: 3px 8px;
-            border-radius: 0 0 0 5px;
+            padding: 2px 5px;
+            border-radius: 3px;
             /* margin-left: 8px; */
             white-space: nowrap;
         }
@@ -486,17 +486,27 @@
             color: #555;
             margin-top: 8px;
         }
-        
+        .discount-badge-card::before {
+            content: '';
+            margin-right: 1px;
+            border-radius: 5px;
+            display: inline-block;
+            background: #fff;
+            height: 2px;
+            width: 6px;
+        }
         .discount-badge-card {
+            align-items: center;
+            display: flex;
             position: absolute;
-            top: 0;
-            right: 0;
+            top: -3px;
+            right: -3px;
             background: #AA1010;
             color: white;
             font-size: 10px;
-            font-weight: bold;
-            padding: 2px 8px;
-            border-radius: 0 0 0 5px;
+            font-weight: 500;
+            padding: 2px 5px;
+            border-radius: 3px;
             z-index: 2;
         }
     </style>
@@ -529,10 +539,10 @@
         <div style="text-align: center; color: #888; grid-column: 1/-1;">Загрузка тарифов...</div>
     </div>
 
-    <!-- НОВЫЙ БЛОК: СПОСОБЫ ОПЛАТЫ (CloudTips + Ozon Банк) -->
+    <!-- НОВЫЙ БЛОК: СПОСОБЫ ОПЛАТЫ (CloudTips + Ozon Банк + YooMoney) -->
     <div class="payment-methods-section">
         <div class="methods-title">
-            Способ оплаты СБП
+            Способ оплаты
         </div>
         <div class="methods-grid" id="paymentMethodsGrid">
             <!-- динамически через js, но также можно прописать резерв -->
@@ -563,11 +573,17 @@
 <script>
 // Данные из price.js (ожидаем глобальный pricelist)
 let currentSelectedIndex = null;
-let currentPaymentMethod = 'cloudtips';   // 'cloudtips' или 'ozonbank'
-const OZON_COMMON_LINK = 'https://finance.ozon.ru/apps/sbp/ozonbankpay/000019cbd69-fa97-748c-98dc-bdafc336be0c ';  // общая ссылка для Ozon (если доступна, но у нас недоступно)
+let currentPaymentMethod = 'cloudtips';   // 'cloudtips', 'ozonbank' или 'yoomoney'
+
+// Настройки доступности и ссылки для Ozon
+const OZON_COMMON_LINK = 'https://finance.ozon.ru/apps/sbp/ozonbankpay/000019cbd69-fa97-748c-98dc-bdafc336be0c';
 const OZON_UNAVAILABLE = true;  // true = временно недоступно, отключаем выбор и показываем плашку
 
-// Данные методов оплаты с иконками (используем png из условия)
+// Настройки для YooMoney (аналог Ozon)
+const YOOMONEY_COMMON_LINK = 'https://yoomoney.ru/transfer/quickpay?requestId=2b7a8f3c-9d4e-4a1f-8c2d-5e6f7g8h9i0j'; // Универсальная ссылка на перевод/кошелек
+const YOOMONEY_UNAVAILABLE = true; // Доступен по умолчанию (можно выключить при необходимости)
+
+// Данные методов оплаты с иконками
 const paymentMethods = [
     {
         id: 'cloudtips',
@@ -577,7 +593,9 @@ const paymentMethods = [
         getLink: (selectedTariff) => {
             if (!selectedTariff) return '#';
             return selectedTariff.pay_link;
-        }
+        },
+        warningText: 'После оплаты обязательно оповестите продавца!',
+        warningStyle: { background: '#660000', border: '1px solid #ff7b7b', color: '#ffffff' }
     },
     {
         id: 'ozonbank',
@@ -585,7 +603,17 @@ const paymentMethods = [
         icon: 'ozonbank.png',
         available: !OZON_UNAVAILABLE,   // false = недоступно
         getLink: () => OZON_COMMON_LINK,
-        unavailableMessage: 'Недоступно'
+        warningText: '💰 Сумму нужно указать вручную<br>После оплаты обязательно оповестите продавца!',
+        warningStyle: { background: '#226622', border: '1px solid #d7fe7b', color: '#f0f0f0' }
+    },
+    {
+        id: 'yoomoney',
+        name: 'YooMoney',
+        icon: 'yoomoney.png',
+        available: !YOOMONEY_UNAVAILABLE,
+        getLink: () => YOOMONEY_COMMON_LINK,
+        warningText: '💰 Укажите точную сумму к оплате вручную<br>После оплаты обязательно оповестите продавца!',
+        warningStyle: { background: '#226699', border: '1px solid #88ddff', color: '#ffffff' }
     }
 ];
 
@@ -634,7 +662,7 @@ function renderPriceCards() {
         }
         
         card.innerHTML = `
-            ${hasDiscount ? `<div class="discount-badge-card">-${discount}%</div>` : ''}
+            ${hasDiscount ? `<div class="discount-badge-card">${discount}%</div>` : ''}
             ${priceHtml}
             <div class="price-term">${item.item_term}</div>
         `;
@@ -675,7 +703,10 @@ function getPaymentUrlByMethod() {
         return selectedTariff.pay_link;
     } 
     else if (method.id === 'ozonbank') {
-        // для озона единая ссылка (если доступна)
+        return method.getLink(selectedTariff);
+    }
+    else if (method.id === 'yoomoney') {
+        // Для YooMoney также единая ссылка (можно передавать сумму, но здесь просто открываем форму перевода)
         return method.getLink(selectedTariff);
     }
     return null;
@@ -709,7 +740,7 @@ function updateIframeByCurrentMethod() {
         return;
     }
     
-    // Если метод недоступен (Ozon временно недоступен)
+    // Если метод недоступен (Ozon или YooMoney выключены)
     if (!isMethodAvailable) {
         iframe.style.display = 'none';
         placeholder.style.display = 'flex';
@@ -752,18 +783,18 @@ function updateWarningText(method, isAvailable) {
         warningDiv.innerHTML = `⚠️ ${method.name} временно недоступен. Выберите другой способ.`;
         warningDiv.style.background = "#662200";
         warningDiv.style.border = "1px solid #ff8844";
+        warningDiv.style.color = "#ffffff";
         return;
     }
     
-    if (method.id === 'ozonbank') {
-        // для озона (если когда-либо включится) специальная плашка:
-        warningDiv.innerHTML = `💰 Сумму нужно указать вручную<br>После оплаты обязательно оповестите продавца!`;
-        warningDiv.style.background = "#226622";
-        warningDiv.style.border = "1px solid #d7fe7b";
-        warningDiv.style.color = "#f0f0f0";
-    } 
-    else {
-        // CloudTips и другие стандартные
+    // Если метод доступен, берем стандартные настройки из массива
+    if (method && method.warningText) {
+        warningDiv.innerHTML = method.warningText;
+        warningDiv.style.background = method.warningStyle.background;
+        warningDiv.style.border = method.warningStyle.border;
+        warningDiv.style.color = method.warningStyle.color;
+    } else {
+        // fallback
         warningDiv.innerHTML = `После оплаты обязательно оповестите продавца!`;
         warningDiv.style.background = "#660000";
         warningDiv.style.border = "1px solid #ff7b7b";
@@ -771,7 +802,7 @@ function updateWarningText(method, isAvailable) {
     }
 }
 
-// Отрисовка кнопок способов оплаты (cloudtips.png / ozonbank.png)
+// Отрисовка кнопок способов оплаты (cloudtips.png / ozonbank.png / yoomoney.png)
 function renderPaymentMethods() {
     const container = document.getElementById('paymentMethodsGrid');
     if (!container) return;
@@ -787,16 +818,10 @@ function renderPaymentMethods() {
             methodCard.classList.add('active-method');
         }
         
-        const iconPath = method.icon; // cloudtips.png / ozonbank.png
-        // если иконка не загрузится — будет альт
-        let availabilityHtml = '';
-        if (!method.available) {
-            availabilityHtml = `<span class="disabled-badge">${method.unavailableMessage || 'Недоступно'}</span>`;
-        }
+        const iconPath = method.icon; // cloudtips.png / ozonbank.png / yoomoney.png
         
         methodCard.innerHTML = `
             <img class="method-icon ${method.name}" src="${iconPath}" alt="${method.name}" onerror="this.style.display='none'">
-            ${availabilityHtml}
         `;
         
         if (method.available) {
@@ -821,6 +846,8 @@ function renderPaymentMethods() {
                     warnDiv.style.background = "#882222";
                     setTimeout(() => {
                         if (currentPaymentMethod === 'cloudtips') updateWarningText(paymentMethods.find(m => m.id === 'cloudtips'), true);
+                        else if (currentPaymentMethod === 'ozonbank') updateWarningText(paymentMethods.find(m => m.id === 'ozonbank'), true);
+                        else if (currentPaymentMethod === 'yoomoney') updateWarningText(paymentMethods.find(m => m.id === 'yoomoney'), true);
                         else updateWarningText(paymentMethods.find(m => m.id === currentPaymentMethod), true);
                     }, 2000);
                 }
@@ -836,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Проверяем наличие pricelist из price.js
     if (typeof window.pricelist === 'undefined') {
         console.warn("price.js не загружен? создаём заглушку");
-
+        // Для демонстрации можно создать тестовые данные, но оставим как есть
     }
     
     // отобразить методы оплаты
@@ -856,7 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(placeholderDiv) placeholderDiv.innerHTML = `<p>⚠️ Нет доступных тарифов</p>`;
     }
     
-    // доп. защита: если метод озона изначально недоступен, предупреждение при клике уже обработано
+    // доп. защита: если метод озона или yoomoney изначально недоступен, предупреждение при клике уже обработано
 });
 </script>
 
