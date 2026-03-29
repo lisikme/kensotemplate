@@ -36,7 +36,7 @@ pricelist = [
         pay_link: 'https://pay.cloudtips.ru/p/8c833222',
     },
     {   
-        item_discount: 0,
+        item_discount: -1,
         item_price: 'Пожертвование',
         item_term: 'На развитие проекта',
         pay_link: 'https://pay.cloudtips.ru/p/c6fe8558',

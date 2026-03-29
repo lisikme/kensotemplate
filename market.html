@@ -342,19 +342,18 @@
         .method-card.active-method::after {
             content: '✓';
             position: absolute;
-            top: -8px;
-            right: -5px;
+            bottom: 3px;
+            right: 3px;
             background: #d7fe7b;
             color: #0e0e0e;
             font-size: 12px;
             font-weight: bold;
-            width: 20px;
-            height: 20px;
-            border-radius: 20px;
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid #0e0e0e;
         }
         
         .method-icon {
@@ -500,21 +499,6 @@
             border-radius: 0 0 0 5px;
             z-index: 2;
         }
-        
-        @media (max-width: 600px) {
-            .method-card {
-                padding: 8px 16px;
-                min-width: 130px;
-            }
-            .method-icon {
-                width: 26px;
-                height: 26px;
-            }
-            .card-warn {
-                font-size: 10px;
-                max-width: 95%;
-            }
-        }
     </style>
 </head>
 <body>
@@ -548,7 +532,7 @@
     <!-- НОВЫЙ БЛОК: СПОСОБЫ ОПЛАТЫ (CloudTips + Ozon Банк) -->
     <div class="payment-methods-section">
         <div class="methods-title">
-            💳 Способ оплаты
+            Способ оплаты СБП
         </div>
         <div class="methods-grid" id="paymentMethodsGrid">
             <!-- динамически через js, но также можно прописать резерв -->

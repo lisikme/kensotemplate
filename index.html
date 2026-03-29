@@ -1475,8 +1475,13 @@
                         return discountedPrice + ' ' + currentPrice.replace(/\d+/, '').trim();
                     }
                     
-                    // Добавляем строки из pricelist
+                    // Добавляем строки из pricelist, но пропускаем те, у которых item_discount === -1
                     pricelist.forEach(item => {
+                        // Скрываем лот, если скидка равна -1
+                        if (item.item_discount === -1) {
+                            return; // пропускаем этот элемент, не добавляем в таблицу
+                        }
+                        
                         const row = document.createElement('tr');
                         row.className = 'price-row';
                         
@@ -1527,7 +1532,7 @@
                     updateBuyButton(0);
                 });
             </script>
-            <table>
+             <table>
                 <thead>
                     <tr>
                         <th><span>СТОИМОСТЬ</span></th>
@@ -1536,7 +1541,7 @@
                 </thead>
                 <tbody>
                 </tbody>
-            </table>
+             </table>
         </div>
 
         <div class="price-note">
