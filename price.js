@@ -1,6 +1,6 @@
 pricelist = [
     {
-        item_discount: 0,
+        item_discount: 09,
         item_price: '70 Руб',
         item_term: '2 нед. (14д)',
         pay_link: 'https://pay.cloudtips.ru/p/d97e09bd',
