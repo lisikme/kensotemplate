@@ -1521,16 +1521,6 @@
                     });
                 }
 
-                // Функция для обновления кнопки покупки (если нужно динамически менять ссылку)
-                function updateBuyButton(priceIndex = 0) {
-                    const buyButtons = document.querySelectorAll('.action-btn.btn-buy, .buy-nav');
-                    if (buyButtons.length && pricelist[priceIndex]) {
-                        buyButtons.forEach(btn => {
-                            btn.setAttribute('href', pricelist[priceIndex].pay_link);
-                        });
-                    }
-                }
-
                 // Запускаем отображение при загрузке страницы
                 document.addEventListener('DOMContentLoaded', () => {
                     renderPricingTable();
