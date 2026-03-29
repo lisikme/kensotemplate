@@ -104,6 +104,7 @@
 
         .nav-link {
             color: #efefef;
+            border: 1px solid #ffffff10;
             text-decoration: none;
             font-weight: 500;
             font-size: 16px;
@@ -196,10 +197,11 @@
 
         /* Стиль кнопки как карточка */
         .price-card {
-            background: #1a1a1a;
+            background: #010101;
             border: 1px solid #303030;
             border-radius: 5px;
             padding: 5px 0px;
+            min-height: 58px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-align: center;
@@ -225,11 +227,18 @@
         .price-card.active::before {
             content: '✓';
             position: absolute;
-            top: 0px;
+            bottom: 4px;
             right: 3px;
-            color: #d7fe7b;
+            background: #d7fe7b;
+            color: #0e0e0e;
             font-size: 12px;
             font-weight: bold;
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* Стили для цены со скидкой в карточке */
@@ -276,7 +285,150 @@
             opacity: 0.9;
         }
 
-        /* Блок с iframe */
+        /* ========= НОВЫЙ БЛОК: СПОСОБЫ ОПЛАТЫ ========= */
+        .payment-methods-section {
+            background: #0a0a0a;
+            border-radius: 5px;
+            padding: 10px 15px 15px 15px;
+            border: 1px solid #2a2a2a;
+            background: #010101;
+        }
+        
+        .methods-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 500;
+            color: #d7fe7b;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .methods-grid {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .method-card {
+            background: #141414;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 160px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .method-card:hover:not(.disabled-method) {
+            border-color: #d7fe7b;
+            background: #1f1f1f;
+        }
+        
+        .method-card.active-method {
+            border: 1px solid #d7fe7b;
+            background: #202020;
+        }
+        
+        .method-card.active-method::after {
+            content: '✓';
+            position: absolute;
+            top: -8px;
+            right: -5px;
+            background: #d7fe7b;
+            color: #0e0e0e;
+            font-size: 12px;
+            font-weight: bold;
+            width: 20px;
+            height: 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #0e0e0e;
+        }
+        
+        .method-icon {
+            width: 120px;
+            object-fit: contain;
+            border-radius: 6px;
+        }
+        
+        .method-name {
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: 0.3px;
+        }
+        
+        .disabled-method>img {
+            filter: grayscale(0.7);
+        }
+        .disabled-method {
+            cursor: not-allowed;
+            /* filter: grayscale(1); */
+            position: relative;
+            overflow: hidden;
+            background: rgb(8, 8, 8);
+            border-color: #303030;
+        }
+        
+        .disabled-badge {
+            background: #AA1010;
+            color: white;
+            font-size: 8px;
+            position: absolute;
+            right: 0;
+            top: 0;
+            font-weight: bold;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 0 0 0 5px;
+            /* margin-left: 8px; */
+            white-space: nowrap;
+        }
+        
+        .method-status {
+            font-size: 11px;
+            color: #ff8888;
+            margin-left: 6px;
+        }
+        
+        /* обновленная плашка после оплаты (две строки) */
+        .card-warn {
+            background: #660000;
+            color: #ffffff;
+            width: max-content;
+            padding: 5px 12px;
+            margin: 0 auto;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ff7b7b;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.4;
+        }
+        
+        .payment-note {
+            background: #2a2a2a;
+            border-left: 3px solid #d7fe7b;
+            padding: 6px 12px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: #ddd;
+            text-align: center;
+        }
+        
+        /* iframe блок */
         .iframe-section {
             background: #010101;
             border: 1px solid #303030;
@@ -336,7 +488,6 @@
             margin-top: 8px;
         }
         
-        /* Стили для элемента скидки в сетке */
         .discount-badge-card {
             position: absolute;
             top: 0;
@@ -349,6 +500,21 @@
             border-radius: 0 0 0 5px;
             z-index: 2;
         }
+        
+        @media (max-width: 600px) {
+            .method-card {
+                padding: 8px 16px;
+                min-width: 130px;
+            }
+            .method-icon {
+                width: 26px;
+                height: 26px;
+            }
+            .card-warn {
+                font-size: 10px;
+                max-width: 95%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -356,7 +522,7 @@
 <header class="site-header">
     <div class="header-container">
         <div style="display: flex; gap: 8px; align-items: center;">
-            <img src="./logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
+            <img src="./logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="logo">
             <div class="logo">
                 <div class="site-name">KensoUltra</div>
                 <span class="by-kelix">For nixware.cc - by Kelix.me</span>
@@ -374,29 +540,27 @@
         <p>Кликните по карточке для выбора услуги</p>
     </div>
 
-    <!-- Сетка кнопок как adminlist_blocks -->
+    <!-- Сетка тарифов -->
     <div class="price-buttons-grid" id="priceButtonsGrid">
-        <!-- Кнопки будут подгружены из JS -->
         <div style="text-align: center; color: #888; grid-column: 1/-1;">Загрузка тарифов...</div>
     </div>
 
-    <!-- Блок с iframe -->
+    <!-- НОВЫЙ БЛОК: СПОСОБЫ ОПЛАТЫ (CloudTips + Ozon Банк) -->
+    <div class="payment-methods-section">
+        <div class="methods-title">
+            💳 Способ оплаты
+        </div>
+        <div class="methods-grid" id="paymentMethodsGrid">
+            <!-- динамически через js, но также можно прописать резерв -->
+        </div>
+    </div>
+
+    <!-- Блок с iframe и плашками -->
     <div class="iframe-section">
         <div class="iframe-title">
             🔒 Безопасная оплата
-            <style>
-                .card-warn{
-                    background: #660000;
-                    color: #ffffff;
-                    width: max-content;
-                    padding: 5px 10px;
-                    margin: 0 auto;
-                    margin-top: 5px;
-                    border-radius: 3px;
-                    border: 1px solid #ff0000;
-                }
-            </style>
-            <div class="card-warn">После оплаты обязателно оповестите продовца!</div>
+            <!-- Динамическая плашка будет здесь обновляться в зависимости от метода -->
+            <div id="dynamicPaymentWarning" class="card-warn">После оплаты обязательно оповестите продавца!</div>
         </div>
         <div class="iframe-wrapper" id="iframeWrapper">
             <div class="iframe-placeholder" id="iframePlaceholder">
@@ -413,13 +577,37 @@
 </div>
 
 <script>
-
+// Данные из price.js (ожидаем глобальный pricelist)
 let currentSelectedIndex = null;
+let currentPaymentMethod = 'cloudtips';   // 'cloudtips' или 'ozonbank'
+const OZON_COMMON_LINK = 'https://finance.ozon.ru/apps/sbp/ozonbankpay/000019cbd69-fa97-748c-98dc-bdafc336be0c ';  // общая ссылка для Ozon (если доступна, но у нас недоступно)
+const OZON_UNAVAILABLE = true;  // true = временно недоступно, отключаем выбор и показываем плашку
 
-// Функция для вычисления старой цены на основе скидки
+// Данные методов оплаты с иконками (используем png из условия)
+const paymentMethods = [
+    {
+        id: 'cloudtips',
+        name: 'CloudTips',
+        icon: 'cloudtips.png',
+        available: true,
+        getLink: (selectedTariff) => {
+            if (!selectedTariff) return '#';
+            return selectedTariff.pay_link;
+        }
+    },
+    {
+        id: 'ozonbank',
+        name: 'Ozon Банк',
+        icon: 'ozonbank.png',
+        available: !OZON_UNAVAILABLE,   // false = недоступно
+        getLink: () => OZON_COMMON_LINK,
+        unavailableMessage: 'Недоступно'
+    }
+];
+
+// Функция для вычисления старой цены
 function getOriginalPrice(currentPrice, discountPercent) {
     if (!discountPercent || discountPercent === 0) return null;
-    // currentPrice - это строка вида "70 Руб" или "400 РУБ"
     const priceMatch = currentPrice.match(/(\d+)/);
     if (!priceMatch) return null;
     const price = parseInt(priceMatch[0]);
@@ -427,14 +615,18 @@ function getOriginalPrice(currentPrice, discountPercent) {
     return discountedPrice + ' ' + currentPrice.replace(/\d+/, '').trim();
 }
 
-// Функция отображения карточек-кнопок в сетке
+// Отображение карточек тарифов
 function renderPriceCards() {
     const container = document.getElementById('priceButtonsGrid');
     if (!container) return;
     
     container.innerHTML = '';
+    if (!window.pricelist || !window.pricelist.length) {
+        container.innerHTML = '<div style="text-align: center; color: #888; grid-column: 1/-1;">Ошибка загрузки тарифов</div>';
+        return;
+    }
     
-    pricelist.forEach((item, index) => {
+    window.pricelist.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'price-card';
         if (currentSelectedIndex === index) {
@@ -444,14 +636,13 @@ function renderPriceCards() {
         const discount = item.item_discount || 0;
         const hasDiscount = discount > 0;
         
-        // Формируем HTML для цены
         let priceHtml = '';
         if (hasDiscount) {
             const originalPrice = getOriginalPrice(item.item_price, discount);
             priceHtml = `
                 <div class="price-amount-with-discount">
                     <span class="price-old">${item.item_price}</span>
-                    </div>
+                </div>
                 <span class="price-new">${originalPrice || item.item_price}</span>
             `;
         } else {
@@ -469,45 +660,219 @@ function renderPriceCards() {
     });
 }
 
-// Функция выбора тарифа
+// Выбор тарифа (обновляем iframe с учётом текущего метода оплаты)
 function selectTariff(index) {
     if (currentSelectedIndex === index) return;
-    
     currentSelectedIndex = index;
     
-    // Обновляем активные карточки
+    // обновляем активный класс карточек
     const cards = document.querySelectorAll('.price-card');
     cards.forEach((card, i) => {
-        if (i === index) {
-            card.classList.add('active');
-        } else {
-            card.classList.remove('active');
-        }
+        if (i === index) card.classList.add('active');
+        else card.classList.remove('active');
     });
     
-    // Загружаем iframe
-    loadIframe(pricelist[index].pay_link);
+    // перезагружаем iframe, используя текущий способ оплаты
+    updateIframeByCurrentMethod();
 }
 
-// Функция загрузки iframe
-function loadIframe(url) {
+// Получить ссылку в зависимости от выбранного тарифа и метода
+function getPaymentUrlByMethod() {
+    if (currentSelectedIndex === null || currentSelectedIndex === undefined) return null;
+    if (!window.pricelist || !window.pricelist[currentSelectedIndex]) return null;
+    
+    const selectedTariff = window.pricelist[currentSelectedIndex];
+    const method = paymentMethods.find(m => m.id === currentPaymentMethod);
+    
+    if (!method) return null;
+    if (!method.available) return null;  // если недоступно – не даём ссылку
+    
+    if (method.id === 'cloudtips') {
+        return selectedTariff.pay_link;
+    } 
+    else if (method.id === 'ozonbank') {
+        // для озона единая ссылка (если доступна)
+        return method.getLink(selectedTariff);
+    }
+    return null;
+}
+
+// Обновить iframe и плашки (предупреждения)
+function updateIframeByCurrentMethod() {
     const iframe = document.getElementById('paymentIframe');
     const placeholder = document.getElementById('iframePlaceholder');
+    const warningDiv = document.getElementById('dynamicPaymentWarning');
     
     if (!iframe || !placeholder) return;
     
+    const method = paymentMethods.find(m => m.id === currentPaymentMethod);
+    const isMethodAvailable = method ? method.available : false;
+    
+    // Если нет выбранного тарифа
+    if (currentSelectedIndex === null) {
+        iframe.style.display = 'none';
+        placeholder.style.display = 'flex';
+        placeholder.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" stroke-linecap="round"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor"/>
+            </svg>
+            <p>Выберите тариф для оплаты</p>
+            <small>Нажмите на любую карточку выше</small>
+        `;
+        // обновляем текст плашки в зависимости от метода
+        updateWarningText(method, isMethodAvailable);
+        return;
+    }
+    
+    // Если метод недоступен (Ozon временно недоступен)
+    if (!isMethodAvailable) {
+        iframe.style.display = 'none';
+        placeholder.style.display = 'flex';
+        placeholder.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ff8888" stroke-width="1.5">
+                <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor"/>
+                <circle cx="12" cy="12" r="9" stroke="currentColor"/>
+            </svg>
+            <p style="color:#ff9e9e;">⚠️ ${method.name} временно недоступен</p>
+            <small>Пожалуйста, выберите CloudTips или другой способ оплаты</small>
+        `;
+        updateWarningText(method, false);
+        return;
+    }
+    
+    // Если метод доступен и выбран тариф
+    const paymentUrl = getPaymentUrlByMethod();
+    if (!paymentUrl) {
+        iframe.style.display = 'none';
+        placeholder.style.display = 'flex';
+        placeholder.innerHTML = `<p>❌ Не удалось сформировать ссылку оплаты</p>`;
+        return;
+    }
+    
+    // показываем iframe с платежкой
     iframe.style.display = 'block';
     placeholder.style.display = 'none';
-    iframe.src = url;
+    iframe.src = paymentUrl;
+    
+    // обновляем текст плашки (после оплаты)
+    updateWarningText(method, true);
 }
 
-// При загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    renderPriceCards();
-    // Автоматически выбираем первый тариф
-    if (pricelist.length > 0) {
-        selectTariff(0);
+// Обновление текста предупреждения (под заголовком iframe)
+function updateWarningText(method, isAvailable) {
+    const warningDiv = document.getElementById('dynamicPaymentWarning');
+    if (!warningDiv) return;
+    
+    if (!isAvailable) {
+        warningDiv.innerHTML = `⚠️ ${method.name} временно недоступен. Выберите другой способ.`;
+        warningDiv.style.background = "#662200";
+        warningDiv.style.border = "1px solid #ff8844";
+        return;
     }
+    
+    if (method.id === 'ozonbank') {
+        // для озона (если когда-либо включится) специальная плашка:
+        warningDiv.innerHTML = `💰 Сумму нужно указать вручную<br>После оплаты обязательно оповестите продавца!`;
+        warningDiv.style.background = "#226622";
+        warningDiv.style.border = "1px solid #d7fe7b";
+        warningDiv.style.color = "#f0f0f0";
+    } 
+    else {
+        // CloudTips и другие стандартные
+        warningDiv.innerHTML = `После оплаты обязательно оповестите продавца!`;
+        warningDiv.style.background = "#660000";
+        warningDiv.style.border = "1px solid #ff7b7b";
+        warningDiv.style.color = "#ffffff";
+    }
+}
+
+// Отрисовка кнопок способов оплаты (cloudtips.png / ozonbank.png)
+function renderPaymentMethods() {
+    const container = document.getElementById('paymentMethodsGrid');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    paymentMethods.forEach(method => {
+        const methodCard = document.createElement('div');
+        methodCard.className = 'method-card';
+        if (!method.available) {
+            methodCard.classList.add('disabled-method');
+        }
+        if (currentPaymentMethod === method.id && method.available) {
+            methodCard.classList.add('active-method');
+        }
+        
+        const iconPath = method.icon; // cloudtips.png / ozonbank.png
+        // если иконка не загрузится — будет альт
+        let availabilityHtml = '';
+        if (!method.available) {
+            availabilityHtml = `<span class="disabled-badge">${method.unavailableMessage || 'Недоступно'}</span>`;
+        }
+        
+        methodCard.innerHTML = `
+            <img class="method-icon ${method.name}" src="${iconPath}" alt="${method.name}" onerror="this.style.display='none'">
+            ${availabilityHtml}
+        `;
+        
+        if (method.available) {
+            methodCard.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (currentPaymentMethod === method.id) return;
+                currentPaymentMethod = method.id;
+                // обновляем активный класс у методов
+                document.querySelectorAll('.method-card').forEach(card => card.classList.remove('active-method'));
+                methodCard.classList.add('active-method');
+                // перезагружаем iframe с новым методом (если тариф выбран)
+                updateIframeByCurrentMethod();
+            });
+        } else {
+            methodCard.style.cursor = 'not-allowed';
+            methodCard.addEventListener('click', (e) => {
+                e.preventDefault();
+                // легкий нотификационный эффект
+                const warnDiv = document.getElementById('dynamicPaymentWarning');
+                if (warnDiv) {
+                    warnDiv.innerHTML = `${method.name} временно недоступен. Используйте CloudTips.`;
+                    warnDiv.style.background = "#882222";
+                    setTimeout(() => {
+                        if (currentPaymentMethod === 'cloudtips') updateWarningText(paymentMethods.find(m => m.id === 'cloudtips'), true);
+                        else updateWarningText(paymentMethods.find(m => m.id === currentPaymentMethod), true);
+                    }, 2000);
+                }
+            });
+        }
+        
+        container.appendChild(methodCard);
+    });
+}
+
+// При загрузке страницы инициализация
+document.addEventListener('DOMContentLoaded', () => {
+    // Проверяем наличие pricelist из price.js
+    if (typeof window.pricelist === 'undefined') {
+        console.warn("price.js не загружен? создаём заглушку");
+
+    }
+    
+    // отобразить методы оплаты
+    renderPaymentMethods();
+    // отрисовать тарифы
+    renderPriceCards();
+    
+    // если есть тарифы, автоматически выбираем первый
+    if (window.pricelist && window.pricelist.length > 0) {
+        currentSelectedIndex = 0;
+        // визуально выделим карточку
+        renderPriceCards(); // перерисовка с активным первым
+        // обновляем iframe с учётом метода по умолчанию (cloudtips)
+        updateIframeByCurrentMethod();
+    } else {
+        const placeholderDiv = document.getElementById('iframePlaceholder');
+        if(placeholderDiv) placeholderDiv.innerHTML = `<p>⚠️ Нет доступных тарифов</p>`;
+    }
+    
+    // доп. защита: если метод озона изначально недоступен, предупреждение при клике уже обработано
 });
 </script>
 
