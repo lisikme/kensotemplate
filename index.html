@@ -194,7 +194,7 @@
             overflow: auto;
         }
         #adminListBlocks {
-            padding: 10px 10px;
+            padding: 5px;
             margin: 0px;
             overflow: auto;
             /* height: 720px; */
@@ -841,7 +841,7 @@
         .adminlist_blocks {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 5px;
+            gap: 3px;
             margin-bottom: 30px;
         }
         .admin_card {
@@ -1432,13 +1432,6 @@
 
 <div class="product-table">
     <div class="table-container">
-        <div class="product-header-text">
-            <p class="product-discord">
-                <span class="discord-label">Discord сервер: </span>
-                <a href="https://discord.gg/5BM4XD3qxM" class="contact-link">discord.gg/5BM4XD3qxM</a>
-            </p>
-        </div>
-
         <style>
             .payment-methods-section{
                 /* display: grid;
@@ -1458,7 +1451,7 @@
             }
             .subscription-header{
                 border: 1px solid #161616 !important;
-                background: #0e0e0e !important;
+                background: #080808 !important;
             }
             .payment-method{
                 height: 30px;
@@ -1498,9 +1491,26 @@
                 /* margin-left: 8px; */
                 white-space: nowrap;
             }
+            .description-main{
+                font-size: 10px !important;
+            }
+            .product-description{
+                max-width: 398px;
+                padding: 0px !important;
+                position: relative;
+                margin: 0 auto !important;
+                border: 1px solid #303030 !important;
+                margin-bottom: 5px !important;
+            }
         </style>
+        
+        <div class="product-description">
+            <div class="dropdown-title">✨ Универсальный скрипт для CS2 ✨</div>
+            <p class="description-sub">Это не просто скрипт, это комплексное решение, которое раскроет весь потенциал игры, предоставит тебе невероятные визуальные и игровые преимущества, а также полный контроль над процессом.</p>
+        </div>
+
         <div class="subscription-header">
-            <h2 class="subscription-title">Гибкая система оплаты</h2>
+            <div class="dropdown-title">💸 Гибкая система оплаты 💸</div>
             <div class="payment-methods-section">
                 <div class="payment-method active-method">
                     <img src="cloudtips.svg" alt="">
@@ -1516,6 +1526,7 @@
         </div>
 
         <div class="pricing-table">
+            <div class="dropdown-title">📦 Список товаров 📦</div>
             <script>
                 // price.js - данные о ценах и функция отображения
 
@@ -1644,8 +1655,9 @@
             }
             .dropdown-box {
                 display: grid;
+                background: #080808;
                 grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-                gap: 2px;
+                gap: 3px;
             }
             .dropdown-menu {
                 justify-items: center;
@@ -1679,6 +1691,7 @@
                 text-decoration: none;
                 display: flex;
                 align-items: center;
+                border-radius: 3px;
                 gap: 10px;
                 font-size: 10px;
                 transition: all 0.3s;
@@ -1725,12 +1738,13 @@
 
             .dropdown-title {
                 background: #000;
-                padding: 5px 0;
-                font-size: 10px;
+                padding: 4px 0 !important;
+                font-size: 10px !important;
                 text-align: center;
+                font-weight: 400;
                 color: #bebebe;
-                text-transform: uppercase;
-                letter-spacing: 1px;
+                /* text-transform: uppercase; */
+                /* letter-spacing: 1px; */
             }
 
             .dropdown-box {
@@ -1948,6 +1962,7 @@
 
     <div class="dropdown-wrapper2" id="featuresMenu">
         <div class="dropdown-content">
+            <div class="dropdown-title">Функционал LUA скрипта</div>
             <div class="features-list">
                 <div class="feature-category">
                     <h4>Утилиты</h4>
@@ -2174,6 +2189,30 @@
             </div>
         </div>
     </div>
+    <div class="scroll-container">
+        <div class="adminlist_title" id="adminListTitle"></div>
+        <style>
+            .scroll-container{
+                max-width: 398px !important;
+                border: 1px solid #303030;
+                background: #080808 !important;
+            }
+            #adminListTitle{
+                font-size: 10px;
+                padding: 4px 0px;
+                font-weight: 400;
+                border-bottom: 1px solid #303030 !important;
+                background: #000000;
+                margin: 0;
+            }
+        </style>
+        <div class="scroll-gradient top" id="gradientTop"></div>
+        <div class="scroll-gradient bottom" id="gradientBottom"></div>
+
+        <div class="scroll-arrow up hidden" id="scrollUp">Scroll up</div>
+        <div class="adminlist_blocks" id="adminListBlocks"></div>
+        <div class="scroll-arrow down" id="scrollDown">Scroll down</div>
+    </div>
 
         <style>
             .product-actions {
@@ -2212,20 +2251,25 @@
 
             .dropdown-title {
                 background: #000;
-                padding: 5px 0;
-                font-size: 10px;
+                color: #d7fe7b !important;
+                font-size: 10px !important;
+                margin: 0;
+                border-bottom: 1px solid #303030;
                 text-align: center;
                 color: #bebebe;
-                text-transform: uppercase;
-                letter-spacing: 1px;
+                /* text-transform: uppercase; */
+                /* letter-spacing: 1px; */
             }
 
             .dropdown-box {
+                padding: 5px;
                 display: flex;
                 flex-direction: column;
             }
 
             .dropdown-item {
+                background: #0E0E0E;
+                border: 1px solid #303030;
                 background: #0E0E0E;
                 color: #efefef;
                 padding: 12px 15px;
@@ -2270,20 +2314,6 @@
             }
         });
     </script>
-
-        <div class="price-note">
-            <p>Актуальную цену и условия акций уточняйте при покупке</p>
-            <p>из за технических трудностей оплаты была введена акция для подписок</p>
-        </div>
-
-        <div class="product-tagline">
-            <h2>✨ МОЩНЫЙ И УНИВЕРСАЛЬНЫЙ LUA-МОДУЛЬ ДЛЯ CS2 ✨</h2>
-        </div>
-
-        <div class="product-description">
-            <p class="description-main">Погрузись в игру с новым уровнем контроля и кастомизации!</p>
-            <p class="description-sub">Это не просто скрипт, это комплексное решение, которое раскроет весь потенциал игры, предоставит тебе невероятные визуальные и игровые преимущества, а также полный контроль над процессом.</p>
-        </div>
 
         <style>
             .toggle-features-container {
@@ -2367,7 +2397,7 @@
     .subscription-header {
         text-align: center;
         margin: 0px 0;
-        padding: 5px 0;
+        /* padding: 5px 0; */
         background: rgba(255, 255, 255, 0.05);
         border-radius: 5px;
         margin: 0 auto;
@@ -2387,25 +2417,31 @@
     }
     .pricing-table {
         font-size: 12px;
-        max-width: 400px;
+        max-width: 398px;
         margin: 0 auto;
         margin-top: 5px;
+        background: #0D0D0D;
+        border: 1px solid #303030;
+        overflow: hidden;
+        border-radius: 5px;
+    }
+    .subscription-header{
+        border: 1px solid #303030 !important;
     }
     .pricing-table table {
         width: 100%;
         border-collapse: collapse;
-        background: #0e0e0e;
-        border-radius: 5px;
+        background: #0D0D0D;
         overflow: hidden;
-        border: 2px solid #c66666;
+        /* border: 2px solid #c66666; */
     }
     .pricing-table th {
-        border-right: 1px solid #080808;
-        background: #000000;
-        color: #ffffff;
-        padding: 4px 10px;
-        font-size: 12px;
+        background: #D7FE7B;
+        color: #000000;
+        padding: 1px 0px;
+        font-size: 8px;
         text-align: center;
+        border-bottom: 1px solid #000000;
     }
     .pricing-table td:first-child {
         background: #181818;
@@ -2449,11 +2485,11 @@
     }
     .product-tagline {
         text-align: center;
-        margin: 0px 0 10px 0;
+        /* margin: 0px 0 10px 0; */
     }
     .product-tagline h2 {
         color: #ffd700;
-        font-size: 16px;
+        font-size: 12px;
         margin: 0;
         text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
     }
@@ -2463,7 +2499,8 @@
         padding: 10px;
         background: rgba(255, 255, 255, 0.05);
         border-radius: 5px;
-        border-left: 4px solid #d7fe7b;
+        overflow: hidden;
+        /* border-left: 4px solid #d7fe7b; */
     }
     .description-main {
         color: #cccccc;
@@ -2473,9 +2510,10 @@
     }
     .description-sub {
         color: #fba026;
-        font-size: 12px;
+        background: #080808;
+        font-size: 10px;
+        padding: 5px 3px;
         margin: 0;
-        line-height: 1.5;
     }
     .features-intro {
         text-align: center;
@@ -2548,7 +2586,7 @@
         margin: 0 auto;
     }
     .scroll-container{
-        max-width: 1600px;
+        max-width: 400px;
         margin: 0 auto;
     }
 
@@ -2563,7 +2601,7 @@
         </div>
     </div>
     <!-- Существующий блок со списком пользователей -->
-    <div class="adminlist_title" id="adminListTitle"></div>
+    <!-- <div class="adminlist_title" id="adminListTitle"></div>
     <div class="scroll-container">
         <div class="scroll-gradient top" id="gradientTop"></div>
         <div class="scroll-gradient bottom" id="gradientBottom"></div>
@@ -2571,7 +2609,7 @@
         <div class="scroll-arrow up hidden" id="scrollUp">Scroll up</div>
         <div class="adminlist_blocks" id="adminListBlocks"></div>
         <div class="scroll-arrow down" id="scrollDown">Scroll down</div>
-    </div>
+    </div> -->
 
     <!-- Модальное окно для галереи -->
 <div id="galleryModal">

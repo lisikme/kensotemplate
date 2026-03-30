@@ -437,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const activeUsers = users.filter(user => user.is_active && (!user.banStatus || !user.banStatus.isBanned));
         const bannedUsers = users.filter(user => user.banStatus && user.banStatus.isBanned);
         
-        adminListTitle.textContent = `Subscribers: ${activeUsers.length} | Banned: ${bannedUsers.length}`;
+        adminListTitle.textContent = `📀 Подписки: ${activeUsers.length} ー Баны: ${bannedUsers.length} 📀`;
         adminListBlocks.innerHTML = '';
         
         const avatarPromisesList = [];
