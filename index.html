@@ -35,6 +35,10 @@
         @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
 
+.forum, #toggleFeaturesBtn{
+    padding: 2px 0 !important;
+}
+
         /* KetaRu ScrollBars */
         :root{
             --Background: #0f0f0f;
@@ -371,8 +375,8 @@
         .gallery-scroll-container {
             border: #303030 solid 1px;
             position: relative;
-            width: 100%;
-            margin-bottom: 15px;
+            width: calc(100% - 10);
+            margin-bottom: 10px;
             border-radius: 5px;
             overflow: hidden;
         }
@@ -838,9 +842,18 @@
             text-align: center;
             color: #d7fe7b;
         }
+        .forum:hover{
+            border-color: #7aa4ff !important;
+            background: #00102e;
+        }
+        .forum-tag{
+            background: #ffffff25 !important;
+            border-radius: 2px !important;
+            padding: 1px 10px !important;
+        }
         .adminlist_blocks {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 3px;
             margin-bottom: 30px;
         }
@@ -1431,787 +1444,814 @@
             </div>
 
 <div class="product-table">
-    <div class="table-container">
-        <style>
-            .payment-methods-section{
-                /* display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-                gap: 5px;
-                padding: 5px 10px; */
-
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 5px;
-                padding: 5px 10px;
-            }
-            .payment-method>img{
-                width: 80px;
-
-            }
-            .subscription-header{
-                border: 1px solid #161616 !important;
-                background: #080808 !important;
-            }
-            .payment-method{
-                height: 30px;
-                display: flex;
-                border: #303030 solid 1px;
-                border: 1px solid #d7fe7b;
-                background: #202020;
-                justify-content: center;
-                align-items: center;
-                padding: 0 15px;
-                border-radius: 3px;
-                flex: 0 0 auto;
-                position: relative;
-            }
-            .disabled-method > img {
-                filter: grayscale(0.7);
-            }
-            .disabled-method {
-                cursor: not-allowed;
-                position: relative;
-                /* overflow: hidden; */
-                background: rgb(8, 8, 8);
-                border-color: #303030;
-            }
-            .disabled-method:after {
-                content: 'СКОРО';
-                background: #3b3b3b;
-                color: white;
-                font-size: 8px;
-                position: absolute;
-                right: -3px;
-                top: -3px;
-                font-weight: bold;
-                font-weight: 500;
-                padding: 2px 5px;
-                border-radius: 3px;
-                /* margin-left: 8px; */
-                white-space: nowrap;
-            }
-            .description-main{
-                font-size: 10px !important;
-            }
-            .product-description{
-                max-width: 398px;
-                padding: 0px !important;
-                position: relative;
-                margin: 0 auto !important;
-                border: 1px solid #303030 !important;
-                margin-bottom: 5px !important;
-            }
-        </style>
-        
-        <div class="product-description">
-            <div class="dropdown-title">Универсальный скрипт для CS2</div>
-            <p class="description-sub">Это не просто скрипт, это комплексное решение, которое раскроет весь потенциал игры, предоставит тебе невероятные визуальные и игровые преимущества, а также полный контроль над процессом.</p>
-        </div>
-
-        <div class="subscription-header">
-            <div class="dropdown-title">Гибкая система оплаты</div>
-            <div class="payment-methods-section">
-                <div class="payment-method active-method">
-                    <img src="cloudtips.svg" alt="">
-                </div>
-                <div class="payment-method disabled-method">
-                    <img src="ozonbank.svg" alt="">
-                </div>
-                <div class="payment-method disabled-method">
-                    <img src="yoomoney.svg" alt="">
-                </div>
-            </div>
-            <!-- <p class="payment-methods">CloudTips | о других можете узнать при покупке!</p> -->
-        </div>
-
-        <div class="pricing-table">
-            <div class="dropdown-title">Список товаров</div>
-            <script>
-                // price.js - данные о ценах и функция отображения
-
-                // Функция для отображения цен в таблице
-                function renderPricingTable() {
-                    const tableBody = document.querySelector('.pricing-table tbody');
-                    if (!tableBody) return;
-                    
-                    // Очищаем существующие строки
-                    tableBody.innerHTML = '';
-                    
-                    // Функция для вычисления старой цены на основе скидки
-                    function getOriginalPrice(currentPrice, discountPercent) {
-                        if (!discountPercent || discountPercent === 0) return null;
-                        // currentPrice - это строка вида "70 Руб" или "400 РУБ"
-                        const priceMatch = currentPrice.match(/(\d+)/);
-                        if (!priceMatch) return null;
-                        const price = parseInt(priceMatch[0]);
-                        const discountedPrice = Math.round(price * (1 - discountPercent / 100));
-                        return discountedPrice + ' ' + currentPrice.replace(/\d+/, '').trim();
-                    }
-                    
-                    // Добавляем строки из pricelist, но пропускаем те, у которых item_discount === -1
-                    pricelist.forEach(item => {
-                        // Скрываем лот, если скидка равна -1
-                        if (item.item_discount === -1) {
-                            return; // пропускаем этот элемент, не добавляем в таблицу
-                        }
-                        
-                        const row = document.createElement('tr');
-                        row.className = 'price-row';
-                        
-                        const priceCell = document.createElement('td');
-                        priceCell.className = 'price-cell';
-                        
-                        const termCell = document.createElement('td');
-                        termCell.className = 'term-cell';
-                        
-                        // Проверяем наличие скидки
-                        const discount = item.item_discount || 0;
-                        const hasDiscount = discount > 0;
-                        
-                        if (hasDiscount) {
-                            const originalPrice = getOriginalPrice(item.item_price, discount);
-                            priceCell.innerHTML = `
-                                <div class="price-with-discount">
-                                    <span class="old-price">${item.item_price}</span>
-                                    <span class="discount-badge">${discount}%</span>
-                                    <span class="new-price"><strong>${originalPrice || item.item_price}</strong></span>
-                                </div>
-                            `;
-                        } else {
-                            priceCell.innerHTML = `<strong>${item.item_price}</strong>`;
-                        }
-                        
-                        termCell.innerHTML = `<span class="${item.item_term.includes('Навсегда') ? 'forever' : ''}">${item.item_term}</span>`;
-                        
-                        row.appendChild(priceCell);
-                        row.appendChild(termCell);
-                        tableBody.appendChild(row);
-                    });
-                }
-
-                // Запускаем отображение при загрузке страницы
-                document.addEventListener('DOMContentLoaded', () => {
-                    renderPricingTable();
-                    updateBuyButton(0);
-                });
-            </script>
-             <table>
-                <thead>
-                    <tr>
-                        <th><span>СТОИМОСТЬ</span></th>
-                        <th><span>СРОК ДЕЙСТВИЯ</span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-             </table>
-        </div>
-
-        <div class="product-actions">
-            <button href="https://t.me/kelixme" class="action-btn btn-buy" id="buyBtn">
-                Купить подписку
-            </button>
-            <div class="dropdown-wrapper" id="buyMenu">
-                <div class="dropdown-content">
-                    <div class="dropdown-title">Выберите метод связи для покупки</div>
-                    <div class="dropdown-box">
-                        <a href="https://t.me/kelixme" target="_blank" class="dropdown-item">
-                            <img src="./telegram.ico" width="16" height="16" alt="">
-                            Чат создателя
-                        </a>
-                        <a href="https://vk.me/kensolua" target="_blank" class="dropdown-item">
-                            <img src="./vk.ico" width="16" height="16" alt="">
-                            Чат сообщества
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <style>
-            .btn-buy {
-                border: 1px solid #6d6dff;
-            }
-            .dropdown-toggle {
-                cursor: pointer;
-                outline: none;
-                border: 1px solid #ffffff10;
-                transition: all 0.5s;
-            }
-            .dropdown-title {
-                background: #000;
-                padding: 6px 0px;
-                font-size: 10px;
-                /* width: max-content; */
-                /* text-align: center; */
-                width: 100%;
-                display: flex;
-                justify-content: center;
-                justify-items: center;
-                align-items: flex-end;
-                flex-direction: row;
-                margin-bottom: 2px;
-            }
-            .dropdown-box {
-                display: grid;
-                background: #080808;
-                grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-                gap: 3px;
-            }
-            .dropdown-menu {
-                justify-items: center;
-                display: flex;
-                height: 0px;
-                right: 0;
-                top: 100%;
-                background: #1a1a1a;
-                max-width: 398px;
-                width: 100%;
-                z-index: 1001;
-                border-radius: 5px;
-                border: 1px solid #303030;
-                overflow: hidden;
-                transition: all 0.5s;
-                flex-direction: column;
-                gap: 2px;
-                opacity: 0; 
-                margin-bottom: 3px;
-            }
-            .dropdown-menu.active {
-                margin: 5px 0;
-                height: 100px;
-                position: unset;
-                opacity: 1; 
-            }
-            .dropdown-item {
-                background: #0E0E0E;
-                color: #efefef;
-                padding: 10px 15px;
-                text-decoration: none;
-                display: flex;
-                align-items: center;
-                border-radius: 3px;
-                gap: 10px;
-                font-size: 10px;
-                transition: all 0.3s;
-            }
-            .dropdown-item:hover {
-                background: rgba(215, 254, 123, 0.1);
-                color: #d7fe7b;
-            }
-        </style>
-
-        <style>
-            .product-actions {
-                position: relative;
-                max-width: 400px;
-            }
-
-            .dropdown-wrapper {
-                display: grid;
-                grid-template-rows: 0fr;
-                transition: all 0.5s ease;
-                opacity: 0;
-                overflow: hidden;
-                background: #1a1a1a;
-                border: 1px solid transparent;
-                border-radius: 5px;
-                margin-bottom: 3px;
-                max-width: 400px;
-                width: 100%;
-            }
-
-            /* Когда меню активно */
-            .dropdown-wrapper.active {
-                grid-template-rows: 1fr; /* Плавно раскрывается до размера контента */
-                opacity: 1;
-                margin-top: 5px;
-                margin-bottom: 5px;
-                border-color: #303030;
-            }
-
-            /* Внутренний контейнер, который позволяет Grid считать высоту */
-            .dropdown-content {
-                min-height: 0;
-            }
-
-            .dropdown-title {
-                background: #000;
-                padding: 4px 0 !important;
-                font-size: 10px !important;
-                text-align: center;
-                font-weight: 400;
-                color: #bebebe;
-                /* text-transform: uppercase; */
-                /* letter-spacing: 1px; */
-            }
-
-            .dropdown-box {
-                display: flex;
-                flex-direction: column;
-            }
-
-            .dropdown-item {
-                background: #0E0E0E;
-                color: #efefef;
-                padding: 12px 15px;
-                text-decoration: none;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                font-size: 12px;
-                transition: all 0.3s, color 0.3s;
-            }
-
-            .dropdown-item:hover {
-                background: rgba(215, 254, 123, 0.1);
-                color: #d7fe7b;
-            }
-        </style>
-
-
-        <script>
-            const buyBtn = document.getElementById('buyBtn');
-            const buyMenu = document.getElementById('buyMenu');
-
-            // Открытие/закрытие меню по клику на кнопку
-            buyBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                buyMenu.classList.toggle('active');
-            });
-
-            // Закрытие меню при клике вне его области
-            document.addEventListener('click', (e) => {
-                if (!buyMenu.contains(e.target) && e.target !== buyBtn) {
-                    buyMenu.classList.remove('active');
-                }
-            });
-        </script>
-
-
-
-
-        <style>
-            .toggle-features-container{
-                display: flex;
-                justify-content: space-between;
-                margin: 0 !important;
-                gap: 5px;
-                max-width: 400px;
-            }
-            .toggle-features-btn{
-                padding: 5px 10px !important;
-                width: 100%;
-                align-items: center !important;
-                justify-content: center;
-                position: relative;
-            }
-            .forum-tag{
-                background: #2b2b2b;
-                padding: 4px 10px 3px 10px;
-                border-radius: 3px;
-                margin-top: 2px;
-                color: #ffffff;
-                font-size: 10px;
-            }
-            .forum{
-                color: #5B92FB;
-                display: flex;
-                width: 100%;
-                font-size: 14px;
-                gap: 2px;
-                padding: 5px 10px !important;
-                width: unset;
-                /* display: flex; */
-                align-items: center;
-                justify-content: center;
-            }
-            .toggle-features-btn::after{
-                background: #3b3b3b;
-                color: white;
-                font-size: 8px;
-                position: absolute;
-                right: -3px;
-                top: -3px;
-                font-weight: bold;
-                font-weight: 600;
-                padding: 2px 5px;
-                border-radius: 3px;
-                white-space: nowrap;
-                transition: all 0.3s;
-            }
-            .toggle-features-btn.active{
-                border-color: #ff6060;
-                background: #200000;
-            }
-            .toggle-features-btn.active:hover{
-                border-color: #ff6060;
-            }
-            .toggle-features-btn.active::after{
-                content: 'СКРЫТЬ';
-                background: #ff6060;
-                color: #000000;
-            }
-            .toggle-features-btn.unactive{
-                border-color: #D7FE7B;
-                background: #182000;
-            }
-            .toggle-features-btn.unactive:hover{
-                border-color: #D7FE7B;
-            }
-            .forum-tag.table{
-                background: #ffffff3b;
-            }
-            .toggle-features-btn.unactive::after{
-                content: 'ПОКАЗЫТЬ';
-                background: #D7FE7B;
-                color: #000;
-            }
-            .btn-func{
-                display: flex;
-                gap: 2px;
-                color: #D7FE7B;
-                font-size: 14px;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-            }
-        </style>
-        <div class="toggle-features-container">
-            <button id="toggleFeaturesBtn" class="toggle-features-btn unactive">
-                <span class="btn-text btn-func" >
-                    <span class="forum-tag table">ФУНКЦИИОНАЛ</span>
-                    KensoUltra
-                </span>
-            </button>
-            <a href="https://nixware.cc/threads/29483/" class="action-btn btn-support forum" target="_blank">
-                <span class="forum-tag">FORUM</span>
-                Nixware.cc
-            </a>
-        </div>
-
     <style>
-        .features-list {
-            background: #111;
-            border-radius: 5px;
-            padding: 0px;
-            display: grid;
-            /* grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); */
-            grid-template-columns: 1fr;
-            gap: 2px;
+        .table-container-box{
+            /* width: 150px; */
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
-        .feature-category {
-            background: #000;
-            padding: 5px 10px;
-        }
-        .feature-category h4 {
-            color: #d7fe7b; 
-            margin: 0 0 5px 0; 
-            font-size: 14px; 
-        }
-        .feature-category ul { 
-            list-style: none; 
-            padding: 0; 
-            margin: 0; 
-            font-size: 12px; 
-            color: #bbb; 
-        }
-        .feature-category li { 
-            margin-bottom: 5px; 
-            padding-left: 15px; 
-            position: relative; 
-        }
-        .feature-category li::before { 
-            content: "•"; 
-            position: absolute; 
-            left: 0; 
-            color: #d7fe7b; 
-        }
-        .sub-tag{
-            color: #75b1ff;
-        }
-        .sub-tag2{
-            color: #ff7575;
-        }
-        .info-box{
-            color: #ffffff;
-            background: #143663;
-            padding: 3px 5px;
-            border-radius: 3px;
-            font-size: 9px;
-            margin-bottom: 3px;
-        }
-        .info-box2{
-            color: #ffffff;
-            background: #63142e;
-            padding: 3px 5px;
-            border-radius: 3px;
-            font-size: 9px;
-            margin-bottom: 3px;
-        }
-        .info-box3{
-            color: #ffffff;
-            background: #5e0909;
-            padding: 3px 5px;
-            border-radius: 3px;
-            font-size: 9px;
-            margin-bottom: 3px;
+        .table-container{
+            max-width: 400px;
+            width: 100%;
         }
     </style>
+    <div class="table-container-box">
+        <div class="table-container">
+            <style>
+                .payment-methods-section{
+                    /* display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                    gap: 5px;
+                    padding: 5px 10px; */
 
-    <div class="dropdown-wrapper2" id="featuresMenu">
-        <div class="dropdown-content">
-            <div class="dropdown-title">Функционал LUA скрипта</div>
-            <div class="features-list">
-                <div class="feature-category">
-                    <h4>Утилиты</h4>
-                    <ul>
-                        <li>Встроенный мониторинг HVH серверов.</li>
-                        <li>Discord Rich Presence интеграция.</li>
-                    </ul>
-                </div>
-                <div class="feature-category">
-                    <h4>Закупка</h4>
-                    <ul>
-                        <li>Настраиваемый таймер закупки оружия.</li>
-                        <li>Есть совместимость с командой <span class="sub-tag2">!respawn</span>
-                            <br>
-                            на серверах с возраждениями
-                        </li>
-                        <li>Пистолеты:
-                            <br>-> <span class="sub-tag">Desert Eagle</span>
-                            <br>-> <span class="sub-tag">Revolver R8</span>
-                        </li>
-                        <li>Снайперки:
-                            <br>-> <span class="sub-tag">AWP</span>
-                            <br>-> <span class="sub-tag">S3SG1</span>
-                            <br>-> <span class="sub-tag">SCAR-20</span>
-                        </li>
-                        <li>Гранаты:
-                            <br>-> <span class="sub-tag">Димовые</span>
-                            <br>-> <span class="sub-tag">Осколочные</span>
-                            <br>-> <span class="sub-tag">Зажигательные</span>
-                            <br>-> <span class="sub-tag">Молотов</span> 
-                        </li>
-                        <li>Прочее:
-                            <br>-> <span class="sub-tag">Zeus x27</span>
-                            <br>-> <span class="sub-tag">Наборы сапера</span>
-                            <br>-> <span class="sub-tag">Бронижелет</span>
-                            <br>-> <span class="sub-tag">Бронижелет и шлем</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="feature-category">
-                    <h4>Убийства</h4>
-                    <ul>
-                        <li>Сохраниение Kill-Feed</li>
-                        <li>Кастомные Kill-Feed статусы:
-                            <br>-> <span class="sub-tag">Убийство в голову</span>
-                            <br>-> <span class="sub-tag">С ослеплением</span>
-                            <br>-> <span class="sub-tag">Без прицела</span>
-                            <br>-> <span class="sub-tag">Прострелы</span>
-                            <br>-> <span class="sub-tag">Через дым</span>
-                            <br>-> <span class="sub-tag">Реванш</span>
-                            <br>-> <span class="sub-tag">Доминирование</span>
-                            <br>-> <span class="sub-tag">В воздухе</span>
-                            <br>-> <span class="sub-tag">С ножа</span>
-                            <br>-> <span class="sub-tag">Уничтожение отряда</span>
-                        </li>
-                        <li>АвтоРеспавн для серверов с возраждениями.</li>
-                        <li>Настройка количевства респавнов.</li>
-                        <li>Натройка респавна по бинду.</li>
-                    </ul>
-                </div>
-                <div class="feature-category">
-                    <h4>Звуки</h4>
-                    <ul>
-                        <div class="info-box">Это самая продвинутая функция которой нет именно в такой общирной фунциональностью.</div>
-                        <div class="info-box2">При покупке предусмотрен уже готовый пак кастомных звуков</div>
-                        <li>Поддерживается:
-                            <br>-> <span class="sub-tag">Интеграция радио KetaMeFM</span>
-                            <br>-> <span class="sub-tag">Музыка MVP в конце раунда</span>
-                            <br>-> <span class="sub-tag">Звуки попаданий по игрокам</span>
-                            <br>-> <span class="sub-tag">Звуки убийства игроков</span>
-                        </li>
-                        <li>Натройка громкости звуков/музыки/радио.</li>
-                        <li>Режим: <span class="sub-tag2">[Game]</span> - Встроенные звуки в игру.</li>
-                        <li>Режим: <span class="sub-tag2">[Auto]</span> - Автоматически находит звуки
-                            <br>в папке игры <span class="sub-tag">./sounds/hitsounds/</span></li>
-                        <li>Режим: <span class="sub-tag2">[Custom]</span> - Ипользует звуки 
-                            <br>указаные в <span class="sub-tag">hitsounds.json</span></li>
-                    </ul>
-                </div>
-                <div class="feature-category">
-                    <h4>Анти-Аим</h4>
-                    <ul>
-                        <li><span class="sub-tag2">[Fake Pitch]</span>
-                            <br>Фейковый наклон.
-                        </li>
-                        <li><span class="sub-tag2">[Custom Pitch]</span>
-                            <br>Пользовательский наклон.
-                        </li>
-                        <li><span class="sub-tag2">[Random Yaw Offset]</span>
-                            <br>Случайное смещение по оси Y.
-                        </li>
-                        <li><span class="sub-tag2">[Manual AA]</span>
-                            <br>Ручной анти-аим.
-                        </li>
-                        <li><span class="sub-tag2">[Air Flick]</span>
-                            <br>Резкий поворот в воздухе.
-                        </li>
-                        <li><span class="sub-tag2">[Pitch Jitter on Manual]</span>
-                            <br>Дрожание наклона при ручном режиме.
-                        </li>
-                    </ul>
-                </div>
-                <div class="feature-category">
-                    <h4>Рейдж</h4>
-                    <ul>
-                        <li><span class="sub-tag2">[Duck Peek Assist]</span>
-                            <br>Помогает автоматически выполнять быстрый выглядывающий пик с приседом.
-                        </li>
-                        <li><span class="sub-tag2">[Отключить RAGE в воздухе]</span>
-                            <br>Выключает агрессивные функции во время прыжка для более естественного поведения.
-                        </li>
-                        <li><span class="sub-tag2">[Auto Stop в прыжке]</span>
-                            <br>Автоматически останавливает движение для повышения точности в прыжке.
-                        </li>
-                        <li><span class="sub-tag2">[AI Peek]</span>
-                            <br>Интеллектуально выбирает момент и способ выхода из укрытия.
-                        </li>
-                        <li><span class="sub-tag2">[Wallbang Helper]</span>
-                            <br>Подсказывает возможность прострела через стены и поверхности.
-                        </li>
-                        <li><span class="sub-tag2">[Безопастный режим]</span>
-                            <br>Снижает риск обнаружения за счёт более осторожных настроек.
-                        </li>
-                    </ul>
-                </div>
-                <div class="feature-category">
-                    <h4>Интерфейс</h4>
-                    <ul>
-                        <li>Индикаторы:
-                            <br>-> <span class="sub-tag">FPS</span>
-                            <br>-> <span class="sub-tag">Пинг</span>
-                            <br>-> <span class="sub-tag">Время</span>
-                            <br>-> <span class="sub-tag">Список игроков</span>
-                            <br>-> <span class="sub-tag">Логи попаданий</span>
-                            <br>-> <span class="sub-tag">Индикатор замедления</span>
-                            <br>-> <span class="sub-tag">Индикатор SPEED</span>
-                            <br>-> <span class="sub-tag">MVP уведомления</span>
-                            <br>-> <span class="sub-tag">Отображение HP возле прицела</span>
-                            <br>-> <span class="sub-tag">Отображение SEED возле прицела</span>
-                            <br>-> <span class="sub-tag">Отображение Manual AA [Текст]</span>
-                            <br>-> <span class="sub-tag">Stattrack</span>
-                        </li>
-                        <li>Натройка размера элементов.</li>
-                    </ul>
-                </div>
-                <div class="feature-category">
-                    <h4>Визуалы</h4>
-                    <ul>
-                        <li>Камера игрока:
-                            <br>-> <span class="sub-tag">Угол обзора</span>
-                            <br>-> <span class="sub-tag">Дальность обзора</span>
-                        </li>
-                        <li>Камера игрок:
-                            <br>-> <span class="sub-tag">Угол обзора</span>
-                            <br>-> <span class="sub-tag">Дальность обзора</span>
-                        </li>
-                        <li>ESP линии до игроков.</li>
-                        <li>Кастом скоп прицел.</li>
-                    </ul>
-                </div>
-                <div class="feature-category">
-                    <h4>Трассера</h4>
-                    <div class="info-box3">
-                        Это временное решение с трасерами, после обновы, как вы знаете,
-                        они больше не работают но мы сделали другой метод отрисовки,
-                        который визуально даёт тот же эффект.
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: center;
+                    gap: 5px;
+                    padding: 5px 10px;
+                }
+                .payment-method>img{
+                    width: 80px;
+
+                }
+                .subscription-header{
+                    border: 1px solid #161616 !important;
+                    overflow: hidden;
+                    background: #080808 !important;
+                }
+                .payment-method{
+                    height: 30px;
+                    display: flex;
+                    border: #303030 solid 1px;
+                    border: 1px solid #d7fe7b;
+                    background: #202020;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 0 15px;
+                    border-radius: 3px;
+                    flex: 0 0 auto;
+                    position: relative;
+                }
+                .disabled-method > img {
+                    filter: grayscale(0.7);
+                }
+                .disabled-method {
+                    cursor: not-allowed;
+                    position: relative;
+                    /* overflow: hidden; */
+                    background: rgb(8, 8, 8);
+                    border-color: #303030;
+                }
+                .disabled-method:after {
+                    content: 'СКОРО';
+                    background: #3b3b3b;
+                    color: white;
+                    font-size: 8px;
+                    position: absolute;
+                    right: -3px;
+                    top: -3px;
+                    font-weight: bold;
+                    font-weight: 500;
+                    padding: 2px 5px;
+                    border-radius: 3px;
+                    /* margin-left: 8px; */
+                    white-space: nowrap;
+                }
+                .description-main{
+                    font-size: 10px !important;
+                }
+                .product-description{
+                    max-width: 398px;
+                    padding: 0px !important;
+                    position: relative;
+                    margin: 0 auto !important;
+                    border: 1px solid #303030 !important;
+                    margin-bottom: 5px !important;
+                }
+            </style>
+            
+            <div class="product-description">
+                <div class="dropdown-title">Универсальный скрипт для CS2</div>
+                <p class="description-sub">Это не просто скрипт, это комплексное решение, которое раскроет весь потенциал игры, предоставит тебе невероятные визуальные и игровые преимущества, а также полный контроль над процессом.</p>
+            </div>
+
+            <div class="subscription-header">
+                <div class="dropdown-title">Гибкая система оплаты</div>
+                <div class="payment-methods-section">
+                    <div class="payment-method active-method">
+                        <img src="cloudtips.svg" alt="">
                     </div>
-                    <ul>
-                        <li>Bullet Tracer:
-                            <br>-> <span class="sub-tag">Цвет</span>
-                            <br>-> <span class="sub-tag">Толщина</span>
-                            <br>-> <span class="sub-tag">Свечение</span>
-                            <br>-> <span class="sub-tag">Сегменты</span>
-                            <br>-> <span class="sub-tag">Время отображения</span>
-                            <br>-> <span class="sub-tag">Настройка лимита</span>
-                        </li>
-                        <li>Bullet Impact <span class="sub-tag2">[sv_cheats 1]</span>.</li>
-                    </ul>
+                    <div class="payment-method disabled-method">
+                        <img src="ozonbank.svg" alt="">
+                    </div>
+                    <div class="payment-method disabled-method">
+                        <img src="yoomoney.svg" alt="">
+                    </div>
                 </div>
-                <style>
-                    @keyframes hueCycle {
-                        from {
-                            filter: hue-rotate(0deg) saturate(3) brightness(1);
+                <!-- <p class="payment-methods">CloudTips | о других можете узнать при покупке!</p> -->
+            </div>
+
+            <div class="pricing-table">
+                <div class="dropdown-title">Список товаров</div>
+                <script>
+                    // price.js - данные о ценах и функция отображения
+
+                    // Функция для отображения цен в таблице
+                    function renderPricingTable() {
+                        const tableBody = document.querySelector('.pricing-table tbody');
+                        if (!tableBody) return;
+                        
+                        // Очищаем существующие строки
+                        tableBody.innerHTML = '';
+                        
+                        // Функция для вычисления старой цены на основе скидки
+                        function getOriginalPrice(currentPrice, discountPercent) {
+                            if (!discountPercent || discountPercent === 0) return null;
+                            // currentPrice - это строка вида "70 Руб" или "400 РУБ"
+                            const priceMatch = currentPrice.match(/(\d+)/);
+                            if (!priceMatch) return null;
+                            const price = parseInt(priceMatch[0]);
+                            const discountedPrice = Math.round(price * (1 - discountPercent / 100));
+                            return discountedPrice + ' ' + currentPrice.replace(/\d+/, '').trim();
                         }
-                        to {
-                            filter: hue-rotate(360deg) saturate(3) brightness(1);
-                        }
+                        
+                        // Добавляем строки из pricelist, но пропускаем те, у которых item_discount === -1
+                        pricelist.forEach(item => {
+                            // Скрываем лот, если скидка равна -1
+                            if (item.item_discount === -1) {
+                                return; // пропускаем этот элемент, не добавляем в таблицу
+                            }
+                            
+                            const row = document.createElement('tr');
+                            row.className = 'price-row';
+                            
+                            const priceCell = document.createElement('td');
+                            priceCell.className = 'price-cell';
+                            
+                            const termCell = document.createElement('td');
+                            termCell.className = 'term-cell';
+                            
+                            // Проверяем наличие скидки
+                            const discount = item.item_discount || 0;
+                            const hasDiscount = discount > 0;
+                            
+                            if (hasDiscount) {
+                                const originalPrice = getOriginalPrice(item.item_price, discount);
+                                priceCell.innerHTML = `
+                                    <div class="price-with-discount">
+                                        <span class="old-price">${item.item_price}</span>
+                                        <span class="discount-badge">${discount}%</span>
+                                        <span class="new-price"><strong>${originalPrice || item.item_price}</strong></span>
+                                    </div>
+                                `;
+                            } else {
+                                priceCell.innerHTML = `<strong>${item.item_price}</strong>`;
+                            }
+                            
+                            termCell.innerHTML = `<span class="${item.item_term.includes('Навсегда') ? 'forever' : ''}">${item.item_term}</span>`;
+                            
+                            row.appendChild(priceCell);
+                            row.appendChild(termCell);
+                            tableBody.appendChild(row);
+                        });
                     }
 
-                    .rgb {
-                        animation: hueCycle 4s linear infinite;
+                    // Запускаем отображение при загрузке страницы
+                    document.addEventListener('DOMContentLoaded', () => {
+                        renderPricingTable();
+                        updateBuyButton(0);
+                    });
+                </script>
+                <table>
+                    <thead>
+                        <tr>
+                            <th><span>СТОИМОСТЬ</span></th>
+                            <th><span>СРОК ДЕЙСТВИЯ</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="product-actions">
+                <button href="https://t.me/kelixme" class="action-btn btn-buy" id="buyBtn">
+                    Купить подписку
+                </button>
+                <div class="dropdown-wrapper" id="buyMenu">
+                    <div class="dropdown-content">
+                        <div class="dropdown-title">Выберите метод связи для покупки</div>
+                        <div class="dropdown-box">
+                            <a href="https://t.me/kelixme" target="_blank" class="dropdown-item">
+                                <img src="./telegram.ico" width="16" height="16" alt="">
+                                Чат создателя
+                            </a>
+                            <a href="https://vk.me/kensolua" target="_blank" class="dropdown-item">
+                                <img src="./vk.ico" width="16" height="16" alt="">
+                                Чат сообщества
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                .btn-buy {
+                    border: 1px solid #6d6dff;
+                }
+                .dropdown-toggle {
+                    cursor: pointer;
+                    outline: none;
+                    border: 1px solid #ffffff10;
+                    transition: all 0.5s;
+                }
+                .dropdown-title {
+                    background: #000;
+                    padding: 6px 0px;
+                    font-size: 10px;
+                    /* width: max-content; */
+                    /* text-align: center; */
+                    width: 100%;
+                    display: flex;
+                    justify-content: center;
+                    justify-items: center;
+                    align-items: flex-end;
+                    flex-direction: row;
+                    margin-bottom: 2px;
+                }
+                .dropdown-box {
+                    display: grid;
+                    background: #080808;
+                    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+                    gap: 3px;
+                }
+                .dropdown-menu {
+                    justify-items: center;
+                    display: flex;
+                    height: 0px;
+                    right: 0;
+                    top: 100%;
+                    background: #1a1a1a;
+                    max-width: 398px;
+                    width: 100%;
+                    z-index: 1001;
+                    border-radius: 5px;
+                    border: 1px solid #303030;
+                    overflow: hidden;
+                    transition: all 0.5s;
+                    flex-direction: column;
+                    gap: 2px;
+                    opacity: 0; 
+                    margin-bottom: 3px;
+                }
+                .dropdown-menu.active {
+                    margin: 5px 0;
+                    height: 100px;
+                    position: unset;
+                    opacity: 1; 
+                }
+                .dropdown-item {
+                    background: #0E0E0E;
+                    color: #efefef;
+                    padding: 10px 15px;
+                    text-decoration: none;
+                    display: flex;
+                    align-items: center;
+                    border-radius: 3px;
+                    gap: 10px;
+                    font-size: 10px;
+                    transition: all 0.3s;
+                }
+                .dropdown-item:hover {
+                    background: rgba(215, 254, 123, 0.1);
+                    color: #d7fe7b;
+                }
+            </style>
+
+            <style>
+                .product-actions {
+                    position: relative;
+                    max-width: 400px;
+                }
+
+                .dropdown-wrapper {
+                    display: grid;
+                    grid-template-rows: 0fr;
+                    transition: all 0.5s ease;
+                    opacity: 0;
+                    overflow: hidden;
+                    background: #1a1a1a;
+                    border: 1px solid transparent;
+                    border-radius: 5px;
+                    margin-bottom: 3px;
+                    max-width: 400px;
+                    width: 100%;
+                }
+
+                /* Когда меню активно */
+                .dropdown-wrapper.active {
+                    grid-template-rows: 1fr; /* Плавно раскрывается до размера контента */
+                    opacity: 1;
+                    margin-top: 5px;
+                    margin-bottom: 5px;
+                    border-color: #303030;
+                }
+
+                /* Внутренний контейнер, который позволяет Grid считать высоту */
+                .dropdown-content {
+                    min-height: 0;
+                }
+
+                .dropdown-title {
+                    background: #000;
+                    padding: 4px 0 !important;
+                    font-size: 10px !important;
+                    text-align: center;
+                    font-weight: 400;
+                    color: #bebebe;
+                    /* text-transform: uppercase; */
+                    /* letter-spacing: 1px; */
+                }
+
+                .dropdown-box {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .dropdown-item {
+                    background: #0E0E0E;
+                    color: #efefef;
+                    padding: 12px 15px;
+                    text-decoration: none;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-size: 12px;
+                    transition: all 0.3s, color 0.3s;
+                }
+
+                .dropdown-item:hover {
+                    background: rgba(215, 254, 123, 0.1);
+                    color: #d7fe7b;
+                }
+            </style>
+
+
+            <script>
+                const buyBtn = document.getElementById('buyBtn');
+                const buyMenu = document.getElementById('buyMenu');
+
+                // Открытие/закрытие меню по клику на кнопку
+                buyBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    buyMenu.classList.toggle('active');
+                });
+
+                // Закрытие меню при клике вне его области
+                document.addEventListener('click', (e) => {
+                    if (!buyMenu.contains(e.target) && e.target !== buyBtn) {
+                        buyMenu.classList.remove('active');
                     }
-                </style>
-                <div class="feature-category">
-                    <h4>Трейлы</h4>
-                    <ul>
-                        <li>Настройка цвета</li>
-                        <li>Настройка толщины</li>
-                        <li>Настройка сегментов</li>
-                        <li><span class="sub-tag rgb">Настройка RGB режима</span></li>
-                    </ul>
-                </div>
-                <div class="feature-category">
-                    <h4>Эффекты</h4>
-                    <ul>
-                        <li><span class="sub-tag2">[Эффект по краям экрана]</span>
-                            <br>при убийстве или смерти.
-                        </li>
-                    </ul>
-                </div>
-                <div class="feature-category">
-                    <h4>Настройка</h4>
-                    <ul>
-                        <li>Кастомизация цветовов меню.</li>
-                        <li>Настройки режимов API мониторинга</li>
-                        <li><span class="sub-tag rgb">Настройка RGB Элементов меню</span></li>
-                        <li>Экран загрузки меню</li>
-                        <li>Спец возможность: 
-                            <br>-> <span class="sub-tag">Принудительный Анти-Аим</span>
-                            <br>-> <span class="sub-tag">Информация о HWID и подписке</span>
-                        </li>
-                    </ul>
+                });
+            </script>
+
+
+
+
+            <style>
+                .toggle-features-container{
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 0 !important;
+                    gap: 5px;
+                    max-width: 400px;
+                }
+                .toggle-features-btn{
+                    padding: 5px 10px !important;
+                    width: 100%;
+                    align-items: center !important;
+                    justify-content: center;
+                    position: relative;
+                }
+                .forum-tag{
+                    background: #2b2b2b;
+                    padding: 4px 10px 3px 10px;
+                    border-radius: 3px;
+                    margin-top: 2px;
+                    color: #ffffff;
+                    font-size: 8px;
+                }
+                .forum{
+                    color: #5B92FB;
+                    display: flex;
+                    width: 100%;
+                    font-size: 14px;
+                    gap: 2px;
+                    width: unset;
+                    /* display: flex; */
+                    align-items: center;
+                    justify-content: center;
+                }
+                .toggle-features-btn::after{
+                    background: #3b3b3b;
+                    color: white;
+                    font-size: 8px;
+                    position: absolute;
+                    right: -3px;
+                    top: -3px;
+                    font-weight: bold;
+                    font-weight: 600;
+                    padding: 2px 5px;
+                    border-radius: 3px;
+                    white-space: nowrap;
+                    transition: all 0.3s;
+                }
+                .toggle-features-btn.active{
+                    border-color: #ff6060;
+                    background: #200000;
+                }
+                .toggle-features-btn.active:hover{
+                    border-color: #ff6060;
+                }
+                .toggle-features-btn.active::after{
+                    content: 'СКРЫТЬ';
+                    background: #ff6060;
+                    color: #000000;
+                }
+                .toggle-features-btn.unactive{
+                    border-color: #D7FE7B;
+                    background: #182000;
+                }
+                .toggle-features-btn.unactive:hover{
+                    border-color: #D7FE7B;
+                }
+                .forum-tag.table{
+                    background: #ffffff3b;
+                }
+                .toggle-features-btn.unactive::after{
+                    content: 'ПОКАЗЫТЬ';
+                    background: #D7FE7B;
+                    color: #000;
+                }
+                .btn-func{
+                    display: flex;
+                    gap: 2px;
+                    color: #D7FE7B;
+                    font-size: 14px;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                }
+            </style>
+            <div class="toggle-features-container">
+                <button id="toggleFeaturesBtn" class="toggle-features-btn unactive">
+                    <span class="btn-text btn-func" >
+                        <span class="forum-tag table">ФУНКЦИИ</span>
+                        KensoUltra
+                    </span>
+                </button>
+                <a href="https://nixware.cc/threads/29483/" class="action-btn btn-support forum" target="_blank">
+                    <span class="forum-tag">FORUM</span>
+                    Nixware.cc
+                </a>
+            </div>
+
+        <style>
+            .features-list {
+                background: #111;
+                border-radius: 5px;
+                padding: 0px;
+                display: grid;
+                /* grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); */
+                grid-template-columns: 1fr;
+                gap: 2px;
+            }
+            .feature-category {
+                background: #000;
+                padding: 5px 10px;
+            }
+            .feature-category h4 {
+                color: #d7fe7b; 
+                margin: 0 0 5px 0; 
+                font-size: 14px; 
+            }
+            .feature-category ul { 
+                list-style: none; 
+                padding: 0; 
+                margin: 0; 
+                font-size: 12px; 
+                color: #bbb; 
+            }
+            .feature-category li { 
+                margin-bottom: 5px; 
+                padding-left: 15px; 
+                position: relative; 
+            }
+            .feature-category li::before { 
+                content: "•"; 
+                position: absolute; 
+                left: 0; 
+                color: #d7fe7b; 
+            }
+            .sub-tag{
+                color: #75b1ff;
+            }
+            .sub-tag2{
+                color: #ff7575;
+            }
+            .info-box{
+                color: #ffffff;
+                background: #143663;
+                padding: 3px 5px;
+                border-radius: 3px;
+                font-size: 9px;
+                margin-bottom: 3px;
+            }
+            .info-box2{
+                color: #ffffff;
+                background: #63142e;
+                padding: 3px 5px;
+                border-radius: 3px;
+                font-size: 9px;
+                margin-bottom: 3px;
+            }
+            .info-box3{
+                color: #ffffff;
+                background: #5e0909;
+                padding: 3px 5px;
+                border-radius: 3px;
+                font-size: 9px;
+                margin-bottom: 3px;
+            }
+        </style>
+
+        <div class="dropdown-wrapper2" id="featuresMenu">
+            <div class="dropdown-content">
+                <div class="dropdown-title">Функционал LUA скрипта</div>
+                <div class="features-list">
+                    <div class="feature-category">
+                        <h4>Утилиты</h4>
+                        <ul>
+                            <li>Встроенный мониторинг HVH серверов.</li>
+                            <li>Discord Rich Presence интеграция.</li>
+                        </ul>
+                    </div>
+                    <div class="feature-category">
+                        <h4>Закупка</h4>
+                        <ul>
+                            <li>Настраиваемый таймер закупки оружия.</li>
+                            <li>Есть совместимость с командой <span class="sub-tag2">!respawn</span>
+                                <br>
+                                на серверах с возраждениями
+                            </li>
+                            <li>Пистолеты:
+                                <br>-> <span class="sub-tag">Desert Eagle</span>
+                                <br>-> <span class="sub-tag">Revolver R8</span>
+                            </li>
+                            <li>Снайперки:
+                                <br>-> <span class="sub-tag">AWP</span>
+                                <br>-> <span class="sub-tag">S3SG1</span>
+                                <br>-> <span class="sub-tag">SCAR-20</span>
+                            </li>
+                            <li>Гранаты:
+                                <br>-> <span class="sub-tag">Димовые</span>
+                                <br>-> <span class="sub-tag">Осколочные</span>
+                                <br>-> <span class="sub-tag">Зажигательные</span>
+                                <br>-> <span class="sub-tag">Молотов</span> 
+                            </li>
+                            <li>Прочее:
+                                <br>-> <span class="sub-tag">Zeus x27</span>
+                                <br>-> <span class="sub-tag">Наборы сапера</span>
+                                <br>-> <span class="sub-tag">Бронижелет</span>
+                                <br>-> <span class="sub-tag">Бронижелет и шлем</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="feature-category">
+                        <h4>Убийства</h4>
+                        <ul>
+                            <li>Сохраниение Kill-Feed</li>
+                            <li>Кастомные Kill-Feed статусы:
+                                <br>-> <span class="sub-tag">Убийство в голову</span>
+                                <br>-> <span class="sub-tag">С ослеплением</span>
+                                <br>-> <span class="sub-tag">Без прицела</span>
+                                <br>-> <span class="sub-tag">Прострелы</span>
+                                <br>-> <span class="sub-tag">Через дым</span>
+                                <br>-> <span class="sub-tag">Реванш</span>
+                                <br>-> <span class="sub-tag">Доминирование</span>
+                                <br>-> <span class="sub-tag">В воздухе</span>
+                                <br>-> <span class="sub-tag">С ножа</span>
+                                <br>-> <span class="sub-tag">Уничтожение отряда</span>
+                            </li>
+                            <li>АвтоРеспавн для серверов с возраждениями.</li>
+                            <li>Настройка количевства респавнов.</li>
+                            <li>Натройка респавна по бинду.</li>
+                        </ul>
+                    </div>
+                    <div class="feature-category">
+                        <h4>Звуки</h4>
+                        <ul>
+                            <div class="info-box">Это самая продвинутая функция которой нет именно в такой общирной фунциональностью.</div>
+                            <div class="info-box2">При покупке предусмотрен уже готовый пак кастомных звуков</div>
+                            <li>Поддерживается:
+                                <br>-> <span class="sub-tag">Интеграция радио KetaMeFM</span>
+                                <br>-> <span class="sub-tag">Музыка MVP в конце раунда</span>
+                                <br>-> <span class="sub-tag">Звуки попаданий по игрокам</span>
+                                <br>-> <span class="sub-tag">Звуки убийства игроков</span>
+                            </li>
+                            <li>Натройка громкости звуков/музыки/радио.</li>
+                            <li>Режим: <span class="sub-tag2">[Game]</span> - Встроенные звуки в игру.</li>
+                            <li>Режим: <span class="sub-tag2">[Auto]</span> - Автоматически находит звуки
+                                <br>в папке игры <span class="sub-tag">./sounds/hitsounds/</span></li>
+                            <li>Режим: <span class="sub-tag2">[Custom]</span> - Ипользует звуки 
+                                <br>указаные в <span class="sub-tag">hitsounds.json</span></li>
+                        </ul>
+                    </div>
+                    <div class="feature-category">
+                        <h4>Анти-Аим</h4>
+                        <ul>
+                            <li><span class="sub-tag2">[Fake Pitch]</span>
+                                <br>Фейковый наклон.
+                            </li>
+                            <li><span class="sub-tag2">[Custom Pitch]</span>
+                                <br>Пользовательский наклон.
+                            </li>
+                            <li><span class="sub-tag2">[Random Yaw Offset]</span>
+                                <br>Случайное смещение по оси Y.
+                            </li>
+                            <li><span class="sub-tag2">[Manual AA]</span>
+                                <br>Ручной анти-аим.
+                            </li>
+                            <li><span class="sub-tag2">[Air Flick]</span>
+                                <br>Резкий поворот в воздухе.
+                            </li>
+                            <li><span class="sub-tag2">[Pitch Jitter on Manual]</span>
+                                <br>Дрожание наклона при ручном режиме.
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="feature-category">
+                        <h4>Рейдж</h4>
+                        <ul>
+                            <li><span class="sub-tag2">[Duck Peek Assist]</span>
+                                <br>Помогает автоматически выполнять быстрый выглядывающий пик с приседом.
+                            </li>
+                            <li><span class="sub-tag2">[Отключить RAGE в воздухе]</span>
+                                <br>Выключает агрессивные функции во время прыжка для более естественного поведения.
+                            </li>
+                            <li><span class="sub-tag2">[Auto Stop в прыжке]</span>
+                                <br>Автоматически останавливает движение для повышения точности в прыжке.
+                            </li>
+                            <li><span class="sub-tag2">[AI Peek]</span>
+                                <br>Интеллектуально выбирает момент и способ выхода из укрытия.
+                            </li>
+                            <li><span class="sub-tag2">[Wallbang Helper]</span>
+                                <br>Подсказывает возможность прострела через стены и поверхности.
+                            </li>
+                            <li><span class="sub-tag2">[Безопастный режим]</span>
+                                <br>Снижает риск обнаружения за счёт более осторожных настроек.
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="feature-category">
+                        <h4>Интерфейс</h4>
+                        <ul>
+                            <li>Индикаторы:
+                                <br>-> <span class="sub-tag">FPS</span>
+                                <br>-> <span class="sub-tag">Пинг</span>
+                                <br>-> <span class="sub-tag">Время</span>
+                                <br>-> <span class="sub-tag">Список игроков</span>
+                                <br>-> <span class="sub-tag">Логи попаданий</span>
+                                <br>-> <span class="sub-tag">Индикатор замедления</span>
+                                <br>-> <span class="sub-tag">Индикатор SPEED</span>
+                                <br>-> <span class="sub-tag">MVP уведомления</span>
+                                <br>-> <span class="sub-tag">Отображение HP возле прицела</span>
+                                <br>-> <span class="sub-tag">Отображение SEED возле прицела</span>
+                                <br>-> <span class="sub-tag">Отображение Manual AA [Текст]</span>
+                                <br>-> <span class="sub-tag">Stattrack</span>
+                            </li>
+                            <li>Натройка размера элементов.</li>
+                        </ul>
+                    </div>
+                    <div class="feature-category">
+                        <h4>Визуалы</h4>
+                        <ul>
+                            <li>Камера игрока:
+                                <br>-> <span class="sub-tag">Угол обзора</span>
+                                <br>-> <span class="sub-tag">Дальность обзора</span>
+                            </li>
+                            <li>Камера игрок:
+                                <br>-> <span class="sub-tag">Угол обзора</span>
+                                <br>-> <span class="sub-tag">Дальность обзора</span>
+                            </li>
+                            <li>ESP линии до игроков.</li>
+                            <li>Кастом скоп прицел.</li>
+                        </ul>
+                    </div>
+                    <div class="feature-category">
+                        <h4>Трассера</h4>
+                        <div class="info-box3">
+                            Это временное решение с трасерами, после обновы, как вы знаете,
+                            они больше не работают но мы сделали другой метод отрисовки,
+                            который визуально даёт тот же эффект.
+                        </div>
+                        <ul>
+                            <li>Bullet Tracer:
+                                <br>-> <span class="sub-tag">Цвет</span>
+                                <br>-> <span class="sub-tag">Толщина</span>
+                                <br>-> <span class="sub-tag">Свечение</span>
+                                <br>-> <span class="sub-tag">Сегменты</span>
+                                <br>-> <span class="sub-tag">Время отображения</span>
+                                <br>-> <span class="sub-tag">Настройка лимита</span>
+                            </li>
+                            <li>Bullet Impact <span class="sub-tag2">[sv_cheats 1]</span>.</li>
+                        </ul>
+                    </div>
+                    <style>
+                        @keyframes hueCycle {
+                            from {
+                                filter: hue-rotate(0deg) saturate(3) brightness(1);
+                            }
+                            to {
+                                filter: hue-rotate(360deg) saturate(3) brightness(1);
+                            }
+                        }
+
+                        .rgb {
+                            animation: hueCycle 4s linear infinite;
+                        }
+                    </style>
+                    <div class="feature-category">
+                        <h4>Трейлы</h4>
+                        <ul>
+                            <li>Настройка цвета</li>
+                            <li>Настройка толщины</li>
+                            <li>Настройка сегментов</li>
+                            <li><span class="sub-tag rgb">Настройка RGB режима</span></li>
+                        </ul>
+                    </div>
+                    <div class="feature-category">
+                        <h4>Эффекты</h4>
+                        <ul>
+                            <li><span class="sub-tag2">[Эффект по краям экрана]</span>
+                                <br>при убийстве или смерти.
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="feature-category">
+                        <h4>Настройка</h4>
+                        <ul>
+                            <li>Кастомизация цветовов меню.</li>
+                            <li>Настройки режимов API мониторинга</li>
+                            <li><span class="sub-tag rgb">Настройка RGB Элементов меню</span></li>
+                            <li>Экран загрузки меню</li>
+                            <li>Спец возможность: 
+                                <br>-> <span class="sub-tag">Принудительный Анти-Аим</span>
+                                <br>-> <span class="sub-tag">Информация о HWID и подписке</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="scroll-container">
-        <div class="adminlist_title" id="adminListTitle"></div>
-        <style>
-            .scroll-container{
-                max-width: 398px !important;
-                border: 1px solid #303030;
-                background: #080808 !important;
-            }
-            #adminListTitle{
-                font-size: 10px;
-                padding: 4px 0px;
-                font-weight: 400;
-                border-bottom: 1px solid #303030 !important;
-                background: #000000;
-                margin: 0;
-            }
-        </style>
-        <div class="scroll-gradient top" id="gradientTop"></div>
-        <div class="scroll-gradient bottom" id="gradientBottom"></div>
-
-        <div class="scroll-arrow up hidden" id="scrollUp">Scroll up</div>
-        <div class="adminlist_blocks" id="adminListBlocks"></div>
-        <div class="scroll-arrow down" id="scrollDown">Scroll down</div>
+    <div class="table-container1">
+        <div class="scroll-container">
+            <div class="adminlist_title" id="adminListTitle"></div>
+            <style>
+                .scroll-container{
+                    max-width: 398px !important;
+                    border: 1px solid #303030;
+                    background: #080808 !important;
+                    height: auto;
+                }
+                #adminListTitle{
+                    line-height: normal;
+                    font-size: 10px;
+                    padding: 4px 0px;
+                    text-align: center;
+                    display: flex
+;
+    justify-content: center;
+    justify-items: center;
+    align-items: flex-end;
+    flex-direction: row;
+                    font-weight: 400;
+                    border-bottom: 1px solid #303030 !important;
+                    background: #000000;
+                    margin: 0;
+                }
+            </style>
+            <div class="scroll-gradient top" id="gradientTop" style="display: none;"></div>
+            <div class="scroll-gradient bottom" id="gradientBottom" style="display: none;"></div>
+            <div class="scroll-arrow up hidden" id="scrollUp" style="display: none;">Scroll up</div>
+            <div class="adminlist_blocks" id="adminListBlocks"></div>
+            <div class="scroll-arrow down" id="scrollDown" style="display: none;">Scroll down</div>
+        </div>
+    </div>
+    </div>
     </div>
 
         <style>
@@ -3087,3 +3127,72 @@
         }
     )
 </script> -->
+
+
+<style>
+.dropdown-wrapper2.active{
+    margin: 6px 0;
+}
+.product-table{
+    padding: 10px;
+}
+.gallery-container{
+    gap: 10px;
+}
+/* Базовые стили */
+.table-container-box {
+    justify-content: space-around !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0 10px !important;
+    align-items: flex-start !important;
+}
+
+.table-container {
+    flex: 0 0 400px !important;
+    max-width: 400px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.table-container1 {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    box-sizing: border-box !important;
+}
+
+/* Адаптация внутренних элементов */
+.table-container-box .scroll-container,
+.table-container-box .pricing-table,
+.table-container-box .subscription-header,
+.table-container-box .product-description,
+.table-container-box .dropdown-wrapper2,
+.table-container-box .dropdown-wrapper,
+.table-container-box .product-actions,
+.table-container-box .toggle-features-container {
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+}
+
+.table-container-box .scroll-container {
+    width: 100% !important;
+}
+
+/* Медиа-запрос для переключения в одну колонку */
+@media (max-width: 900px) {
+    .table-container-box {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    
+    .table-container-box .table-container,
+    .table-container-box .table-container1 {
+        flex: 1 1 auto !important;
+        max-width: 400px !important;
+        min-width: auto !important;
+        width: 100% !important;
+    }
+}
+</style>
