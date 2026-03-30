@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Конфигурация
     const config = {
         adminsJsonUrl: 'https://lisikme.github.io/Nixware-allowed/admins.json',
         hwidJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwid4.json',
@@ -9,24 +8,23 @@ document.addEventListener('DOMContentLoaded', function() {
         bansJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/bans.json',
         discordApiBase: 'https://dis-api.sakuri.ru/api/discord/user/',
         proxy: 'https://proxy.sakuri.ru/api/proxy?url='
-        // proxy: 'https://v0-proxy-krcorp.vercel.app/api/proxy?url='
     };
     
-    // Функция для добавления параметра обхода кеша
+    // Хранилище для имен пользователей Discord
+    const discordUsernames = new Map();
+    const usernamePromises = new Map();
+    
     function addCacheBuster(url) {
-        const timestamp = new Date().getTime();
-        return url + (url.includes('?') ? '&' : '?') + 't=' + timestamp;
+        return url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
     }
     
     async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
         try {
-            const cacheBustedUrl = addCacheBuster(url);
-            const response = await fetch(cacheBustedUrl, options);
+            const response = await fetch(addCacheBuster(url), options);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return await response.json();
         } catch (error) {
             if (retries > 0) {
-                console.log(`Повторная попытка загрузки (${4-retries}/${3}): ${url}`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 return fetchWithRetry(url, options, retries - 1, delay * 2);
             }
@@ -35,12 +33,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function getUserRole(discordId, adminList) {
-        if (discordId === '470573716711931905') {
-            return 'creator'; 
-        }
-        if (discordId === '1393856315067203635') {
-            return 'bot'; 
-        }
+        if (discordId === '470573716711931905') return 'creator';
+        if (discordId === '1393856315067203635') return 'bot';
         return adminList.includes(discordId) ? 'admin' : 'player';
     }
     
@@ -48,278 +42,268 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             return await fetchWithRetry(url);
         } catch (error) {
-            console.error(`Ошибка загрузки данных из ${url}:`, error);
+            console.error(`Ошибка загрузки ${url}:`, error);
             return null;
         }
     }
-class AvatarQueue {
-    constructor(maxConcurrent = 1, delayBetweenBatches = 1000) {
-        this.maxConcurrent = maxConcurrent;
-        this.delayBetweenBatches = delayBetweenBatches;
-        this.current = 0;
-        this.queue = [];
-        this.lastBatchTime = 0;
-    }
     
-    add(task) {
-        return new Promise((resolve, reject) => {
-            this.queue.push({ task, resolve, reject });
-            this.run();
-        });
-    }
-    
-    async run() {
-        const now = Date.now();
-        const timeSinceLastBatch = now - this.lastBatchTime;
+    class AvatarQueue {
+        constructor(maxConcurrent = 1, delayBetweenBatches = 1000) {
+            this.maxConcurrent = maxConcurrent;
+            this.delayBetweenBatches = delayBetweenBatches;
+            this.current = 0;
+            this.queue = [];
+            this.lastBatchTime = 0;
+        }
         
-        if (timeSinceLastBatch < this.delayBetweenBatches) {
-            setTimeout(() => this.run(), this.delayBetweenBatches - timeSinceLastBatch);
+        add(task) {
+            return new Promise((resolve, reject) => {
+                this.queue.push({ task, resolve, reject });
+                this.run();
+            });
+        }
+        
+        async run() {
+            const now = Date.now();
+            const timeSinceLastBatch = now - this.lastBatchTime;
+            
+            if (timeSinceLastBatch < this.delayBetweenBatches) {
+                setTimeout(() => this.run(), this.delayBetweenBatches - timeSinceLastBatch);
+                return;
+            }
+            
+            if (this.current >= this.maxConcurrent || this.queue.length === 0) return;
+            
+            this.lastBatchTime = Date.now();
+            const batchSize = Math.min(this.maxConcurrent - this.current, this.queue.length);
+            const batch = this.queue.splice(0, batchSize);
+            
+            this.current += batch.length;
+            
+            batch.forEach(async ({ task, resolve, reject }) => {
+                try {
+                    resolve(await task());
+                } catch (error) {
+                    reject(error);
+                } finally {
+                    this.current--;
+                    this.run();
+                }
+            });
+        }
+    }
+    
+    const cacheQueue = new AvatarQueue(5, 100);
+    const updateQueue = new AvatarQueue(1, 500);
+    const avatarPromises = new Map();
+    const discordNameQueue = new AvatarQueue(3, 1000); // Очередь для запросов имен
+    
+    async function loadDiscordAvatar(discordId, elementId, username) {
+        if (!discordId) return;
+        
+        if (avatarPromises.has(discordId)) return avatarPromises.get(discordId);
+        
+        const promise = (async () => {
+            try {
+                const avatarElement = document.getElementById(elementId);
+                const cacheKey = `avatar_${discordId}`;
+                
+                if (avatarElement) {
+                    avatarElement.src = '';
+                    avatarElement.removeAttribute('src');
+                }
+                
+                cacheQueue.add(async () => {
+                    const cachedAvatar = localStorage.getItem(cacheKey);
+                    if (cachedAvatar && avatarElement) {
+                        try {
+                            await tryLoadImage(cachedAvatar, 3000);
+                            avatarElement.src = cachedAvatar;
+                            avatarElement.style.opacity = '1';
+                        } catch (cacheError) {
+                            localStorage.removeItem(cacheKey);
+                        }
+                    }
+                });
+                
+                updateQueue.add(async () => {
+                    try {
+                        const cachedAvatar = localStorage.getItem(cacheKey);
+                        const userData = await fetchWithRetry(addCacheBuster(`${config.proxy}"${config.discordApiBase}${discordId}"`));
+                        
+                        if (userData.avatar && avatarElement) {
+                            let avatarUrl = null;
+                            const avatarHash = userData.avatar;
+                            const discord_cdn = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}`;
+                            const isSameAvatar = cachedAvatar && cachedAvatar.includes(avatarHash);
+                            
+                            if (!isSameAvatar) {
+                                try {
+                                    avatarUrl = await tryLoadImage(`${config.proxy}"${discord_cdn}.gif"`, 8000);
+                                } catch {
+                                    avatarUrl = await tryLoadImage(`${config.proxy}"${discord_cdn}.png"`, 5000);
+                                }
+                                
+                                if (avatarUrl) {
+                                    avatarElement.src = avatarUrl;
+                                    avatarElement.style.opacity = '1';
+                                    localStorage.setItem(cacheKey, avatarUrl);
+                                }
+                            }
+                        } else if (!userData.avatar) {
+                            localStorage.removeItem(cacheKey);
+                            if (avatarElement) {
+                                avatarElement.src = '';
+                                avatarElement.removeAttribute('src');
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Ошибка для ${discordId}:`, error.message);
+                    }
+                });
+            } finally {
+                avatarPromises.delete(discordId);
+            }
+        })();
+        
+        avatarPromises.set(discordId, promise);
+        return promise;
+    }
+    
+    // Функция для получения имени пользователя Discord
+    async function loadDiscordUsername(discordId, usernameElement, originalName) {
+        if (!discordId) return;
+        
+        // Проверяем кэш
+        if (discordUsernames.has(discordId)) {
+            const cachedName = discordUsernames.get(discordId);
+            if (usernameElement) {
+                usernameElement.textContent = cachedName;
+            }
             return;
         }
         
-        if (this.current >= this.maxConcurrent || this.queue.length === 0) return;
+        // Проверяем, не идет ли уже запрос
+        if (usernamePromises.has(discordId)) {
+            const name = await usernamePromises.get(discordId);
+            if (usernameElement) {
+                usernameElement.textContent = name;
+            }
+            return;
+        }
         
-        this.lastBatchTime = Date.now();
-        
-        const batchSize = Math.min(this.maxConcurrent - this.current, this.queue.length);
-        const batch = this.queue.splice(0, batchSize);
-        
-        this.current += batch.length;
-        
-        batch.forEach(async ({ task, resolve, reject }) => {
+        const promise = discordNameQueue.add(async () => {
             try {
-                const result = await task();
-                resolve(result);
+                // Проверяем localStorage кэш
+                const cacheKey = `discord_name_${discordId}`;
+                const cachedName = localStorage.getItem(cacheKey);
+                
+                if (cachedName && cachedName !== 'undefined') {
+                    discordUsernames.set(discordId, cachedName);
+                    if (usernameElement) {
+                        usernameElement.textContent = cachedName;
+                    }
+                    return cachedName;
+                }
+                
+                // Запрос к API
+                const userData = await fetchWithRetry(addCacheBuster(`${config.proxy}"${config.discordApiBase}${discordId}"`));
+                
+                let displayName = originalName;
+                if (userData && userData.username) {
+                    displayName = userData.username;
+                    if (userData.discriminator && userData.discriminator !== '0') {
+                        displayName = `${userData.username}#${userData.discriminator}`;
+                    }
+                    // Сохраняем в кэш
+                    localStorage.setItem(cacheKey, displayName);
+                    discordUsernames.set(discordId, displayName);
+                } else if (userData && userData.global_name) {
+                    displayName = userData.global_name;
+                    localStorage.setItem(cacheKey, displayName);
+                    discordUsernames.set(discordId, displayName);
+                } else {
+                    // Если не удалось получить имя, используем ID
+                    displayName = `${user.name}`;
+                }
+                
+                if (usernameElement) {
+                    usernameElement.textContent = displayName;
+                }
+                return displayName;
             } catch (error) {
-                reject(error);
-            } finally {
-                this.current--;
-                this.run();
+                console.warn(`Ошибка получения имени для ${discordId}:`, error.message);
+                const fallbackName = `${user.name}`;
+                if (usernameElement) {
+                    usernameElement.textContent = fallbackName;
+                }
+                return fallbackName;
             }
         });
-    }
-}
-
-// Очередь для кэша (100ms между загрузками)
-const cacheQueue = new AvatarQueue(5, 100);
-// Очередь для обновлений (1000ms между проверками)
-const updateQueue = new AvatarQueue(1, 100);
-
-// Храним промисы для каждого discordId
-const avatarPromises = new Map();
-
-async function loadDiscordAvatar(discordId, elementId, username) {
-    if (!discordId) return;
-    
-    // Если уже загружается, возвращаем существующий промис
-    if (avatarPromises.has(discordId)) {
-        return avatarPromises.get(discordId);
+        
+        usernamePromises.set(discordId, promise);
+        const result = await promise;
+        usernamePromises.delete(discordId);
+        return result;
     }
     
-    const promise = (async () => {
-        try {
-            const avatarElement = document.getElementById(elementId);
-            const cacheKey = `avatar_${discordId}`;
+    function tryLoadImage(url, timeoutMs) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const timeout = setTimeout(() => {
+                cleanup();
+                reject(new Error(`Таймаут ${timeoutMs}ms`));
+            }, timeoutMs);
             
-            // 1. Сразу показываем заглушку
-            if (avatarElement) {
-                avatarElement.src = '';
-                avatarElement.removeAttribute('src');
+            function cleanup() {
+                clearTimeout(timeout);
+                img.onload = null;
+                img.onerror = null;
             }
             
-            // 2. Загружаем из кэша с задержкой 100ms
-            cacheQueue.add(async () => {
-                const cachedAvatar = localStorage.getItem(cacheKey);
-                if (cachedAvatar && avatarElement) {
-                    try {
-                        await tryLoadImage(cachedAvatar, 3000);
-                        avatarElement.src = cachedAvatar;
-                        avatarElement.style.opacity = '1';
-                        console.log(`📦 КЭШ: загружен аватар для ${discordId}`);
-                    } catch (cacheError) {
-                        console.warn(`⚠️ КЭШ: битый кэш для ${discordId}, удаляем`);
-                        localStorage.removeItem(cacheKey);
-                    }
-                }
-            });
-            
-            // 3. Обновляем из сети с задержкой 1000ms
-            updateQueue.add(async () => {
-                try {
-                    const cachedAvatar = localStorage.getItem(cacheKey);
-                    const cacheBustedUrl = addCacheBuster(`${config.discordApiBase}${discordId}`);
-                    const userData = await fetchWithRetry(cacheBustedUrl);
-                    
-                    if (userData.avatar && avatarElement) {
-                        let avatarUrl = null;
-                        const avatarHash = userData.avatar;
-                        
-                        const discord_cdn = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}`;
-                        const isSameAvatar = cachedAvatar && cachedAvatar.includes(avatarHash);
-                        
-                        if (!isSameAvatar) {
-                            try {
-                                const gifUrl = `${config.proxy}"${discord_cdn}.gif"`;
-                                avatarUrl = await tryLoadImage(gifUrl, 8000);
-                            } catch (gifError) {
-                                const pngUrl = `${config.proxy}"${discord_cdn}.png"`;
-                                avatarUrl = await tryLoadImage(pngUrl, 5000);
-                            }
-                            
-                            if (avatarUrl) {
-                                avatarElement.src = avatarUrl;
-                                avatarElement.style.opacity = '1';
-                                localStorage.setItem(cacheKey, avatarUrl);
-                                console.log(`🌐 СЕТЬ: обновлен аватар для ${discordId}`);
-                            }
-                        } else {
-                            console.log(`✅ СЕТЬ: аватар для ${discordId} актуален`);
-                        }
-                    } else if (!userData.avatar) {
-                        console.log(`❌ СЕТЬ: аватар для ${discordId} удален`);
-                        localStorage.removeItem(cacheKey);
-                        if (avatarElement) {
-                            avatarElement.src = '';
-                            avatarElement.removeAttribute('src');
-                        }
-                    }
-                } catch (error) {
-                    console.warn(`⚠️ СЕТЬ: ошибка для ${discordId}:`, error.message);
-                }
-            });
-            
-        } finally {
-            avatarPromises.delete(discordId);
-        }
-    })();
-    
-    avatarPromises.set(discordId, promise);
-    return promise;
-}
-
-function removeAvatarFromCache(discordId, elementId, username) {
-    const cacheKey = `avatar_${discordId}`;
-    localStorage.removeItem(cacheKey);
-    
-    const avatarElement = document.getElementById(elementId);
-    if (avatarElement) {
-        avatarElement.src = '';
-        avatarElement.removeAttribute('src');
+            img.onload = () => { cleanup(); resolve(url); };
+            img.onerror = () => { cleanup(); reject(new Error('Ошибка загрузки')); };
+            img.src = url.includes('?') ? `${url}&_=${Date.now()}` : `${url}?_=${Date.now()}`;
+        });
     }
-}
-
-function tryLoadImage(url, timeoutMs) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        let timeout = setTimeout(() => {
-            cleanup();
-            reject(new Error(`Таймаут загрузки (${timeoutMs}ms)`));
-        }, timeoutMs);
-        
-        function cleanup() {
-            clearTimeout(timeout);
-            img.onload = null;
-            img.onerror = null;
-        }
-        
-        img.onload = function() {
-            cleanup();
-            resolve(url);
-        };
-        
-        img.onerror = function() {
-            cleanup();
-            reject(new Error('Ошибка загрузки изображения'));
-        };
-        
-        const cacheBuster = Date.now();
-        img.src = url.includes('?') ? `${url}&_=${cacheBuster}` : `${url}?_=${cacheBuster}`;
-    });
-}
-    // Функция для преобразования даты в timestamp
+    
     function parseDateToTimestamp(dateString) {
         try {
-            // Пробуем разные форматы дат
-            if (typeof dateString === 'number') {
-                return dateString;
-            }
-            
-            if (dateString.includes('T')) {
-                // ISO формат: "2026-02-21T08:10:37.000000"
-                return Math.floor(new Date(dateString).getTime() / 1000);
-            } else {
-                // Другие форматы, пробуем распарсить
-                return Math.floor(new Date(dateString).getTime() / 1000);
-            }
+            if (typeof dateString === 'number') return dateString;
+            return Math.floor(new Date(dateString).getTime() / 1000);
         } catch (e) {
-            console.warn(`Не удалось распарсить дату: ${dateString}`, e);
             return 0;
         }
     }
-
-    // Функция для проверки статуса бана
+    
     function getBanStatus(userHwid, bansData) {
-        if (!bansData || typeof bansData !== 'object') {
-            return null;
-        }
+        if (!bansData || typeof bansData !== 'object') return null;
         
         const banInfo = bansData[userHwid];
-        if (!banInfo) {
-            return null;
-        }
+        if (!banInfo) return null;
         
         const now = new Date();
         const banTime = new Date(banInfo.ban_time);
         const banTemp = banInfo.ban_temp;
         
-        // Проверяем, является ли бан вечным
         if (banTemp === "-1") {
-            return {
-                isBanned: true,
-                isPermanent: true,
-                reason: banInfo.ban_reason || 'Причина не указана',
-                banTime: banTime,
-                remainingTime: null,
-                banInfo: banInfo
-            };
+            return { isBanned: true, isPermanent: true, reason: banInfo.ban_reason || 'Не указана', banTime, banInfo };
         }
         
-        // Проверяем временный бан
         const banEnd = new Date(banTemp);
         if (banEnd > now) {
-            // Бан еще активен
-            const remainingMs = banEnd - now;
-            const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
-            
             return {
                 isBanned: true,
                 isPermanent: false,
-                reason: banInfo.ban_reason || 'Причина не указана',
-                banTime: banTime,
-                banEnd: banEnd,
-                remainingTime: remainingDays,
-                banInfo: banInfo
-            };
-        } else {
-            // Бан истек
-            return {
-                isBanned: false,
-                wasBanned: true,
-                reason: banInfo.ban_reason,
-                banTime: banTime,
-                banEnd: banEnd,
-                banInfo: banInfo
+                reason: banInfo.ban_reason || 'Не указана',
+                banTime,
+                banEnd,
+                remainingTime: Math.ceil((banEnd - now) / (1000 * 60 * 60 * 24)),
+                banInfo
             };
         }
-    }
-
-    // Функция для форматирования даты
-    function formatDate(date) {
-        return date.toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        
+        return { isBanned: false, wasBanned: true, reason: banInfo.ban_reason, banTime, banEnd, banInfo };
     }
     
     async function loadUsersData() {
@@ -333,7 +317,6 @@ function tryLoadImage(url, timeoutMs) {
                 fetchJsonData(config.bansJsonUrl)
             ]);
             
-            // Обработка результатов
             const admins = adminsData.status === 'fulfilled' ? adminsData.value : { "Admins": [] };
             const hwid = hwidData.status === 'fulfilled' ? hwidData.value : { "users:": [] };
             const temp = tempData.status === 'fulfilled' ? tempData.value : {};
@@ -343,59 +326,47 @@ function tryLoadImage(url, timeoutMs) {
             
             const adminDiscordIds = admins.Admins || [];
             
-            // Функция для поиска Discord ID по HWID
             function getDiscordIdByHwid(hwid, discordData) {
                 if (discordData.hwids && Array.isArray(discordData.hwids)) {
-                    for (const entry of discordData.hwids) {
-                        if (entry.HWID === hwid) {
-                            return `${entry.DISCORD}`;
-                        }
-                    }
+                    const entry = discordData.hwids.find(e => e.HWID === hwid);
+                    return entry ? `${entry.DISCORD}` : null;
                 }
                 return null;
             }
             
-            // Функция для поиска Telegram ID по HWID
             function getTelegramIdByHwid(hwid, telegramData) {
                 if (telegramData.bindings && Array.isArray(telegramData.bindings)) {
-                    for (const entry of telegramData.bindings) {
-                        if (entry.HWID === hwid) {
-                            return `${entry.TELEGRAM}`;
-                        }
-                    }
+                    const entry = telegramData.bindings.find(e => e.HWID === hwid);
+                    return entry ? `${entry.TELEGRAM}` : null;
                 }
                 return null;
             }
             
             const usersList = [];
             const bannedUsersList = [];
-            
-            // Сначала обрабатываем активных пользователей из hwid4.json
             const activeUsers = hwid["users:"] || hwid.users || [];
             
-            activeUsers.forEach((username, index) => {
-                const userhwid = username;
+            activeUsers.forEach((username) => {
                 const discordId = getDiscordIdByHwid(username, discord);
                 const telegramId = getTelegramIdByHwid(username, telegram);
                 const endTime = temp[username] || 0;
                 const banStatus = getBanStatus(username, bans);
                 
                 const userData = {
-                    id: index + 1,
+                    id: usersList.length + bannedUsersList.length + 1,
                     sid: discordId,
                     telegramId: telegramId,
-                    hwid: userhwid,
+                    hwid: username,
                     name: username,
                     flags: '999',
                     immunity: 0,
-                    group_id: 'Подписка',
+                    group_id: 'HWID',
                     end: parseDateToTimestamp(endTime),
                     server_id: 0,
                     is_active: true,
-                    banStatus: banStatus
+                    banStatus
                 };
                 
-                // Разделяем пользователей на забаненных и активных
                 if (banStatus && banStatus.isBanned) {
                     bannedUsersList.push(userData);
                 } else {
@@ -403,23 +374,18 @@ function tryLoadImage(url, timeoutMs) {
                 }
             });
             
-            // Теперь добавляем пользователей из bans.json, которых нет в hwid4.json
-            // но только тех, у кого бан еще активен
             if (bans && typeof bans === 'object') {
                 Object.keys(bans).forEach(bannedHwid => {
-                    // Проверяем, есть ли уже этот пользователь в списке
                     const alreadyExists = [...usersList, ...bannedUsersList].some(user => user.hwid === bannedHwid);
                     
                     if (!alreadyExists) {
-                        const banInfo = bans[bannedHwid];
                         const banStatus = getBanStatus(bannedHwid, bans);
                         
-                        // Добавляем только если бан активен (не истек)
                         if (banStatus && banStatus.isBanned) {
                             const discordId = getDiscordIdByHwid(bannedHwid, discord);
                             const telegramId = getTelegramIdByHwid(bannedHwid, telegram);
                             
-                            const bannedUserData = {
+                            bannedUsersList.push({
                                 id: usersList.length + bannedUsersList.length + 1,
                                 sid: discordId,
                                 telegramId: telegramId,
@@ -431,20 +397,16 @@ function tryLoadImage(url, timeoutMs) {
                                 end: 0,
                                 server_id: 0,
                                 is_active: false,
-                                banStatus: banStatus
-                            };
-                            
-                            bannedUsersList.push(bannedUserData);
+                                banStatus
+                            });
                         }
                     }
                 });
             }
             
-            // Сначала показываем активных пользователей, потом забаненных
             const allUsers = [...usersList, ...bannedUsersList];
             
             allUsers.sort((a, b) => {
-                // Сначала сортируем по роли
                 const aRole = getUserRole(a.sid, adminDiscordIds);
                 const bRole = getUserRole(b.sid, adminDiscordIds);
                 
@@ -454,21 +416,16 @@ function tryLoadImage(url, timeoutMs) {
                 if (bRole === 'bot') return 1;
                 if (aRole === 'admin' && bRole !== 'admin') return -1;
                 if (bRole === 'admin' && aRole !== 'admin') return 1;
-                
-                // Затем по статусу бана (активные выше забаненных)
-                if (a.banStatus && a.banStatus.isBanned && !(b.banStatus && b.banStatus.isBanned)) return 1;
-                if (!(a.banStatus && a.banStatus.isBanned) && b.banStatus && b.banStatus.isBanned) return -1;
-                
-                // Затем по активности (активные выше неактивных)
+                if (a.banStatus?.isBanned && !b.banStatus?.isBanned) return 1;
+                if (!a.banStatus?.isBanned && b.banStatus?.isBanned) return -1;
                 if (a.is_active && !b.is_active) return -1;
                 if (!a.is_active && b.is_active) return 1;
-                
                 return 0;
             });
             
             displayUsers(allUsers, adminDiscordIds);
         } catch (error) {
-            console.error('Ошибка загрузки данных пользователей:', error);
+            console.error('Ошибка загрузки:', error);
             document.getElementById('adminListTitle').textContent = 'Ошибка загрузки данных';
         }
     }
@@ -483,8 +440,8 @@ function tryLoadImage(url, timeoutMs) {
         adminListTitle.textContent = `Subscribers: ${activeUsers.length} | Banned: ${bannedUsers.length}`;
         adminListBlocks.innerHTML = '';
         
-        const avatarPromises = [];
-        const userDiscordData = {}; // Для хранения данных Discord пользователей
+        const avatarPromisesList = [];
+        const usernamePromisesList = [];
         
         users.forEach(user => {
             const userRole = getUserRole(user.sid, adminDiscordIds);
@@ -493,199 +450,120 @@ function tryLoadImage(url, timeoutMs) {
             const userCard = document.createElement('div');
             userCard.className = 'admin_card';
             userCard.id = `block-${userRole}`;
-            
-            // Добавляем класс для забаненных пользователей
-            if (banStatus && banStatus.isBanned) {
-                userCard.classList.add('banned-user');
-            }
+            if (banStatus?.isBanned) userCard.classList.add('banned-user');
             
             let endText = 'Не указано';
             if (user.end === 0) {
                 endText = user.is_active ? 'Навсегда' : 'Навсегда';
             } else if (user.end > 0 && user.end * 1000 > Date.now()) {
-                const endDate = new Date(user.end * 1000);
-                endText = `До ${endDate.toLocaleDateString('ru-RU')}`;
+                endText = `До ${new Date(user.end * 1000).toLocaleDateString('ru-RU')}`;
             } else if (user.end > 0 && user.end * 1000 <= Date.now()) {
                 endText = 'Истек';
             }
             
-            // Формируем текст бана
-            let banText = '';
-            let banEnd = '';
-            let banReason = '';
+            let banText = '', banEnd = '', banReason = '';
             if (banStatus) {
                 if (banStatus.isBanned) {
-                    if (banStatus.isPermanent) {
-                        banText = `Блок`;
-                        banEnd = 'Навсегда';
-                        banReason = `Причина: ${banStatus.reason}`;
-                    } else {
-                        banText = `Блок`;
-                        banEnd = `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
-                        banReason = `Причина: ${banStatus.reason}`;
-                    }
+                    banText = 'Блок';
+                    banEnd = banStatus.isPermanent ? 'Навсегда' : `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
+                    banReason = `Причина: ${banStatus.reason}`;
                 } else if (banStatus.wasBanned) {
-                    banText = `Блок истек`;
+                    banText = 'Блок истек';
                     banEnd = `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
                     banReason = `Причина: ${banStatus.reason}`;
                 }
             }
             
+            // Генерируем уникальный ID для элемента username
+            const usernameSpanId = `username-${user.sid || user.hwid}`.replace(/[^a-zA-Z0-9-]/g, '_');
+            
             userCard.innerHTML = `
             <div id="admins_card">
-            <div class="adminlist_info">
-            <div class="avatar_block">
-            <div class="avatar_letter">${user.name.charAt(0).toUpperCase()}</div>
-            <div style="display: flex; gap: 3px; flex-direction: column;">
-                <a href="./profile?hwid=${user.name}" target="_blank">
-                    <img class="admins_avatar" id="user-${user.sid}-avatar" src="./images/none.png" alt="" 
-                    data-username="${user.name}"
-                    onerror="this.setAttribute('data-fallback', 'true');">
-                </a>
-                <div class="adminlist_button steam_button" data-tippy-content="Роль" data-tippy-placement="bottom" id="tag-${banStatus && !banStatus.wasBanned ? 'banned' : userRole}">
-                    <span
-                    >${
-                        userRole === 'creator' ? 'Создатель' : (
-                        userRole === 'admin' ? 'Партнёр' : (
-                        userRole === 'bot' ? 'Менеджер' : (
-                        banStatus && !banStatus.wasBanned ? 'Забанен': 'Игрок')))
-                    }</span>
-                </div>
-            </div>
-            </div>
-            <div class="adminlist_buttons">
-            <div id="admins_info">
-            <span class="admin_nickname">${user.name}</span>
-            <div class="admin_term">
-            <div class="admin_group">
-            ${
-                                            banStatus && !banStatus.wasBanned ? 
-                                                banText ? 
-                                                `<span class="admin_group_text_ban">${banText}</span>` : 
-                                                `<span class="admin_group_text">${user.group_id}</span>` : 
-                                                `<span class="admin_group_text">${user.group_id}</span>`
-                                        }
-                                    </div>
-                                    <span class="admin_term_text">
-                                        ${
-                                            banText ? 
-                                            banEnd : 
-                                            endText
-                                        }
-                                    </span>
-                                </div>
-                                <div id="link_block">
-                                    <!-- 
-                                    <a href="/profile?hwid=${user.name}" target="_blank" id="link_prof" class="discord-link profil-link" data-discord-id="${user.sid}" data-original-name="${user.name}">
-                                        <svg x="0" y="0" viewBox="0 0 24 24" xml:space="preserve" fill-rule="evenodd" class="">
-                                            <g>
-                                                <circle cx="11.5" cy="6.744" r="5.5"></circle>
-                                                <path d="M12.925 21.756A6.226 6.226 0 0 1 11.25 17.5c0-1.683.667-3.212 1.751-4.336-.49-.038-.991-.058-1.501-.058-3.322 0-6.263.831-8.089 2.076-1.393.95-2.161 2.157-2.161 3.424v1.45a1.697 1.697 0 0 0 1.7 1.7z">
-                                                </path>
-                                                <path d="M17.5 12.25c-2.898 0-5.25 2.352-5.25 5.25s2.352 5.25 5.25 5.25 5.25-2.352 5.25-5.25-2.352-5.25-5.25-5.25zm-.75 5.25V20a.75.75 0 0 0 1.5 0v-2.5a.75.75 0 0 0-1.5 0zm.75-3.25a1 1 0 1 1 0 2 1 1 0 0 1 0-2z">
-                                                </path>
-                                            </g>
-                                        </svg>
-                                    </a>
-                                    -->
-                                    ${!(banStatus && !banStatus.wasBanned) && (user.sid || user.telegramId) ? 
-                                        `${user.sid ? 
-                                            `<a href="https://discord.com/users/${user.sid}" target="_blank" id="link_prof" class="discord-link DS" data-discord-id="${user.sid}" data-original-name="${user.name}">
-                                                <svg viewBox="0 0 24 24">
-                                                    <path d="M14.82 4.26a10.14 10.14 0 0 0-.53 1.1 14.66 14.66 0 0 0-4.58 0 10.14 10.14 0 0 0-.53-1.1 16 16 0 0 0-4.13 1.3 17.33 17.33 0 0 0-3 11.59 16.6 16.6 0 0 0 5.07 2.59A12.89 12.89 0 0 0 8.23 18a9.65 9.65 0 0 1-1.71-.83 3.39 3.39 0 0 0 .42-.33 11.66 11.66 0 0 0 10.12 0c.14.09.28.19.42.33a10.14 10.14 0 0 1-1.71.83 12.89 12.89 0 0 0 1.08 1.78 16.44 16.44 0 0 0 5.06-2.59 17.22 17.22 0 0 0-3-11.59 16.09 16.09 0 0 0-4.09-1.35zM8.68 14.81a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.93 1.93 0 0 1 1.8 2 1.93 1.93 0 0 1-1.8 2zm6.64 0a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.92 1.92 0 0 1 1.8 2 1.92 1.92 0 0 1-1.8 2z"/>
-                                                </svg>
-                                                <span class="discord-username">${user.name}</span>
-                                            </a>` : ''
-                                        }
-                                        ${user.telegramId ? 
-                                            `<a target="_blank" id="link_prof" class="discord-link telegram-link TG" data-discord-id="${user.sid}" data-original-name="${user.name}">
-                                                <svg viewBox="0 0 100 100">
-                                                    <path d="M89.442 11.418c-12.533 5.19-66.27 27.449-81.118 33.516-9.958 3.886-4.129 7.529-4.129 7.529s8.5 2.914 15.786 5.1 11.172-.243 11.172-.243l34.244-23.073c12.143-8.257 9.229-1.457 6.315 1.457-6.315 6.315-16.758 16.272-25.501 24.287-3.886 3.4-1.943 6.315-.243 7.772 6.315 5.343 23.558 16.272 24.53 17.001 5.131 3.632 15.223 8.861 16.758-2.186l6.072-38.13c1.943-12.872 3.886-24.773 4.129-28.173.728-8.257-8.015-4.857-8.015-4.857z"></path>
-                                                </svg>
-                                                <span class="discord-username">ID: ${user.telegramId}</span>
-                                            </a>` : ''
-                                        }` : 
-                                        `${!(banStatus && !banStatus.wasBanned) ?
-                                            `<a target="_blank" id="link_prof" style="max-width: 100%;" class="discord-link">
-                                                <p id="no-link">Без привязки</p>
-                                            </a>` : ''
-                                        }`
-                                    }
-                                </div>
-                                ${
-                                    banStatus && !banStatus.wasBanned ?
-                                        banText ? 
-                                        `<span class="admin_term_reason">${banStatus.reason}</span>` : 
-                                        `` : 
-                                        ``
-                                }
-                            </div>
+                <div class="adminlist_info">
+                    <div class="avatar_block">
+                        <div class="avatar_letter">${user.name.charAt(0).toUpperCase()}</div>
+                        <div style="display: flex; gap: 3px; flex-direction: column;">
+                            <a href="./profile?hwid=${user.name}" target="_blank">
+                                <img class="admins_avatar" id="user-${user.sid}-avatar" src="./images/none.png" alt="">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="adminlist_buttons">
+                        <div id="admins_info">
+                        <div class="admin_term">
+                        <div class="adminlist_button steam_button" id="tag-${banStatus && !banStatus.wasBanned ? 'banned' : userRole}">
+                        <span>${userRole === 'creator' ? 'Создатель' : (userRole === 'admin' ? 'Партнёр' : (userRole === 'bot' ? 'Менеджер' : (banStatus && !banStatus.wasBanned ? 'Забанен' : 'Игрок')))}</span>
+                        </div>
+                        ${!(banStatus && !banStatus.wasBanned) ? `
+                            <div class="admin_group">
+                                <span class="admin_group_text">${user.group_id}</span>
+                            </div>`:``
+                        }
+                        <span class="admin_term_text">${banText ? banEnd : endText}</span>
+                        </div>
+                        <span class="admin_nickname">${user.name}</span>
+                            ${!(banStatus && !banStatus.wasBanned) && (user.sid || user.telegramId) ? 
+                            `${user.sid ? `<div id="link_block">
+                                <a 
+                                href="https://discord.com/users/${user.sid}" 
+                                target="_blank" 
+                                id="link_prof" 
+                                class="discord-link DS" 
+                                data-discord-id="${user.sid}" 
+                                data-original-name="${user.name}">
+                                    <svg viewBox="0 0 24 24"><path d="M14.82 4.26a10.14 10.14 0 0 0-.53 1.1 14.66 14.66 0 0 0-4.58 0 10.14 10.14 0 0 0-.53-1.1 16 16 0 0 0-4.13 1.3 17.33 17.33 0 0 0-3 11.59 16.6 16.6 0 0 0 5.07 2.59A12.89 12.89 0 0 0 8.23 18a9.65 9.65 0 0 1-1.71-.83 3.39 3.39 0 0 0 .42-.33 11.66 11.66 0 0 0 10.12 0c.14.09.28.19.42.33a10.14 10.14 0 0 1-1.71.83 12.89 12.89 0 0 0 1.08 1.78 16.44 16.44 0 0 0 5.06-2.59 17.22 17.22 0 0 0-3-11.59 16.09 16.09 0 0 0-4.09-1.35zM8.68 14.81a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.93 1.93 0 0 1 1.8 2 1.93 1.93 0 0 1-1.8 2zm6.64 0a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.92 1.92 0 0 1 1.8 2 1.92 1.92 0 0 1-1.8 2z"/></svg>
+                                    <span class="discord-username" id="${usernameSpanId}">Loading...</span>
+                                </a>` : ''}
+                                ${user.telegramId ? `<a 
+                                target="_blank"
+                                id="link_prof"
+                                class="discord-link telegram-link TG"
+                                data-discord-id="${user.sid}"
+                                data-original-name="${user.name}">
+                                    <svg viewBox="0 0 100 100"><path d="M89.442 11.418c-12.533 5.19-66.27 27.449-81.118 33.516-9.958 3.886-4.129 7.529-4.129 7.529s8.5 2.914 15.786 5.1 11.172-.243 11.172-.243l34.244-23.073c12.143-8.257 9.229-1.457 6.315 1.457-6.315 6.315-16.758 16.272-25.501 24.287-3.886 3.4-1.943 6.315-.243 7.772 6.315 5.343 23.558 16.272 24.53 17.001 5.131 3.632 15.223 8.861 16.758-2.186l6.072-38.13c1.943-12.872 3.886-24.773 4.129-28.173.728-8.257-8.015-4.857-8.015-4.857z"/></svg>
+                                    <span class="discord-username">ID: ${user.telegramId}</span>
+                                </a>` : ''}` : 
+                                `${!(banStatus && !banStatus.wasBanned) ? `<a 
+                                target="_blank" 
+                                id="link_prof" 
+                                style="max-width: 100%;" 
+                                class="discord-link">
+                                    <p id="no-link">Без привязки</p>
+                                </a>` : ''}
+                                ${banStatus && !banStatus.wasBanned ? `<div 
+                                class="admin_term_reason">
+                                    ${banStatus.reason}
+                                </div>` : ''}
+                            </div>`
+                            }
                         </div>
                     </div>
                 </div>
-            `;
+            </div>`;
             
             adminListBlocks.appendChild(userCard);
             
-if (user.sid) {
-    const avatarPromise = loadDiscordAvatar(
-        user.sid, 
-        `user-${user.sid}-avatar`,
-        user.name
-    ).then(discordData => {
-        if (discordData) {
-            userDiscordData[user.sid] = discordData;
+            // Загружаем аватар
+            if (user.sid) {
+                avatarPromisesList.push(loadDiscordAvatar(user.sid, `user-${user.sid}-avatar`, user.name));
+            }
             
-            // Обновляем все элементы, связанные с этим пользователем
-            const userElements = document.querySelectorAll(`[data-discord-id="${user.sid}"]`);
-            userElements.forEach(element => {
-                // Обновляем ссылки Discord
-                if (element.classList.contains('DS')) {
-                    const usernameSpan = element.querySelector('.discord-username');
-                    if (usernameSpan) {
-                        usernameSpan.textContent = discordData.username;
-                    }
+            // Загружаем имя пользователя Discord
+            if (user.sid) {
+                const usernameSpan = document.getElementById(usernameSpanId);
+                if (usernameSpan) {
+                    // Сразу показываем ID, потом заменим на имя
+                    usernamePromisesList.push(loadDiscordUsername(user.sid, usernameSpan, user.name));
                 }
-                
-                // Обновляем ссылки профиля (с иконкой человечка)
-                if (element.classList.contains('profil-link')) {
-                    const originalName = element.getAttribute('data-original-name');
-                    // Можно добавить логику для обновления, если нужно
-                }
-            });
-        }
-    }).catch(error => {
-        console.warn(`Ошибка загрузки данных Discord для ${user.sid}:`, error);
-        // Если не удалось загрузить, показываем оригинальное имя
-        const usernameSpans = document.querySelectorAll(`[data-discord-id="${user.sid}"] .discord-username`);
-        usernameSpans.forEach(span => {
-            span.textContent = user.name;
-        });
-    });
-    
-    avatarPromises.push(avatarPromise);
-}
+            }
         });
         
-        Promise.allSettled(avatarPromises).then(() => {
-            console.log('Все аватары загружены');
-        });
+        Promise.allSettled([...avatarPromisesList, ...usernamePromisesList]).then(() => console.log('Все данные загружены'));
     }
     
-    // Инициализация
     function init() {
-        // Загрузка данных пользователей
         loadUsersData();
-        // Инициализация индикаторов прокрутки
-        setTimeout(updateScrollIndicators, 100);
     }
     
-    // Функция для обновления индикаторов прокрутки (если нужна)
-    function updateScrollIndicators() {
-        // Ваша реализация здесь
-    }
-    
-    // Запуск инициализации
     init();
 });
-
