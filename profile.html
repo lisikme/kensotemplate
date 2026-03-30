@@ -267,63 +267,81 @@
         }
     </style>
     <style>
-    .site-header {
-        background: rgba(14, 14, 14, 0.95);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid #303030;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        padding: 5px 0;
-        margin-bottom: 30px;
-    }
+        body {
+            background-color: #0e0e0e;
+            color: #e0e0e0;
+            font-family: "Unbounded", sans-serif;
+            margin: 0;
+            padding-top: 70px !important;
+            padding: 20px;
+            padding: 0 20px;
+        }
 
-    .header-container {
-        max-width: 1600px;
-        margin: 0 auto;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 20px;
-    }
+        .site-header {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.349);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #303030;
+            /* position: sticky; */
+            left: 0px;
+            right: 0px;
+            /* border: #006eff solid 1px; */
+            top: 0px;
+            z-index: 1000;
+            padding: 5px 20px;
+            margin-bottom: 30px;
+        }
 
-    .site-name {
-        color: #d7fe7b;
-        margin: 0;
-        font-size: 25px;
-        font-weight: 500;
-        line-height: 25px;
-        left: -1px;
-        position: relative;
-        text-shadow: 0 0 10px rgba(215, 254, 123, 0.3);
-    }
-    .logo {
-        display: flex;
-        flex-direction: column;
-    }
+        .header-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            /* padding: 0 20px; */
+        }
 
-    .by-kelix {
-        color: #ff7777;
-        font-size: 12px;
-        opacity: 1;
-    }
+        .site-name {
+            color: #d7fe7b;
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 25px;
+            left: -1px;
+            position: relative;
+            text-shadow: 0 0 10px rgba(215, 254, 123, 0.3);
+        }
+        .logo {
+            display: flex;
+            flex-direction: column;
+        }
 
-    .header-nav {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
+        .by-kelix {
+            color: #ff7777;
+            position: relative;
+            font-size: 10px;
+            top: -3px;
+            opacity: 1;
+        }
 
-    .nav-link {
-        border: 1px solid #ffffff10;
-        color: #efefef;
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        padding: 5px 10px;
-        border-radius: 5px;
-    }
+        .header-nav {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .nav-link {
+            display: flex;
+            color: #efefef;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            padding: 5px 10px;
+            background: #00000075;
+            border: 1px solid #ffffff30;
+            border-radius: 5px;
+        }
 
     .nav-link:hover {
         color: #d7fe7b;
@@ -369,26 +387,27 @@
 </head>
 <body>
     <!-- Шапка сайта -->
-    <header class="site-header">
-        <div class="header-container">
+<header class="site-header">
+    <div class="header-container">
+        <a href="https://kenso.ketame.ru">
             <div style="display: flex; gap: 8px; align-items: center;">
-                <img src="./logo.png"style="
-                    border: 1px solid #222; 
-                    width: 35px; 
-                    height: 35px;
-                    border-radius: 5px;
-                " alt="">
+                <img src="./logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
                 <div class="logo">
-                    <div class="site-name">KensoUltra</div>
+                    <div class="site-name">KensoUltra+</div>
                     <span class="by-kelix">For nixware.cc - by Kelix.me </span>
                 </div>
             </div>
-            <nav class="header-nav">
-                <a href="index.html" class="nav-link">Главная</a>
-                <a href="https://t.me/kelixme" class="nav-link buy-nav" target="_blank">Купить</a>
-            </nav>
-        </div>
-    </header>
+        </a>
+        <nav class="header-nav">
+            <a href="https://vk.com/kensolua" class="nav-link" target="_blank">
+                <img src="vk.svg" width="22" height="18" alt="">
+            </a>
+            <a href="https://discord.gg/5BM4XD3qxM" class="nav-link" target="_blank">
+                <img src="discord.svg" width="22" height="18" alt="">
+            </a>
+        </nav>
+    </div>
+</header>
 
     <div class="profile-container">
         <a href="index.html" class="back-link">
