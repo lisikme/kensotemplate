@@ -488,14 +488,12 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" fill="#d7fe7b" stroke="#d7fe7b"/>
             </svg>
-            Отзывы покупателей
+            Отзывы
         </div>
         <div class="review-stats" id="reviewStats">
-            <!-- Статистика будет вставлена динамически -->
         </div>
     </div>
     <div class="reviews-container" id="reviewsContainer">
-        <!-- Отзывы будут загружены динамически -->
     </div>
 </div>
 
@@ -555,6 +553,10 @@
     &.messages {
         background: #002136;
         color: #7cb9ff;
+    }
+    &.beta {
+        background: #360000;
+        color: #ff7c7c;
     }
 }
 .stat-item svg {
@@ -785,11 +787,14 @@ function renderReviews() {
     if (statsContainer) {
         if (totalReviews === 0) {
             statsContainer.innerHTML = `
+                <div class="stat-item beta">
+                    <span>Бета</span>
+                </div>
                 <div class="stat-item ratings">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
                     </svg>
-                    <span>Р.0</span>
+                    <span>0</span>
                 </div>
                 <div class="stat-item messages">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -800,6 +805,9 @@ function renderReviews() {
             `;
         } else {
             statsContainer.innerHTML = `
+                <div class="stat-item beta">
+                    <span>Бета</span>
+                </div>
                 <div class="stat-item ratings">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
@@ -830,9 +838,7 @@ function renderReviews() {
         reviewEl.innerHTML = `
             <div class="review-author">
                 <span class="review-date">
-                    <div class="review-rating">
-                        ${renderStars(review.rating)}
-                        </div>
+                    <div class="review-rating">${renderStars(review.rating)}</div>
                     <span class="review-name">${review.name}</span>
                     ${review.date}</span>
             </div>
