@@ -765,18 +765,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         </script>
         <script>
-            let currentUser = null;
-            
+            let currentUser = null;            
             function updateUI(user = 'Гость') {
                 currentUser = user;
                 const btn_login = document.querySelector('.btn_login');
                 const btn_logout = document.querySelector('.btn_logout');
                 const avatar = btn_logout.querySelector('.avatar-account').querySelector('.avatar');
                 const username = btn_logout.querySelector('.nav-bt-title');
-                
+                const reviewbutton = btn_logout.querySelector('.add-review-btn');
+                const triggerButton = document.getElementById('x7k9m2p4_addReviewTrigger_btn');
+                if (user == 'Гость') {
+                    triggerButton.style.display = 'none'
+                } else {
+                    triggerButton.style.display = 'inline-flex'
+                }
+
                 if (user == 'Гость') {
                     btn_login.classList.add('active');
                     btn_logout.classList.remove('active');
+                    username.innerHTML = `Гость`;
+                    // reviewbutton.innerHTML = 'fffj'
+                    
                 } else {
                     btn_login.classList.remove('active');
                     btn_logout.classList.add('active');
@@ -1319,16 +1328,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-
 <!-- НОВЫЙ БЛОК ОТЗЫВОВ С GOOGLE TABLES -->
 <div class="reviews-section">
     <div class="reviews-header">
         <div class="reviews-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                 <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" fill="#d7fe7b" stroke="#d7fe7b"/>
             </svg>
-            Отзывы
+            Отзывы    
+            <button class="add-review-btn" id="x7k9m2p4_addReviewTrigger_btn">
+                ДОБАВИТЬ
+            </button>
         </div>
         <div class="review-stats" id="reviewStats">
             <div class="stat-item beta"><span>Загрузка...</span></div>
@@ -1339,193 +1349,32 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 </div>
 
-<style>
-    /* Стили для блока отзывов */
-.reviews-section {
-    margin-bottom: 5px;
-    background: #0a0a0a;
-    border-radius: 5px;
-    border: 1px solid #303030;
-    overflow: hidden;
-}
-.reviews-header {
-    padding: 3px 3px;
-    background: #000000;
-    padding-left: 6px;
-    border-bottom: 1px solid #303030;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-.reviews-title {
-    color: #d7fe7b;
-    font-size: 10px;
-    font-weight: 400;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-.reviews-title svg {
-    width: 10px;
-    height: 10px;
-    fill: #d7fe7b;
-}
-.review-stats {
-    display: flex;
-    gap: 2px;
-    font-size: 10px;
-    color: #aaa;
-    align-items: center;
-}
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    border-radius: 2px;
-    padding: 1px 8px;
-}
-.stat-item.ratings {
-    background: #472a00;
-    color: #FFB347;
-}
-.stat-item.messages {
-    background: #002136;
-    color: #7cb9ff;
-}
-.stat-item.beta {
-    background: #360000;
-    color: #ff7c7c;
-}
-.stat-item svg {
-    width: 10px;
-    height: 10px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-}
-.reviews-container {
-    max-height: 320px;
-    overflow-y: auto;
-    padding: 5px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 3px;
-    width: 100% !important;
-    box-sizing: border-box;
-}
-/* Если отзывов нет, показываем как block (перебиваем grid) */
-.reviews-container:has(.empty-reviews) {
-    display: block;
-}
-.review-card {
-    background: #080808;
-    border: 1px solid #303030;
-    border-radius: 5px;
-    overflow: hidden;
-    transition: all 0.2s;
-}
-.review-author {
-    padding: 0px 5px;
-    border-bottom: 1px solid #303030;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    background: #000000;
-    border-radius: 3px 3px 0px 0px;
-    flex-direction: column;
-}
-.review-name {
-    font-weight: 600;
-    font-size: 10px;
-    color: #FFB347;
-}
-.review-date {
-    border-radius: 3px;
-    padding: 2px 0px;
-    position: relative;
-    font-size: 10px;
-    gap: 10px;
-    width: 100%;
-    font-weight: 400;
-    color: #a7a7a7;
-    flex-direction: row;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.review-rating {
-    display: flex;
-    gap: 2px;
-    width: max-content;
-    border-radius: 3px;
-    align-items: center;
-}
-.star-icon {
-    width: 12px;
-    height: 12px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-}
-.star-icon.filled {
-    fill: #ffb347;
-    stroke: #ffb347;
-}
-.star-icon.empty {
-    fill: #505050;
-    stroke: #505050;
-}
-.review-text {
-    font-size: 10px;
-    background: #080808;
-    padding: 5px;
-    height: 100%;
-    color: #bcbcbc;
-    border-top-width: 0px;
-    border-radius: 0px 0px 3px 3px;
-}
-.reviews-container::-webkit-scrollbar {
-    width: 4px;
-}
-.reviews-container::-webkit-scrollbar-thumb {
-    background: #d7fe7b;
-    border-radius: 2px;
-}
-.empty-reviews {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    text-align: center;
-    gap: 2px;
-}
-.empty-reviews svg {
-    width: 48px;
-    height: 48px;
-    stroke: #555;
-    fill: none;
-    opacity: 0.5;
-}
-.empty-reviews p {
-    color: #777;
-    font-size: 13px;
-    margin: 0;
-}
-.empty-reviews .empty-subtitle {
-    font-size: 11px;
-    color: #555;
-}
-</style>
+<!-- Модальное окно с уникальными идентификаторами - 90% ширины -->
+<div class="x7k9m2p4_modal_overlay" id="x7k9m2p4_reviewModal_system">
+    <div class="x7k9m2p4_modal_container">
+        <div class="x7k9m2p4_modal_header">
+            <h3 class="x7k9m2p4_modal_title">Оставить отзыв</h3>
+            <button class="x7k9m2p4_modal_close_btn" id="x7k9m2p4_closeModal_trigger">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor"/>
+                </svg>
+            </button>
+        </div>
+        <div class="x7k9m2p4_modal_content_wrapper">
+            <iframe id="x7k9m2p4_googleForm_iframe_element" src="" frameborder="0" allowfullscreen></iframe>
+        </div>
+    </div>
+</div>
 
 <script>
 // === НАСТРОЙКИ GOOGLE TABLES ===
-// ВНИМАНИЕ: Убедитесь, что таблица ОТКРЫТА ДЛЯ ВСЕХ (Файл -> Опубликовать в интернете -> CSV)
 const SPREADSHEET_ID = '1R0YGWtAvT6t_fuyu5wpe9H6oVagBZgVkdQel8CLzhOM';
 const SHEET_GID = '547215109';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
+
+// === НАСТРОЙКИ GOOGLE FORMS ===
+// ВСТАВЬТЕ ССЫЛКУ НА ВАШУ GOOGLE FORM (ПУБЛИЧНУЮ)
+const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfVzcMNwmo6Rj7kXwqssMp7MOmgEUbGH7lav6FF8pW4TQME2w/viewform';
 
 // Функция форматирования даты
 function formatDate(dateValue) {
@@ -1682,10 +1531,8 @@ async function loadReviewsFromGoogleSheets() {
             return;
         }
         
-        // Ищем заголовки (первая строка)
         const headers = rows[0].map(h => String(h || '').toLowerCase().trim());
         
-        // Определяем индексы столбцов (исправленная логика)
         let nameIndex = -1;
         let ratingIndex = -1;
         let dateIndex = -1;
@@ -1704,7 +1551,6 @@ async function loadReviewsFromGoogleSheets() {
             }
         }
         
-        // Если какие-то индексы не найдены, назначаем по умолчанию (0,1,2,3)
         if (nameIndex === -1) nameIndex = 0;
         if (ratingIndex === -1) ratingIndex = 1;
         if (dateIndex === -1) dateIndex = 2;
@@ -1717,18 +1563,15 @@ async function loadReviewsFromGoogleSheets() {
             const row = rows[i];
             if (!row || row.length === 0) continue;
             
-            // Получаем имя
             let name = (row[nameIndex] || 'Аноним').toString().trim();
             if (name === '') name = 'Аноним';
             
-            // Получаем рейтинг (исправлено!)
             let rating = 5;
             if (ratingIndex < row.length) {
                 const ratingVal = parseFloat(row[ratingIndex]);
                 if (!isNaN(ratingVal) && ratingVal >= 1 && ratingVal <= 5) {
                     rating = ratingVal;
                 } else {
-                    // Пробуем найти число в строке
                     const match = String(row[ratingIndex]).match(/(\d+(?:\.\d+)?)/);
                     if (match) {
                         const num = parseFloat(match[1]);
@@ -1737,11 +1580,9 @@ async function loadReviewsFromGoogleSheets() {
                 }
             }
             
-            // Получаем дату
             const rawDate = dateIndex < row.length ? row[dateIndex] : '';
             const formattedDate = formatDate(rawDate);
             
-            // Получаем текст
             let text = textIndex < row.length ? (row[textIndex] || '') : '';
             if (text === '') text = '*Без комментария*';
             
@@ -1800,7 +1641,6 @@ function renderReviewsFromData(reviewsData, container, statsContainer) {
     const avgRating = calculateAverageRating(reviewsData);
     const formattedRating = formatRatingDisplay(avgRating);
     
-    // Обновляем статистику
     if (statsContainer) {
         statsContainer.innerHTML = `
             <div class="stat-item beta"><span>БЕТА</span></div>
@@ -1815,7 +1655,6 @@ function renderReviewsFromData(reviewsData, container, statsContainer) {
         `;
     }
     
-    // Рендерим карточки отзывов
     container.innerHTML = '';
     reviewsData.forEach(review => {
         const reviewEl = document.createElement('div');
@@ -1844,12 +1683,97 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-// Запускаем загрузку
-document.addEventListener('DOMContentLoaded', () => {
+// === УПРАВЛЕНИЕ МОДАЛЬНЫМ ОКНОМ С УНИКАЛЬНЫМИ ИДЕНТИФИКАТОРАМИ ===
+function x7k9m2p4_openModalSystem() {
+    const modalElement = document.getElementById('x7k9m2p4_reviewModal_system');
+    const iframeElement = document.getElementById('x7k9m2p4_googleForm_iframe_element');
+    
+    if (!modalElement || !iframeElement) {
+        console.error('Modal elements not found');
+        return;
+    }
+    // Перезагружаем iframe при каждом открытии
+    const discord_name = document.querySelector(".btn_logout").querySelector(".nav-bt-title")
+    iframeElement.src = GOOGLE_FORM_URL+`?usp=pp_url&entry.1516320113=${discord_name.innerHTML}&embedded=true`;
+    // Показываем модальное окно
+    modalElement.classList.add('active');
+    // Блокируем прокрутку body
+    document.body.style.overflow = 'hidden';
+}
+
+function x7k9m2p4_closeModalSystem() {
+    const modalElement = document.getElementById('x7k9m2p4_reviewModal_system');
+    const iframeElement = document.getElementById('x7k9m2p4_googleForm_iframe_element');
+    
+    if (!modalElement) return;
+    
+    // Скрываем модальное окно
+    modalElement.classList.remove('active');
+    
+    // Восстанавливаем прокрутку body
+    document.body.style.overflow = '';
+    
+    // Очищаем src через задержку для плавного закрытия
+    if (iframeElement) {
+        setTimeout(() => {
+            iframeElement.src = '';
+        }, 350);
+    }
+}
+
+// === ИНИЦИАЛИЗАЦИЯ ВСЕХ КОМПОНЕНТОВ ===
+document.addEventListener('DOMContentLoaded', function() {
+    // Загружаем отзывы
     loadReviewsFromGoogleSheets();
+    const triggerButton = document.getElementById('x7k9m2p4_addReviewTrigger_btn');
+    // const discord_name = document.querySelector(".btn_logout").querySelector(".nav-bt-title")
+    // if (discord_name.innerHTML == 'Гость') {
+    //     console.log(triggerButton.style.display = 'none')
+    // } else {
+    //     console.log(triggerButton.style.display = 'inline-flex')
+    // }
+    // Получаем элементы с уникальными ID
+    const closeButton = document.getElementById('x7k9m2p4_closeModal_trigger');
+    const modalOverlay = document.getElementById('x7k9m2p4_reviewModal_system');
+    
+    // Настраиваем открытие модального окна
+    if (triggerButton) {
+        triggerButton.addEventListener('click', x7k9m2p4_openModalSystem);
+    } else {
+        console.warn('Trigger button not found');
+    }
+    
+    // Настраиваем закрытие по кнопке
+    if (closeButton) {
+        closeButton.addEventListener('click', x7k9m2p4_closeModalSystem);
+    }
+    
+    // Закрытие по клику на overlay (фон)
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', function(event) {
+            if (event.target === modalOverlay) {
+                x7k9m2p4_closeModalSystem();
+            }
+        });
+    }
+    
+    // Закрытие по клавише Escape
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const modalActive = document.getElementById('x7k9m2p4_reviewModal_system');
+            if (modalActive && modalActive.classList.contains('active')) {
+                x7k9m2p4_closeModalSystem();
+            }
+        }
+    });
+    
+    // Дополнительная защита: предотвращаем конфликты с другими скриптами
+    window.x7k9m2p4_modalController = {
+        open: x7k9m2p4_openModalSystem,
+        close: x7k9m2p4_closeModalSystem
+    };
 });
 </script>
-
 
 
 
