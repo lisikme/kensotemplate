@@ -279,6 +279,7 @@ a {
             background: #0a0a0a;
             border-radius: 5px;
             padding: 10px 15px 15px 15px;
+            flex-direction: column;
             border: 1px solid #2a2a2a;
             background: #010101;
         }
@@ -393,9 +394,11 @@ a {
         
         /* обновленная плашка после оплаты (две строки) */
         .card-warn {
+            display: none !important;
             background: #660000;
             color: #ffffff;
-            width: max-content;
+            width: 100%;
+            max-width: 400px;
             padding: 5px 12px;
             margin: 0 auto;
             margin-top: 5px;
@@ -559,6 +562,7 @@ a {
         <div class="methods-grid" id="paymentMethodsGrid">
             <!-- динамически через js, но также можно прописать резерв -->
         </div>
+        <div id="dynamicPaymentWarning" class="card-warn">После оплаты обязательно оповестите продавца!</div>
     </div>
 
     <!-- Блок с iframe и плашками -->
@@ -566,7 +570,6 @@ a {
         <div class="iframe-title">
             🔒 Безопасная оплата
             <!-- Динамическая плашка будет здесь обновляться в зависимости от метода -->
-            <div id="dynamicPaymentWarning" class="card-warn">После оплаты обязательно оповестите продавца!</div>
         </div>
         <div class="iframe-wrapper" id="iframeWrapper">
             <div class="iframe-placeholder" id="iframePlaceholder">
@@ -792,7 +795,7 @@ function updateWarningText(method, isAvailable) {
     if (!warningDiv) return;
     
     if (!isAvailable) {
-        warningDiv.innerHTML = `⚠️ ${method.name} временно недоступен. Выберите другой способ.`;
+        warningDiv.innerHTML = `${method.name} временно недоступен.`;
         warningDiv.style.background = "#662200";
         warningDiv.style.border = "1px solid #ff8844";
         warningDiv.style.color = "#ffffff";
@@ -802,6 +805,7 @@ function updateWarningText(method, isAvailable) {
     // Если метод доступен, берем стандартные настройки из массива
     if (method && method.warningText) {
         warningDiv.innerHTML = method.warningText;
+        warningDiv.style.display = 'none';
         warningDiv.style.background = method.warningStyle.background;
         warningDiv.style.border = method.warningStyle.border;
         warningDiv.style.color = method.warningStyle.color;
@@ -854,14 +858,13 @@ function renderPaymentMethods() {
                 // легкий нотификационный эффект
                 const warnDiv = document.getElementById('dynamicPaymentWarning');
                 if (warnDiv) {
-                    warnDiv.innerHTML = `${method.name} временно недоступен. Используйте CloudTips.`;
-                    warnDiv.style.background = "#882222";
+                    warnDiv.innerHTML = `${method.name} временно недоступен.`;
+                    warnDiv.style.display = "block";
+                    warnDiv.style.background = "#202020";
                     setTimeout(() => {
                         if (currentPaymentMethod === 'cloudtips') updateWarningText(paymentMethods.find(m => m.id === 'cloudtips'), true);
-                        else if (currentPaymentMethod === 'ozonbank') updateWarningText(paymentMethods.find(m => m.id === 'ozonbank'), true);
-                        else if (currentPaymentMethod === 'yoomoney') updateWarningText(paymentMethods.find(m => m.id === 'yoomoney'), true);
                         else updateWarningText(paymentMethods.find(m => m.id === currentPaymentMethod), true);
-                    }, 2000);
+                    }, 3000);
                 }
             });
         }
@@ -901,7 +904,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
-
-
-
-<link rel="stylesheet" href="main.css">

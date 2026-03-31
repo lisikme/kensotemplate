@@ -479,9 +479,8 @@
 
 
 
+<!-- 
 
-
-<!-- НОВЫЙ БЛОК ОТЗЫВОВ -->
 <div class="reviews-section">
     <div class="reviews-header">
         <div class="reviews-title">
@@ -498,7 +497,6 @@
 </div>
 
 <style>
-    /* Стили для блока отзывов */
 .reviews-section {
     margin-bottom: 5px;
     background: #0a0a0a;
@@ -514,7 +512,6 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* flex-wrap: wrap; */
     gap: 10px;
 }
 .reviews-title {
@@ -574,37 +571,25 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 3px;
-    width: 100% !important; /* Чтобы контейнер занимал всю доступную ширину */
+    width: 100% !important;
     box-sizing: border-box;
 }
 .review-card {
-    /* background: #111111; */
-    background: #0E0E0E;
-    /* border: 1px solid #303030; */
+    background: #080808;
+    border: 1px solid #303030;
     border-radius: 5px;
-    /* overflow: hidden; */
-    /* display: flex; */
-    /* overflow:inherit; */
-    /* height: auto; */
-    /* padding: 5px 8px; */
-    /* border-left: 3px solid #d7fe7b; */
-    /* transition: transform 0.2s; */
-}
-.review-card:hover {
-    background: #151515;
+    overflow: hidden;
+    transition: all 0.2s;
 }
 .review-author {
-    /* background: #000000; */
     padding: 0px 5px;
-    /* padding-left: 8px; */
-    border: 1px solid #303030;
+    border-bottom: 1px solid #303030;
     display: flex;
     align-items: center;
     gap: 3px;
     background: #000000;
     border-radius: 3px 3px 0px 0px;
     flex-direction: column;
-    /* margin-bottom: 3px; */
 }
 .review-avatar {
     width: 28px;
@@ -626,7 +611,6 @@
 }
 .review-date {
     border-radius: 3px;
-    /* background: #0e0800; */
     padding: 2px 0px;
     position: relative;
     font-size: 10px;
@@ -634,7 +618,6 @@
     width: 100%;
     font-weight: 400;
     color: #a7a7a7;
-    /* margin-left: auto; */
     flex-direction: row;
     display: flex;
     align-items: center;
@@ -643,12 +626,8 @@
 .review-rating {
     display: flex;
     gap: 2px;
-    /* background: #000000; */
     width: max-content;
-    /* padding: 3px 6px; */
-    
     border-radius: 3px;
-    /* margin-bottom: 5px; */
     align-items: center;
 }
 .star-icon {
@@ -671,8 +650,8 @@
     font-size: 10px;
     background: #080808;
     padding: 5px;
+    height: 100%;
     color: #bcbcbc;
-    border: 1px solid #303030;
     border-top-width: 0px;
     border-radius: 0px 0px 3px 3px;
 }
@@ -683,7 +662,6 @@
     background: #d7fe7b;
     border-radius: 2px;
 }
-/* Стили для заглушки "Нет данных" */
 .empty-reviews {
     display: flex;
     flex-direction: column;
@@ -712,7 +690,6 @@
 </style>
 
 <script>
-// Данные отзывов
 const reviewsData = [
     {name: "Aleksey_Petrov", rating: 5, date: "08.09.2025", text: "Лучшая луа советую к покупке :D"},
     {name: "Toxcik", rating: 5, date: "12.09.2025", text: "Самая лучшая луа,топовые функции и т.к д., келикс <3"},
@@ -721,24 +698,19 @@ const reviewsData = [
     {name: "theanqua", rating: 5, date: "14.09.2025", text: "Во 👍"},
 ];
 
-// Функция для расчета среднего рейтинга
 function calculateAverageRating(reviews) {
     if (reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
     return sum / reviews.length;
 }
 
-// Функция для форматирования отображения рейтинга
 function formatRatingDisplay(rating) {
-    // Если рейтинг целое число (например 5.0), показываем без десятичной части
     if (rating % 1 === 0) {
         return rating.toString();
     }
-    // Иначе показываем с одним знаком после запятой
     return rating.toFixed(1);
 }
 
-// Функция для отображения звездного рейтинга с SVG
 function renderStars(rating) {
     let starsHtml = '';
     for (let i = 1; i <= 5; i++) {
@@ -759,7 +731,6 @@ function renderStars(rating) {
     return starsHtml;
 }
 
-// Функция для отображения заглушки "Нет данных"
 function renderEmptyState(container) {
     container.innerHTML = `
         <div class="empty-reviews">
@@ -773,7 +744,6 @@ function renderEmptyState(container) {
     `;
 }
 
-// Рендер отзывов и статистики
 function renderReviews() {
     const container = document.getElementById('reviewsContainer');
     const statsContainer = document.getElementById('reviewStats');
@@ -783,7 +753,6 @@ function renderReviews() {
     const avgRating = calculateAverageRating(reviewsData);
     const formattedRating = formatRatingDisplay(avgRating);
     
-    // Обновляем статистику с SVG иконками
     if (statsContainer) {
         if (totalReviews === 0) {
             statsContainer.innerHTML = `
@@ -824,13 +793,11 @@ function renderReviews() {
         }
     }
     
-    // Проверяем, есть ли отзывы
     if (totalReviews === 0) {
         renderEmptyState(container);
         return;
     }
     
-    // Рендерим карточки отзывов
     container.innerHTML = '';
     reviewsData.forEach(review => {
         const reviewEl = document.createElement('div');
@@ -860,15 +827,540 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+ -->
 
 
 
 
 
+<!-- НОВЫЙ БЛОК ОТЗЫВОВ С GOOGLE TABLES -->
+<div class="reviews-section">
+    <div class="reviews-header">
+        <div class="reviews-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" fill="#d7fe7b" stroke="#d7fe7b"/>
+            </svg>
+            Отзывы
+        </div>
+        <div class="review-stats" id="reviewStats">
+            <div class="stat-item beta"><span>Загрузка...</span></div>
+        </div>
+    </div>
+    <div class="reviews-container" id="reviewsContainer">
+        <div class="empty-reviews"><p>Загрузка отзывов...</p></div>
+    </div>
+</div>
 
+<style>
+    /* Стили для блока отзывов */
+.reviews-section {
+    margin-bottom: 5px;
+    background: #0a0a0a;
+    border-radius: 5px;
+    border: 1px solid #303030;
+    overflow: hidden;
+}
+.reviews-header {
+    padding: 3px 3px;
+    background: #000000;
+    padding-left: 6px;
+    border-bottom: 1px solid #303030;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.reviews-title {
+    color: #d7fe7b;
+    font-size: 10px;
+    font-weight: 400;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.reviews-title svg {
+    width: 10px;
+    height: 10px;
+    fill: #d7fe7b;
+}
+.review-stats {
+    display: flex;
+    gap: 2px;
+    font-size: 10px;
+    color: #aaa;
+    align-items: center;
+}
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    border-radius: 2px;
+    padding: 1px 8px;
+}
+.stat-item.ratings {
+    background: #472a00;
+    color: #FFB347;
+}
+.stat-item.messages {
+    background: #002136;
+    color: #7cb9ff;
+}
+.stat-item.beta {
+    background: #360000;
+    color: #ff7c7c;
+}
+.stat-item svg {
+    width: 10px;
+    height: 10px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+.reviews-container {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 5px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 3px;
+    width: 100% !important;
+    box-sizing: border-box;
+}
+/* Если отзывов нет, показываем как block (перебиваем grid) */
+.reviews-container:has(.empty-reviews) {
+    display: block;
+}
+.review-card {
+    background: #080808;
+    border: 1px solid #303030;
+    border-radius: 5px;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+.review-author {
+    padding: 0px 5px;
+    border-bottom: 1px solid #303030;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: #000000;
+    border-radius: 3px 3px 0px 0px;
+    flex-direction: column;
+}
+.review-name {
+    font-weight: 600;
+    font-size: 10px;
+    color: #FFB347;
+}
+.review-date {
+    border-radius: 3px;
+    padding: 2px 0px;
+    position: relative;
+    font-size: 10px;
+    gap: 10px;
+    width: 100%;
+    font-weight: 400;
+    color: #a7a7a7;
+    flex-direction: row;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.review-rating {
+    display: flex;
+    gap: 2px;
+    width: max-content;
+    border-radius: 3px;
+    align-items: center;
+}
+.star-icon {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+.star-icon.filled {
+    fill: #ffb347;
+    stroke: #ffb347;
+}
+.star-icon.empty {
+    fill: #505050;
+    stroke: #505050;
+}
+.review-text {
+    font-size: 10px;
+    background: #080808;
+    padding: 5px;
+    height: 100%;
+    color: #bcbcbc;
+    border-top-width: 0px;
+    border-radius: 0px 0px 3px 3px;
+}
+.reviews-container::-webkit-scrollbar {
+    width: 4px;
+}
+.reviews-container::-webkit-scrollbar-thumb {
+    background: #d7fe7b;
+    border-radius: 2px;
+}
+.empty-reviews {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    gap: 2px;
+}
+.empty-reviews svg {
+    width: 48px;
+    height: 48px;
+    stroke: #555;
+    fill: none;
+    opacity: 0.5;
+}
+.empty-reviews p {
+    color: #777;
+    font-size: 13px;
+    margin: 0;
+}
+.empty-reviews .empty-subtitle {
+    font-size: 11px;
+    color: #555;
+}
+</style>
 
+<script>
+// === НАСТРОЙКИ GOOGLE TABLES ===
+// ВНИМАНИЕ: Убедитесь, что таблица ОТКРЫТА ДЛЯ ВСЕХ (Файл -> Опубликовать в интернете -> CSV)
+const SPREADSHEET_ID = '1R0YGWtAvT6t_fuyu5wpe9H6oVagBZgVkdQel8CLzhOM';
+const SHEET_GID = '547215109';
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
 
+// Функция форматирования даты
+function formatDate(dateValue) {
+    if (!dateValue || dateValue === '—') return '—';
+    
+    try {
+        let date;
+        
+        if (typeof dateValue === 'string') {
+            const pattern = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/;
+            const match = dateValue.match(pattern);
+            
+            if (match) {
+                let day = match[1].padStart(2, '0');
+                let month = match[2].padStart(2, '0');
+                let year = match[3];
+                let hour = match[4];
+                let minute = match[5].padStart(2, '0');
+                
+                if (year.length === 2) year = '20' + year;
+                return `${day}.${month}.${year.slice(-2)} ${hour}:${minute}`;
+            }
+            
+            date = new Date(dateValue);
+            if (!isNaN(date.getTime())) {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = String(date.getFullYear()).slice(-2);
+                const hours = date.getHours();
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${day}.${month}.${year} ${hours}:${minutes}`;
+            }
+        }
+        
+        date = new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = String(date.getFullYear()).slice(-2);
+            const hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${day}.${month}.${year} ${hours}:${minutes}`;
+        }
+        
+        return dateValue;
+    } catch (e) {
+        return dateValue;
+    }
+}
 
+function calculateAverageRating(reviews) {
+    if (reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return sum / reviews.length;
+}
+
+function formatRatingDisplay(rating) {
+    if (rating % 1 === 0) return rating.toString();
+    return rating.toFixed(1);
+}
+
+function renderStars(rating) {
+    let starsHtml = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= rating) {
+            starsHtml += `<svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>`;
+        } else {
+            starsHtml += `<svg class="star-icon empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>`;
+        }
+    }
+    return starsHtml;
+}
+
+function renderEmptyState(container, msg = 'Нет данных', sub_msg = 'Информация прогружается...', icon = '') {
+    container.innerHTML = `
+        <div class="empty-reviews">
+            ${icon}
+            <p>${msg}</p>
+            <div class="empty-subtitle">${sub_msg}</div>
+        </div>
+    `;
+}
+
+function parseCSV(text) {
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i+1];
+        
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                currentField += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            currentRow.push(currentField);
+            currentField = '';
+        } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+            currentRow.push(currentField);
+            rows.push(currentRow);
+            currentRow = [];
+            currentField = '';
+            if (char === '\r') i++;
+        } else if (char === '\r' && !inQuotes) {
+            currentRow.push(currentField);
+            rows.push(currentRow);
+            currentRow = [];
+            currentField = '';
+        } else {
+            currentField += char;
+        }
+    }
+    if (currentField !== '' || currentRow.length > 0) {
+        currentRow.push(currentField);
+        rows.push(currentRow);
+    }
+    
+    while (rows.length > 0 && rows[rows.length-1].length === 1 && rows[rows.length-1][0] === '') {
+        rows.pop();
+    }
+    
+    return rows;
+}
+
+async function loadReviewsFromGoogleSheets() {
+    const container = document.getElementById('reviewsContainer');
+    const statsContainer = document.getElementById('reviewStats');
+    
+    try {
+        console.log('Загрузка отзывов из Google Sheets...');
+        
+        const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const csvText = await response.text();
+        const rows = parseCSV(csvText);
+        
+        if (rows.length < 2) {
+            renderEmptyState(
+                container, 
+                'Нет отзывов', 
+                'Будьте первым, кто оставит отзыв!', 
+                `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+                    <path d="M12 11v2M12 17h.01"/>
+                </svg>`);
+            updateStatsEmpty(statsContainer);
+            return;
+        }
+        
+        // Ищем заголовки (первая строка)
+        const headers = rows[0].map(h => String(h || '').toLowerCase().trim());
+        
+        // Определяем индексы столбцов (исправленная логика)
+        let nameIndex = -1;
+        let ratingIndex = -1;
+        let dateIndex = -1;
+        let textIndex = -1;
+        
+        for (let i = 0; i < headers.length; i++) {
+            const header = headers[i];
+            if (header.includes('ваше имя или никнейм')) {
+                nameIndex = i;
+            } else if (header.includes('оценить проект')) {
+                ratingIndex = i;
+            } else if (header.includes('отметка времени')) {
+                dateIndex = i;
+            } else if (header.includes('ваш комментарий')) {
+                textIndex = i;
+            }
+        }
+        
+        // Если какие-то индексы не найдены, назначаем по умолчанию (0,1,2,3)
+        if (nameIndex === -1) nameIndex = 0;
+        if (ratingIndex === -1) ratingIndex = 1;
+        if (dateIndex === -1) dateIndex = 2;
+        if (textIndex === -1) textIndex = 3;
+        
+        console.log(`Индексы: Имя=${nameIndex}, Рейтинг=${ratingIndex}, Дата=${dateIndex}, Текст=${textIndex}`);
+        
+        const reviewsData = [];
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length === 0) continue;
+            
+            // Получаем имя
+            let name = (row[nameIndex] || 'Аноним').toString().trim();
+            if (name === '') name = 'Аноним';
+            
+            // Получаем рейтинг (исправлено!)
+            let rating = 5;
+            if (ratingIndex < row.length) {
+                const ratingVal = parseFloat(row[ratingIndex]);
+                if (!isNaN(ratingVal) && ratingVal >= 1 && ratingVal <= 5) {
+                    rating = ratingVal;
+                } else {
+                    // Пробуем найти число в строке
+                    const match = String(row[ratingIndex]).match(/(\d+(?:\.\d+)?)/);
+                    if (match) {
+                        const num = parseFloat(match[1]);
+                        if (!isNaN(num) && num >= 1 && num <= 5) rating = num;
+                    }
+                }
+            }
+            
+            // Получаем дату
+            const rawDate = dateIndex < row.length ? row[dateIndex] : '';
+            const formattedDate = formatDate(rawDate);
+            
+            // Получаем текст
+            let text = textIndex < row.length ? (row[textIndex] || '') : '';
+            if (text === '') text = '*Без комментария*';
+            
+            reviewsData.push({
+                name: name,
+                rating: rating,
+                date: formattedDate,
+                text: text
+            });
+        }
+        
+        if (reviewsData.length === 0) {
+            renderEmptyState(
+                container, 
+                'Нет отзывов', 
+                'Будьте первым, кто оставит отзыв!', 
+                `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+                    <path d="M12 11v2M12 17h.01"/>
+                </svg>`);
+            updateStatsEmpty(statsContainer);
+            return;
+        }
+        
+        renderReviewsFromData(reviewsData, container, statsContainer);
+        
+    } catch (error) {
+        console.error('Ошибка загрузки из Google Sheets:', error);
+        renderEmptyState(
+            container, 
+            'Ошибка API', 
+            'Сервер недоступен!');
+        if (statsContainer) {
+            statsContainer.innerHTML = `<div class="stat-item beta"><span>Ошибка!</span></div>`;
+        }
+    }
+}
+
+function updateStatsEmpty(statsContainer) {
+    if (!statsContainer) return;
+    statsContainer.innerHTML = `
+        <div class="stat-item beta"><span>БЕТА</span></div>
+        <div class="stat-item ratings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>
+            <span>0</span>
+        </div>
+        <div class="stat-item messages">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+            <span>0</span>
+        </div>
+    `;
+}
+
+function renderReviewsFromData(reviewsData, container, statsContainer) {
+    const totalReviews = reviewsData.length;
+    const avgRating = calculateAverageRating(reviewsData);
+    const formattedRating = formatRatingDisplay(avgRating);
+    
+    // Обновляем статистику
+    if (statsContainer) {
+        statsContainer.innerHTML = `
+            <div class="stat-item beta"><span>БЕТА</span></div>
+            <div class="stat-item ratings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>
+                <span>${formattedRating}</span>
+            </div>
+            <div class="stat-item messages">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+                <span>${totalReviews}</span>
+            </div>
+        `;
+    }
+    
+    // Рендерим карточки отзывов
+    container.innerHTML = '';
+    reviewsData.forEach(review => {
+        const reviewEl = document.createElement('div');
+        reviewEl.className = 'review-card';
+        reviewEl.innerHTML = `
+            <div class="review-author">
+                <span class="review-date">
+                    <div class="review-rating">${renderStars(review.rating)}</div>
+                    <span class="review-name">${escapeHtml(review.name)}</span>
+                    <span class="review-time">${escapeHtml(review.date)}</span>
+                </span>
+            </div>
+            <div class="review-text">${escapeHtml(review.text)}</div>
+        `;
+        container.appendChild(reviewEl);
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Запускаем загрузку
+document.addEventListener('DOMContentLoaded', () => {
+    loadReviewsFromGoogleSheets();
+});
+</script>
 
 
 
