@@ -115,32 +115,6 @@ body {
     color: #f67373;
     /* transform: translateY(-2px); */
 }
-
-/* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
-    .header-container {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .header-nav {
-        gap: 15px;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .nav-link {
-        font-size: 14px;
-        padding: 6px 12px;
-    }
-
-    .site-name {
-        font-size: 24px;
-    }
-    .logo{
-        align-items: center;
-    }
-}
 :root{
     --Background: #0f0f0f;
     --Fon: #0d1218;
