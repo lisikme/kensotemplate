@@ -223,9 +223,9 @@ body {
 }
 .product-gallery {
     background: #0e0e0e;
-    padding: 20px;
-    border-radius: 5px;
-    border: #575757 solid 1px;
+    /* padding: 20px; */
+    /* border-radius: 5px; */
+    /* border: #575757 solid 1px; */
     margin-bottom: 20px;
 }
 .gallery-title {
