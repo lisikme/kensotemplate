@@ -1,3198 +1,917 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Основные SEO мета-теги -->
-    <title>KensoLUA - (by Kelix.me)</title>
-    <meta name="description" content="KensoUltra - профессиональный LUA скрипт для CS2 с расширенными возможностями: ESP, аимбот, визуальные эффекты, статистика и многое другое. Совместимость с Nixware.cc">
-    <meta name="keywords" content="kensolua, lua скрипт, cs2, nixware, чит, аимбот, esp, кенсо луа, counter-strike 2, кенсо">
-    <meta name="author" content="Kelix.me">
-    
-    <!-- Open Graph для социальных сетей -->
-    <meta property="og:title" content="KensoUltra - Мощный LUA скрипт для CS2">
-    <meta property="og:description" content="Профессиональный LUA скрипт для CS2 с расширенными возможностями. ESP, аимбот, визуальные эффекты, статистика и многое другое.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://kenso.ketame.ru/">
-    <meta property="og:image" content="https://kenso.ketame.ru/logo.png">
-    <meta property="og:site_name" content="KensoLUA">
-    <meta property="og:locale" content="ru_RU">
-    <link rel="shortcut icon" href="favicon.ico">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="KensoUltra - Мощный LUA скрипт для CS2">
-    <meta name="twitter:description" content="Профессиональный LUA скрипт для CS2 с расширенными возможностями.">
-    <meta name="twitter:image" content="https://kenso.ketame.ru/logo.png">
-    <meta name="twitter:site" content="@kensolua">
-    
-    <!-- Дополнительные мета-теги -->
-    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-    <meta name="theme-color" content="#d7fe7b">
-    <link rel="canonical" href="https://kenso.ketame.ru/">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
-
-.forum, #toggleFeaturesBtn{
-    padding: 2px 0 !important;
-}
-
-        /* KetaRu ScrollBars */
-        :root{
-            --Background: #0f0f0f;
-            --Fon: #0d1218;
-            --ColorNone: #d7fe7b;
-            --ColorCursor: #95b940;
-            --Width: 2px;
-            --Border: 2px;
-            --Radius: 0px;
-        } 
-        /* Дизайн скрол-бара */
-        .element::-webkit-scrollbar{
-            background-color: var(--Background);
-            width: 0;
-        }
-        ::-webkit-scrollbar{
-            width: var(--Width);
-            height: 7px;
-            background-color: var(--Background);
-        }
-        ::-webkit-scrollbar-thumb{
-            background-color: var(--ColorNone);
-            border-radius: var(--Radius);
-            min-height: 30px;
-            width: var(--Width);
-            border: var(--Border) solid var(--Background);
-        }
-        ::-webkit-scrollbar-thumb:hover{
-            background-color: var(--ColorCursor);
-        }
-
-        body {
-            background-color: #0e0e0e;
-            color: #e0e0e0;
-            font-family: "Unbounded", sans-serif;
-            margin: 0;
-            padding-top: 70px !important;
-            padding: 20px;
-            padding: 0 20px;
-        }
-
-        .site-header {
-            position: fixed;
-            background: rgba(0, 0, 0, 0.349);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #303030;
-            /* position: sticky; */
-            left: 0px;
-            right: 0px;
-            /* border: #006eff solid 1px; */
-            top: 0px;
-            z-index: 1000;
-            padding: 5px 20px;
-            margin-bottom: 30px;
-        }
-
-        .header-container {
-            max-width: 1600px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            /* padding: 0 20px; */
-        }
-
-        .site-name {
-            color: #d7fe7b;
-            margin: 0;
-            font-size: 18px;
-            font-weight: 500;
-            line-height: 25px;
-            left: -1px;
-            position: relative;
-            text-shadow: 0 0 10px rgba(215, 254, 123, 0.3);
-        }
-        .logo {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .by-kelix {
-            color: #ff7777;
-            position: relative;
-            font-size: 10px;
-            top: -3px;
-            opacity: 1;
-        }
-
-        .header-nav {
-            display: flex;
-            gap: 5px;
-            align-items: center;
-        }
-
-        .nav-link {
-            display: flex;
-            color: #efefef;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            padding: 5px 10px;
-            background: #00000075;
-            border: 1px solid #ffffff30;
-            border-radius: 5px;
-        }
-
-        .nav-link:hover {
-            color: #d7fe7b;
-            background: rgba(215, 254, 123, 0.1);
-        }
-
-        .buy-nav {
-            background: #353535;
-            color: #d3f979;
-        }
-
-        .buy-nav:hover {
-            background: #222222;
-            color: #f67373;
-        }
-
-        @media (max-width: 768px) {
-            .header-nav {
-                gap: 5px;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            .nav-link {
-                font-size: 14px;
-                padding: 6px 12px;
-            }
-
-        }
-        :root{
-            --Background: #0f0f0f;
-            --Fon: #0d1218;
-            --ColorNone: #d7fe7b;
-            --ColorCursor: #95b940;
-            --Width: 7px;
-            --Border: 2px;
-            --Radius: 0px;
-        } 
-
-        .scroll-container {
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-        }
-        .scroll-container{
-            transition: opacity 0.4s ease;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            margin: 0px;
-            border-radius: 5px;
-            height: 100%;
-            overflow: auto;
-        }
-        #adminListBlocks {
-            padding: 5px;
-            margin: 0px;
-            overflow: auto;
-            /* height: 720px; */
-            position: relative;
-        }
-        .scroll-gradient {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 40px;
-            pointer-events: none;
-            z-index: 2;
-            transition: opacity 0.4s ease;
-        }
-        .scroll-gradient.top {
-            top: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0));
-        }
-        .scroll-gradient.bottom {
-            bottom: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0));
-        }
-        .scroll-gradient.hidden {
-            opacity: 0;
-        }
-        .scroll-arrow {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.2);
-            padding: 5px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            z-index: 3;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .scroll-arrow:hover {
-            background: rgba(0, 0, 0, 0.8);
-        }
-        .scroll-arrow.up {
-            top: 10px;
-        }
-        .scroll-arrow.down {
-            bottom: 10px;
-        }
-        .scroll-arrow.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .product-header {
-            margin-bottom: 30px;
-        }
-        .product-gallery {
-            background: #0e0e0e;
-            padding: 20px;
-            border-radius: 5px;
-            border: #575757 solid 1px;
-            margin-bottom: 20px;
-        }
-        .gallery-title {
-            font-size: 30px;
-            text-align: center;
-            margin: 0px;
-            margin-bottom: 10px;
-            color: #d7fe7b;
-        }
-        .gallery-wrapper {
-            position: relative;
-        }
-        .gallery-container {
-            display: flex;
-            overflow-x: auto;
-            gap: 15px;
-            padding: 10px;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            background: #010101;
-            scroll-behavior: smooth;
-            cursor: grab;
-        }
-        .gallery-container::-webkit-scrollbar {
-            display: none;
-        }
-        .gallery-container:active {
-            cursor: grabbing;
-        }
-        .gallery-item {
-            border: #303030 solid 1px;
-            width: 350px;
-            aspect-ratio: 16/9;
-            border-radius: 5px;
-            overflow: hidden;
-            cursor: pointer;
-            flex-shrink: 0;
-            position: relative;
-            transition: transform 0.3s ease;
-            background: #0b0b0b;
-        }
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            transition: transform 0.3s ease;
-            background: #0b0b0b;
-        }
-        .gallery-item:hover img {
-            transform: scale(1.03);
-        }
-        .gallery-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            pointer-events: none;
-        }
-        .gallery-item:hover .gallery-overlay {
-            opacity: 1;
-        }
-        .product-actions {
-            display: flex;
-            justify-content: center;
-            /* gap: 5px; */
-            
-            max-width: 400px;
-            margin: 0 auto;
-            margin-top: 5px;
-            flex-wrap: wrap;
-        }
-        .action-btn {
-            /* display: inline-flex; */
-            font-family: "Unbounded", sans-serif;
-            align-items: center;
-            padding: 12px 25px;
-            font-size: 14px;
-            color: white;
-            text-decoration: none;
-            text-align: center;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
-        }
-        .action-btn:hover {
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-            border: 1px solid #d7fe7b;
-        }
-        .btn-buy {
-            border: 1px solid #303030;
-            background: linear-gradient(135deg, rgba(50, 120, 255, 0.2), rgba(106, 17, 203, 0.2));
-        }
-        .btn-support {
-            background: #0D0D0D;
-            border: 1px solid #303030 !important;
-        }
-
-        .gallery-scroll-container {
-            border: #303030 solid 1px;
-            position: relative;
-            width: calc(100% - 10);
-            margin-bottom: 10px;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .gallery-scroll-gradient {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 40px;
-            pointer-events: none;
-            z-index: 2;
-            transition: opacity 0.4s ease;
-        }
-        .gallery-scroll-gradient.left {
-            left: 0;
-            background: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0));
-        }
-        .gallery-scroll-gradient.right {
-            right: 0;
-            background: linear-gradient(to left, rgba(0,0,0,0.6), rgba(0,0,0,0));
-        }
-        .gallery-scroll-gradient.hidden {
-            opacity: 0;
-        }
-        .gallery-scroll-arrow {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            margin: auto;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 15px 2px;
-            line-height: 0;
-            font-size: 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            z-index: 3;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .gallery-scroll-arrow:hover {
-            background: rgba(0, 0, 0, 0.8);
-        }
-        .gallery-scroll-arrow.left {
-            left: 10px;
-        }
-        .gallery-scroll-arrow.right {
-            right: 10px;
-        }
-        .gallery-scroll-arrow.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #galleryModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(29, 29, 29, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 10000;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        #galleryModal.active {
-            display: flex;
-            opacity: 1;
-        }
-        .modal-content {
-            position: relative;
-            height: 90vh;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 5px;
-            overflow: hidden;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        #modalImage {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            display: block;
-        }
-        #closeModal {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 30px;
-            cursor: pointer;
-            z-index: 10001;
-            width: 40px;
-            height: 40px;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            opacity: 1;
-        }
-        #closeModal:hover {
-            background: rgba(255,0,0,0.7);
-        }
-        .modal-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 5px;
-            cursor: pointer;
-            opacity: 1;
-            transition: all 0.3s ease;
-            z-index: 10001;
-            font-size: 30px;
-            font-weight: bold;
-        }
-        .modal-nav:hover {
-            opacity: 1;
-            background: rgba(0, 0, 0, 0.8);
-        }
-        *:focus-visible {
-            outline: none;
-        }
-        #modalPrev {
-            left: 20px;
-        }
-        #modalNext {
-            right: 20px;
-        }
-        #modalCounter{
-            width: 80px;
-            padding: 2px 0px;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.7) !important;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-counter {
-            align-items: center;
-            justify-content: space-between;
-            position: absolute;
-            display: inline-flex;
-            text-align: center;
-            bottom: 20px;
-            gap: 3px;
-            color: white;
-            font-size: 15px;
-            font-weight: bold;
-        }
-
-        body.modal-open {
-            overflow: hidden;
-            height: 100vh;
-        }
-        body{
-            margin: 30px 0px;
-            margin-top: 0px;
-        }
-        .gallery-item.video-item::before {
-            content: '▶';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 50px;
-            z-index: 2;
-            opacity: 1;
-            transition: all 0.3s ease;
-            background: linear-gradient(20deg, #006eff, #00ff81 52%, #fff 50%, #93cbff);
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 5px #00ffcf80;
-        }
-        .gallery-item.video-item:hover::before {
-            opacity: 0;
-        }
-        .video-label {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #ff2d2d;
-            color: white;
-            padding: 3px 10px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: bold;
-            z-index: 2;
-        }
-        .modal-video-container {
-            width: 90vw;
-            aspect-ratio: 16/9;
-            background: #000;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .modal-video {
-            width: 100%;
-            height: 100%;
-            aspect-ratio: 16/9;
-            border: none;
-        }
-
-        .row {
-            display: flex;
-            flex-wrap: wrap;
-            margin: 0 -15px;
-        }
-        .col-md-12 {
-            width: 100%;
-            padding: 0 15px;
-            box-sizing: border-box;
-        }
-        .screenshots-section {
-            margin-bottom: 30px;
-            background: #181818;
-            padding: 20px;
-            border-radius: 10px;
-            border: #3278ff solid 1px;
-        }
-        h2 {
-            font-size: 30px;
-            text-align: center;
-            margin-bottom: 20px;
-            color: #d7fe7b;
-        }
-        .screenshots-gallery {
-            position: relative;
-            margin-bottom: 25px;
-        }
-        .screenshots-container {
-            display: flex;
-            overflow-x: auto;
-            gap: 15px;
-            padding: 10px;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        .screenshots-container::-webkit-scrollbar {
-            display: none;
-        }
-        .scroll-indicator {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0,0,0,0.5);
-            color: white;
-            width: 30px;
-            height: 60px;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            border-radius: 5px;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.3s;
-            z-index: 10;
-        }
-        .scroll-indicator.left {
-            left: 0;
-            border-radius: 0 5px 5px 0;
-        }
-        .scroll-indicator.right {
-            right: 0;
-            border-radius: 5px 0 0 5px;
-        }
-        .scroll-indicator:hover {
-            opacity: 1;
-            background: rgba(0,0,0,0.7);
-        }
-        .product-info {
-            border-radius: 5px;
-            text-align: center;
-            color: #e0e0e0;
-            background: #111111;
-            padding: 1px;
-            margin-bottom: 15px;
-        }
-        .product-info h3 {
-            color: white;
-            margin: 10px;
-            font-weight: bold;
-            font-size: 20px;
-        }
-        .product-info p {
-            margin: 0px;
-        }
-        .action-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .action-button {
-            display: inline-flex;
-            align-items: center;
-            padding: 12px 25px;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        .action-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-        }
-        #screenshotModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            z-index: 10000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            position: relative;
-            max-width: 90%;
-            max-height: 90%;
-        }
-        #modalImage {
-            max-width: 100%;
-            max-height: 90vh;
-            border-radius: 8px;
-            filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
-        }
-        #modalVideo {
-            max-width: 100%;
-            max-height: 90vh;
-            border-radius: 8px;
-            filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
-        }
-        #closeModal:hover {
-            opacity: 1;
-        }
-        #closeModal::after {
-            content: 'Закрыть';
-        }
-        #closeModal > svg {
-            width: 16px;
-        }
-        #closeModal {
-            font-family: "Unbounded", sans-serif;
-            background: rgba(0, 0, 0, 0.5);
-            opacity: 0.7;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 90px;
-            height: 26px;
-            color: #ffffff;
-            font-size: 10px;
-            cursor: pointer;
-            z-index: 10001;
-        }
-        .modal-nav {
-            position: absolute;
-            padding: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            width: 40px;
-            height: 40px;
-            align-items: center;
-            justify-content: center;
-            border-radius: 5px;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.3s;
-            z-index: 10001;
-        }
-        .modal-nav:hover {
-            opacity: 1;
-            background: rgba(0,0,0,0.7);
-        }
-        .a-modal-nav {
-            position: absolute;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-            color: white;
-            width: 40px;
-            height: 28px;
-            padding: 0;
-            align-items: center;
-            justify-content: center;
-            border-radius: 5px;
-            cursor: pointer;
-            opacity: 1;
-            transition: opacity 0.3s;
-            z-index: 10001;
-        }
-        .a-modal-nav:hover {
-            opacity: 1;
-            background: rgba(0,0,0,0.7);
-        }
-        #modalPrev {
-            left: 10px;
-        }
-        #modalNext {
-            right: 10px;
-        }
-        .screenshot-item {
-            min-width: 280px;
-            height: 180px;
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
-            flex-shrink: 0;
-            position: relative;
-        }
-        .screenshot-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-        .screenshot-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .adminlist_title {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 10px 0;
-            text-align: center;
-            color: #d7fe7b;
-        }
-        .forum:hover{
-            border-color: #7aa4ff !important;
-            background: #00102e;
-        }
-        .forum-tag{
-            background: #ffffff25 !important;
-            border-radius: 2px !important;
-            padding: 1px 10px !important;
-        }
-        .adminlist_blocks {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 3px;
-            margin-bottom: 30px;
-        }
-        .admin_card {
-            background: #0E0E0E;
-            border-radius: 8px;
-            /* line-break: anywhere; */
-            padding: 3px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-        #block-creator {
-            border: 1px solid #ff4995;
-        }
-        #block-bot {
-            border: 1px solid #4e86ff;
-        }
-        #block-admin {
-            border: 1px solid #ccffa2;
-        }
-        #block-player {
-            border: 1px solid #303030;
-        }
-        .banned-user {
-            border: 1px solid #ff4444 !important;
-        }
-        #block-banned {
-            border: 1px solid #ff3c3c;
-        }
-        .admins_card {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .adminlist_info {
-            display: flex;
-            gap: 2px;
-        }
-        .avatar_block {
-            position: relative;
-        }
-        .admins_avatar {
-            width: 56px;
-            height: 56px;
-            border-radius: 5px;
-            object-fit: cover;
-            opacity: 0;
-            transition: all 0.3s;
-        }
-        .avatar_letter {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 56px;
-            height: 56px;
-            text-transform: uppercase;
-            border-radius: 0px;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 25px;
-            background: linear-gradient(45deg, rgb(0, 0, 0), rgb(5, 0, 49));
-            border-radius: 3px;
-        }
-
-        #tag-creator > span {
-            background: linear-gradient(45deg, rgb(255, 90, 173), rgb(255, 182, 225));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-family: "Unbounded", sans-serif;
-            font-weight: 600;
-            font-size: 10px;
-        }
-        #tag-creator {
-            background: linear-gradient(45deg, rgb(59, 8, 15), rgb(156, 0, 109));
-            background: rgb(102, 0, 77);
-            color: #ffffff;
-            display: flex;
-            align-items: flex-end;
-        }
-        #tag-bot > span {
-            background: linear-gradient(45deg, rgb(97, 237, 255), rgb(220, 250, 255));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-family: "Unbounded", sans-serif;
-            font-weight: 600;
-            font-size: 10px;
-        }
-        #tag-bot {
-            background: linear-gradient(45deg, rgb(75, 10, 161), rgb(119, 0, 129));
-            background: #00415a;
-            color: #ffffff;
-            display: flex;
-            align-items: flex-end;
-        }
-        #tag-admin > span {
-            background: linear-gradient(45deg, rgb(255, 208, 0), rgb(241, 255, 48));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-family: "Unbounded", sans-serif;
-            font-weight: 600;
-            font-size: 10px;
-        }
-        #tag-admin {
-            background: #000000;background: linear-gradient(45deg, rgb(255, 208, 0), rgb(241, 255, 48));
-            color: #ffffff;
-            display: flex;
-            align-items: flex-end;
-        }
-        #tag-player > span {
-            background: linear-gradient(45deg, rgb(46, 197, 41), rgb(167, 255, 84));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-family: "Unbounded", sans-serif;
-            font-weight: 600;
-            font-size: 10px;
-        }
-        #tag-player {
-            background: linear-gradient(45deg, rgb(11, 54, 0), rgb(13, 116, 0));
-            background: #003d1f;
-            color: #ffffff;
-            display: flex;
-            align-items: flex-end;
-        }
-        #tag-banned > span {
-            background: linear-gradient(45deg, rgb(255, 84, 84), rgb(255, 139, 139));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-family: "Unbounded", sans-serif;
-            font-weight: 600;
-            font-size: 10px;
-        }
-        #tag-banned {
-            background: linear-gradient(45deg, rgb(44, 0, 0), rgb(94, 0, 0));
-            background: #490000;
-            color: #ffffff;
-            display: flex;
-            align-items: flex-end;
-        }
-        .adminlist_buttons {
-            flex: 1;
-        }
-        #admins_info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .admin_nickname {
-            font-weight: bold;
-            font-size: 14px;
-            color: white;
-            background: #000000;
-            padding: 1px 8px 2px 8px;
-            /* margin-bottom: 1px; */
-            border-radius: 3px;
-        }
-        .admin_group, .admin_term {
-            display: flex;
-            align-items: center;
-            /* gap: 5px; */
-            font-size: 14px;
-        }
-        .admin_group_text {
-            background: #353535;
-            background: #ff7575;
-            background: #D7FE7B;
-            color: #000000;
-            font-weight: 500;
-            padding: 1px 8px 2px 8px;
-            height: 12px;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            border-radius: 3px;
-        }
-        .admin_group_text_ban {
-            background: #ac0000;
-            color: #ffffff;
-            font-weight: 500;
-            padding: 1px 8px 2px 8px;
-            font-size: 10px;
-            border-radius: 3px;
-        }
-        .admin_term_text {
-            background: #c5b0ff;
-            color: #000000;
-            font-weight: 500;
-            padding: 1px 8px 2px 8px;
-            font-size: 10px;
-            border-radius: 3px;
-        }
-        .admin_term_reason {
-            color: #6bbcff;
-            background: #000000;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-size: 12px;
-        }
-        .admin_group_icon {
-            width: 16px;
-            height: 16px;
-        }
-        #link_prof {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #3278ff;
-            text-decoration: none;
-            font-size: 10px;
-        }
-        #link_prof:hover {
-            text-decoration: underline;
-        }
-        #link_prof svg {
-            width: 12px !important;
-            height: 20px !important;
-        }
-        #no-link {
-            color: #7a7a7a;
-            font-size: 12px;
-            margin: 0px 0;
-        }
-        #b_reason {
-            font-size: 12px;
-            color: #7a7a7a;
-            margin-bottom: 5px;
-        }
-        .banned_reason {
-            color: #ff5757 !important;
-            font-size: 12px;
-            margin: 0;
-        }
-        #link_block{
-            padding-left: 0px;
-            display: flex;
-            gap: 3px;
-        }
-        .admins_avatar{
-            border-radius: 3px;
-            position: relative !important;
-        }
-        #link_prof {
-            display: inline-flex;
-            background: #000000;
-            color: #ffffff;
-            padding: 0px 8px;
-            margin-top: 0px;
-            border-radius: 3px;
-            /* height: 2px !important; */
-        }
-        #no-link {
-            color: #464646;
-        }
-        .discord-link svg{
-            fill: #fff;
-        }
-        #link_block{
-            display: flex;
-            height: auto !important;
-            align-content: center;
-            align-items: center;
-        }
-        .adminlist_button{
-            border-radius: 3px;
-            position: absolute;
-            right: 0px;
-            left: 0px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 600;
-            position: relative;
-            align-items: center !important;
-            padding: 1px 8px 2px 8px;
-        }
-        img[src=""], 
-        img:not([src]), 
-        img[src*="null"],
-        img[src*="undefined"] {
-            visibility: hidden !important;
-        }
-        .admin_card {
-            height: auto;
-            border-radius: 3px;
-        }
-        .screenshots-section{
-            border-radius: 5px;
-        }
-        .screenshots-container{
-            background: #111111;
-            border-radius: 5px;
-        }
-        #link_block {
-            display: flex;
-            /* height: 18px !important; */
-            align-items: flex-end;
-            flex-direction: row;
-        }
-        a:link, a:visited, a:hover, a:active {
-            text-decoration: none !important;
-        }
-        .discord-link{
-            transition: all 0.3s ease !important;
-            background: #000000 !important;
-            border: #ffffff00 solid 1px;
-        }
-        .discord-link:hover{
-            border: #ffffff25 solid 1px;
-            background: #303030 !important;
-        }
-        .discord-link svg {
-            fill: #5662f6 !important;
-        }
-        #no-link{
-            transition: all 0.3s ease !important;
-        }
-        .discord-link:hover #no-link{
-            color: #ff7777 !important;
-        }
-        #link_prof {
-            display: inline-flex;
-            align-items: center;
-            color: inherit;
-            background-color: #36393f;
-            transition: all 0.3s ease;
-            max-width: 12px;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        #link_prof:hover {
-            max-width: 200px;
-        }
-        #link_prof svg {
-            flex-shrink: 0;
-        }
-        .discord-username {
-            opacity: 0;
-            color: #ffffff;
-            transition: opacity 0.2s ease 0.1s;
-        }
-        #link_prof:hover .discord-username {
-            opacity: 1;
-        }
-        .telegram-link svg {
-            fill: #30a3e6 !important;
-            width: 19px !important;
-            height: 15px !important;
-        }
-        .profil-link svg {
-            fill: #b4b4b4 !important;
-            width: 19px !important;
-            height: 16px !important;
-        }
-        #link_prof {
-            display: inline-flex;
-            background: #000000;
-            color: #ffffff;
-            /* padding: 0px 10px; */
-            border-radius: 3px;
-            height: 15px !important;
-        }
-        .scroll-arrow {
-            backdrop-filter: blur(10px) !important;
-            left: 0 !important;
-            right: 0 !important;
-            margin: 0 auto !important;
-            width: 120px !important;
-            text-align: center;
-            padding: 3px 0px !important;
-            font-size: 12px !important;
-            border-radius: 3px !important;
-            font-weight: 500 !important;
-            transform: unset !important;
-        }
-        .admin_term{
-            margin-top: 0px;
-            margin-bottom: 0px;
-            gap: 2px;
-        }
-        .admin_term_reason{
-            font-size: 8px;
-            background: #242424;
-            color: #c5c5c5;
-            min-height: 13px;
-            /* padding: 5px 8px 5px 8px; */
-            display: flex;
-            align-items: center;
-        }
-        .avatar_letter{
-            top: 0px !important;
-            position: relative !important;
-        }
-        .admins_avatar{
-            top: 0px !important;
-            position: absolute !important;
-        }
-        
-        /* Стили для скидок в таблице */
-        .price-with-discount {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
-            flex-wrap: wrap;
-        }
-        .old-price {
-            font-size: 10px;
-            color: #888;
-            text-decoration: line-through;
-        }
-        .new-price {
-            font-weight: bold;
-            color: #d7fe7b;
-        }
-        .discount-badge::before {
-            content: '';
-            margin-right: 1px;
-            border-radius: 5px;
-            display: inline-block;
-            background: #fff;
-            height: 2px;
-            width: 6px;
-        }
-        .discount-badge {
-            background: #aa1010;
-            color: white;
-            font-size: 10px;
-            margin-left: 5px;
-            font-weight: 500;
-            padding: 2px 5px;
-            border-radius: 3px;
-            align-items: center;
-            display: flex;
-        }
-        .price-cell {
-            text-align: center;
-        }
-        .term-cell {
-            text-align: center;
-        }
-        .price-row {
-            border-bottom: 1px solid #000000;
-        }
-        .price-row:last-child {
-            border-bottom: none;
-        }
-        
-        .pricing-table td:first-child {
-            text-align: center;
-        }
-    </style>
-
-<!-- Шапка сайта -->
-<header class="site-header">
-    <div class="header-container">
-        <a href="https://kenso.ketame.ru">
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <img src="./logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
-                <div class="logo">
-                    <div class="site-name">KensoUltra+</div>
-                    <span class="by-kelix">For nixware.cc - by Kelix.me </span>
-                </div>
-            </div>
-        </a>
-        <nav class="header-nav">
-            <a href="https://vk.com/kensolua" class="nav-link" target="_blank">
-                <img src="vk.svg" width="22" height="18" alt="">
-            </a>
-            <a href="https://discord.gg/5BM4XD3qxM" class="nav-link" target="_blank">
-                <img src="discord.svg" width="22" height="18" alt="">
-            </a>
-        </nav>
-    </div>
-</header>
-</head>
-
-<body>
-    <!-- Новый блок с галереей и кнопками -->
-    <div class="product-header">
-        <div class="product-gallery">
-            <!-- <h2 class="gallery-title">KensoUltra+</h2> -->
-            
-            <div class="gallery-scroll-container">
-                <div class="gallery-scroll-gradient left" id="galleryGradientLeft"></div>
-                <div class="gallery-scroll-gradient right" id="galleryGradientRight"></div>
-                <div class="gallery-scroll-arrow left hidden" id="galleryScrollLeft">
-                    <svg width="16" height="16" viewBox="8 8 16 16" fill="currentColor">
-                        <path d="M19 10L13 16L19 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-                    </svg>
-                </div>
-                <div class="gallery-wrapper">
-                    <div class="gallery-container" id="galleryContainer">
-                        <div class="gallery-item video-item" data-index="2" data-type="video" data-youtube-id="Lch7Ve9ntsA">
-                            <img src="./images/1.png" alt="Видео демонстрация">
-                            <div class="video-label">ВИДЕО</div>
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="1">
-                            <img src="./images/promo.png" alt="Скриншот 1">
-                            <div class="video-label">АКЦИЯ</div>
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="1">
-                            <img src="./images/2.png" alt="Скриншот 2">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="2">
-                            <img src="./images/3.png" alt="Скриншот 3">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="3">
-                            <img src="./images/4.png" alt="Скриншот 4">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="4">
-                            <img src="./images/5.png" alt="Скриншот 5">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="5">
-                            <img src="./images/6.png" alt="Скриншот 6">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="6">
-                            <img src="./images/7.png" alt="Скриншот 7">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="7">
-                            <img src="./images/8.png" alt="Скриншот 8">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="8">
-                            <img src="./images/9.png" alt="Скриншот 9">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="9">
-                            <img src="./images/10.png" alt="Скриншот 10">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="10">
-                            <img src="./images/11.png" alt="Скриншот 11">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="11">
-                            <img src="./images/12.png" alt="Скриншот 12">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="12">
-                            <img src="./images/13.png" alt="Скриншот 13">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="13">
-                            <img src="./images/14.png" alt="Скриншот 14">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="14">
-                            <img src="./images/15.png" alt="Скриншот 15">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="15">
-                            <img src="./images/16.png" alt="Скриншот 16">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="16">
-                            <img src="./images/17.png" alt="Скриншот 17">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
-                        </div>
-                        <div class="gallery-item" data-index="16">
-                            <img src="./images/18.png" alt="Скриншот 17">
-                            <div class="gallery-overlay">Нажмите для просмотра</div>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Основные SEO мета-теги -->
+        <title>KensoLUA - (by Kelix.me)</title>
+        <meta name="description" content="KensoUltra - профессиональный LUA скрипт для CS2 с расширенными возможностями: ESP, аимбот, визуальные эффекты, статистика и многое другое. Совместимость с Nixware.cc">
+        <meta name="keywords" content="kensolua, lua скрипт, cs2, nixware, чит, аимбот, esp, кенсо луа, counter-strike 2, кенсо">
+        <meta name="author" content="Kelix.me">
+        <!-- Open Graph для социальных сетей -->
+        <meta property="og:title" content="KensoUltra - Мощный LUA скрипт для CS2">
+        <meta property="og:description" content="Профессиональный LUA скрипт для CS2 с расширенными возможностями. ESP, аимбот, визуальные эффекты, статистика и многое другое.">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://kenso.ketame.ru/">
+        <meta property="og:image" content="https://kenso.ketame.ru/logo.png">
+        <meta property="og:site_name" content="KensoLUA">
+        <meta property="og:locale" content="ru_RU">
+        <link rel="shortcut icon" href="favicon.ico">
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="KensoUltra - Мощный LUA скрипт для CS2">
+        <meta name="twitter:description" content="Профессиональный LUA скрипт для CS2 с расширенными возможностями.">
+        <meta name="twitter:image" content="https://kenso.ketame.ru/logo.png">
+        <meta name="twitter:site" content="@kensolua">
+        <!-- Дополнительные мета-теги -->
+        <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+        <meta name="theme-color" content="#d7fe7b">
+        <link rel="canonical" href="https://kenso.ketame.ru/">
+        <link rel="stylesheet" href="main.css">
+        <!-- Шапка сайта -->
+        <header class="site-header">
+            <div class="header-container">
+                <a href="https://kenso.ketame.ru">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <img src="./logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
+                        <div class="logo">
+                            <div class="site-name">KensoUltra+</div>
+                            <span class="by-kelix">For nixware.cc - by Kelix.me</span>
                         </div>
                     </div>
-                </div>
-                <div class="gallery-scroll-arrow right" id="galleryScrollRight">
-                    <svg width="16" height="16" viewBox="8 8 16 16" fill="currentColor">
-                        <path d="M13 10L19 16L13 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-                    </svg>
-                </div>
-            </div>
-
-<div class="product-table">
-    <style>
-        .table-container-box{
-            /* width: 150px; */
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        .table-container{
-            max-width: 400px;
-            width: 100%;
-        }
-    </style>
-    <div class="table-container-box">
-        <div class="table-container">
-            <style>
-                .payment-methods-section{
-                    /* display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-                    gap: 5px;
-                    padding: 5px 10px; */
-
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                    gap: 5px;
-                    padding: 5px 10px;
-                }
-                .payment-method>img{
-                    width: 80px;
-
-                }
-                .subscription-header{
-                    border: 1px solid #161616 !important;
-                    overflow: hidden;
-                    background: #080808 !important;
-                }
-                .payment-method{
-                    height: 30px;
-                    display: flex;
-                    border: #303030 solid 1px;
-                    border: 1px solid #d7fe7b;
-                    background: #202020;
-                    justify-content: center;
-                    align-items: center;
-                    padding: 0 15px;
-                    border-radius: 3px;
-                    flex: 0 0 auto;
-                    position: relative;
-                }
-                .disabled-method > img {
-                    filter: grayscale(0.7);
-                }
-                .disabled-method {
-                    cursor: not-allowed;
-                    position: relative;
-                    /* overflow: hidden; */
-                    background: rgb(8, 8, 8);
-                    border-color: #303030;
-                }
-                .disabled-method:after {
-                    content: 'СКОРО';
-                    background: #3b3b3b;
-                    color: white;
-                    font-size: 8px;
-                    position: absolute;
-                    right: -3px;
-                    top: -3px;
-                    font-weight: bold;
-                    font-weight: 500;
-                    padding: 2px 5px;
-                    border-radius: 3px;
-                    /* margin-left: 8px; */
-                    white-space: nowrap;
-                }
-                .description-main{
-                    font-size: 10px !important;
-                }
-                .product-description{
-                    max-width: 398px;
-                    padding: 0px !important;
-                    position: relative;
-                    margin: 0 auto !important;
-                    border: 1px solid #303030 !important;
-                    margin-bottom: 5px !important;
-                }
-            </style>
-            
-            <div class="product-description">
-                <div class="dropdown-title">Универсальный скрипт для CS2</div>
-                <p class="description-sub">Это не просто скрипт, это комплексное решение, которое раскроет весь потенциал игры, предоставит тебе невероятные визуальные и игровые преимущества, а также полный контроль над процессом.</p>
-            </div>
-
-            <div class="subscription-header">
-                <div class="dropdown-title">Гибкая система оплаты</div>
-                <div class="payment-methods-section">
-                    <div class="payment-method active-method">
-                        <img src="cloudtips.svg" alt="">
-                    </div>
-                    <div class="payment-method disabled-method">
-                        <img src="ozonbank.svg" alt="">
-                    </div>
-                    <div class="payment-method disabled-method">
-                        <img src="yoomoney.svg" alt="">
-                    </div>
-                </div>
-                <!-- <p class="payment-methods">CloudTips | о других можете узнать при покупке!</p> -->
-            </div>
-
-            <div class="pricing-table">
-                <div class="dropdown-title">Список товаров</div>
-                <script>
-                    // price.js - данные о ценах и функция отображения
-
-                    // Функция для отображения цен в таблице
-                    function renderPricingTable() {
-                        const tableBody = document.querySelector('.pricing-table tbody');
-                        if (!tableBody) return;
-                        
-                        // Очищаем существующие строки
-                        tableBody.innerHTML = '';
-                        
-                        // Функция для вычисления старой цены на основе скидки
-                        function getOriginalPrice(currentPrice, discountPercent) {
-                            if (!discountPercent || discountPercent === 0) return null;
-                            // currentPrice - это строка вида "70 Руб" или "400 РУБ"
-                            const priceMatch = currentPrice.match(/(\d+)/);
-                            if (!priceMatch) return null;
-                            const price = parseInt(priceMatch[0]);
-                            const discountedPrice = Math.round(price * (1 - discountPercent / 100));
-                            return discountedPrice + ' ' + currentPrice.replace(/\d+/, '').trim();
-                        }
-                        
-                        // Добавляем строки из pricelist, но пропускаем те, у которых item_discount === -1
-                        pricelist.forEach(item => {
-                            // Скрываем лот, если скидка равна -1
-                            if (item.item_discount === -1) {
-                                return; // пропускаем этот элемент, не добавляем в таблицу
-                            }
-                            
-                            const row = document.createElement('tr');
-                            row.className = 'price-row';
-                            
-                            const priceCell = document.createElement('td');
-                            priceCell.className = 'price-cell';
-                            
-                            const termCell = document.createElement('td');
-                            termCell.className = 'term-cell';
-                            
-                            // Проверяем наличие скидки
-                            const discount = item.item_discount || 0;
-                            const hasDiscount = discount > 0;
-                            
-                            if (hasDiscount) {
-                                const originalPrice = getOriginalPrice(item.item_price, discount);
-                                priceCell.innerHTML = `
-                                    <div class="price-with-discount">
-                                        <span class="old-price">${item.item_price}</span>
-                                        <span class="discount-badge">${discount}%</span>
-                                        <span class="new-price"><strong>${originalPrice || item.item_price}</strong></span>
-                                    </div>
-                                `;
-                            } else {
-                                priceCell.innerHTML = `<strong>${item.item_price}</strong>`;
-                            }
-                            
-                            termCell.innerHTML = `<span class="${item.item_term.includes('Навсегда') ? 'forever' : ''}">${item.item_term}</span>`;
-                            
-                            row.appendChild(priceCell);
-                            row.appendChild(termCell);
-                            tableBody.appendChild(row);
-                        });
-                    }
-
-                    // Запускаем отображение при загрузке страницы
-                    document.addEventListener('DOMContentLoaded', () => {
-                        renderPricingTable();
-                        updateBuyButton(0);
-                    });
-                </script>
-                <table>
-                    <thead>
-                        <tr>
-                            <th><span>СТОИМОСТЬ</span></th>
-                            <th><span>СРОК ДЕЙСТВИЯ</span></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="product-actions">
-                <button href="https://t.me/kelixme" class="action-btn btn-buy" id="buyBtn">
-                    Купить подписку
-                </button>
-                <div class="dropdown-wrapper" id="buyMenu">
-                    <div class="dropdown-content">
-                        <div class="dropdown-title">Выберите метод связи для покупки</div>
-                        <div class="dropdown-box">
-                            <a href="https://t.me/kelixme" target="_blank" class="dropdown-item">
-                                <img src="./telegram.ico" width="16" height="16" alt="">
-                                Чат создателя
-                            </a>
-                            <a href="https://vk.me/kensolua" target="_blank" class="dropdown-item">
-                                <img src="./vk.ico" width="16" height="16" alt="">
-                                Чат сообщества
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <style>
-                .btn-buy {
-                    border: 1px solid #6d6dff;
-                }
-                .dropdown-toggle {
-                    cursor: pointer;
-                    outline: none;
-                    border: 1px solid #ffffff10;
-                    transition: all 0.5s;
-                }
-                .dropdown-title {
-                    background: #000;
-                    padding: 6px 0px;
-                    font-size: 10px;
-                    /* width: max-content; */
-                    /* text-align: center; */
-                    width: 100%;
-                    display: flex;
-                    justify-content: center;
-                    justify-items: center;
-                    align-items: flex-end;
-                    flex-direction: row;
-                    margin-bottom: 2px;
-                }
-                .dropdown-box {
-                    display: grid;
-                    background: #080808;
-                    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-                    gap: 3px;
-                }
-                .dropdown-menu {
-                    justify-items: center;
-                    display: flex;
-                    height: 0px;
-                    right: 0;
-                    top: 100%;
-                    background: #1a1a1a;
-                    max-width: 398px;
-                    width: 100%;
-                    z-index: 1001;
-                    border-radius: 5px;
-                    border: 1px solid #303030;
-                    overflow: hidden;
-                    transition: all 0.5s;
-                    flex-direction: column;
-                    gap: 2px;
-                    opacity: 0; 
-                    margin-bottom: 3px;
-                }
-                .dropdown-menu.active {
-                    margin: 5px 0;
-                    height: 100px;
-                    position: unset;
-                    opacity: 1; 
-                }
-                .dropdown-item {
-                    background: #0E0E0E;
-                    color: #efefef;
-                    padding: 10px 15px;
-                    text-decoration: none;
-                    display: flex;
-                    align-items: center;
-                    border-radius: 3px;
-                    gap: 10px;
-                    font-size: 10px;
-                    transition: all 0.3s;
-                }
-                .dropdown-item:hover {
-                    background: rgba(215, 254, 123, 0.1);
-                    color: #d7fe7b;
-                }
-            </style>
-
-            <style>
-                .product-actions {
-                    position: relative;
-                    max-width: 400px;
-                }
-
-                .dropdown-wrapper {
-                    display: grid;
-                    grid-template-rows: 0fr;
-                    transition: all 0.5s ease;
-                    opacity: 0;
-                    overflow: hidden;
-                    background: #1a1a1a;
-                    border: 1px solid transparent;
-                    border-radius: 5px;
-                    margin-bottom: 3px;
-                    max-width: 400px;
-                    width: 100%;
-                }
-
-                /* Когда меню активно */
-                .dropdown-wrapper.active {
-                    grid-template-rows: 1fr; /* Плавно раскрывается до размера контента */
-                    opacity: 1;
-                    margin-top: 5px;
-                    margin-bottom: 5px;
-                    border-color: #303030;
-                }
-
-                /* Внутренний контейнер, который позволяет Grid считать высоту */
-                .dropdown-content {
-                    min-height: 0;
-                }
-
-                .dropdown-title {
-                    background: #000;
-                    padding: 4px 0 !important;
-                    font-size: 10px !important;
-                    text-align: center;
-                    font-weight: 400;
-                    color: #bebebe;
-                    /* text-transform: uppercase; */
-                    /* letter-spacing: 1px; */
-                }
-
-                .dropdown-box {
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .dropdown-item {
-                    background: #0E0E0E;
-                    color: #efefef;
-                    padding: 12px 15px;
-                    text-decoration: none;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    font-size: 12px;
-                    transition: all 0.3s, color 0.3s;
-                }
-
-                .dropdown-item:hover {
-                    background: rgba(215, 254, 123, 0.1);
-                    color: #d7fe7b;
-                }
-            </style>
-
-
-            <script>
-                const buyBtn = document.getElementById('buyBtn');
-                const buyMenu = document.getElementById('buyMenu');
-
-                // Открытие/закрытие меню по клику на кнопку
-                buyBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    buyMenu.classList.toggle('active');
-                });
-
-                // Закрытие меню при клике вне его области
-                document.addEventListener('click', (e) => {
-                    if (!buyMenu.contains(e.target) && e.target !== buyBtn) {
-                        buyMenu.classList.remove('active');
-                    }
-                });
-            </script>
-
-
-
-
-            <style>
-                .toggle-features-container{
-                    display: flex;
-                    justify-content: space-between;
-                    margin: 0 !important;
-                    gap: 5px;
-                    max-width: 400px;
-                }
-                .toggle-features-btn{
-                    padding: 5px 10px !important;
-                    width: 100%;
-                    align-items: center !important;
-                    justify-content: center;
-                    position: relative;
-                }
-                .forum-tag{
-                    background: #2b2b2b;
-                    padding: 4px 10px 3px 10px;
-                    border-radius: 3px;
-                    margin-top: 2px;
-                    color: #ffffff;
-                    font-size: 8px;
-                }
-                .forum{
-                    color: #5B92FB;
-                    display: flex;
-                    width: 100%;
-                    font-size: 14px;
-                    gap: 2px;
-                    width: unset;
-                    /* display: flex; */
-                    align-items: center;
-                    justify-content: center;
-                }
-                .toggle-features-btn::after{
-                    background: #3b3b3b;
-                    color: white;
-                    font-size: 8px;
-                    position: absolute;
-                    right: -3px;
-                    top: -3px;
-                    font-weight: bold;
-                    font-weight: 600;
-                    padding: 2px 5px;
-                    border-radius: 3px;
-                    white-space: nowrap;
-                    transition: all 0.3s;
-                }
-                .toggle-features-btn.active{
-                    border-color: #ff6060;
-                    background: #200000;
-                }
-                .toggle-features-btn.active:hover{
-                    border-color: #ff6060;
-                }
-                .toggle-features-btn.active::after{
-                    content: 'СКРЫТЬ';
-                    background: #ff6060;
-                    color: #000000;
-                }
-                .toggle-features-btn.unactive{
-                    border-color: #D7FE7B;
-                    background: #182000;
-                }
-                .toggle-features-btn.unactive:hover{
-                    border-color: #D7FE7B;
-                }
-                .forum-tag.table{
-                    background: #ffffff3b;
-                }
-                .toggle-features-btn.unactive::after{
-                    content: 'ПОКАЗЫТЬ';
-                    background: #D7FE7B;
-                    color: #000;
-                }
-                .btn-func{
-                    display: flex;
-                    gap: 2px;
-                    color: #D7FE7B;
-                    font-size: 14px;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                }
-            </style>
-            <div class="toggle-features-container">
-                <button id="toggleFeaturesBtn" class="toggle-features-btn unactive">
-                    <span class="btn-text btn-func" >
-                        <span class="forum-tag table">ФУНКЦИИ</span>
-                        KensoUltra
-                    </span>
-                </button>
-                <a href="https://nixware.cc/threads/29483/" class="action-btn btn-support forum" target="_blank">
-                    <span class="forum-tag">FORUM</span>
-                    Nixware.cc
                 </a>
+                <nav class="header-nav">
+                    <a href="https://vk.com/kensolua" class="nav-link" target="_blank">
+                        <img src="vk.svg" width="22" height="18" alt="">
+                    </a>
+                    <a href="https://discord.gg/5BM4XD3qxM" class="nav-link" target="_blank">
+                        <img src="discord.svg" width="22" height="18" alt="">
+                    </a>
+                </nav>
             </div>
-
-        <style>
-            .features-list {
-                background: #111;
-                border-radius: 5px;
-                padding: 0px;
-                display: grid;
-                /* grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); */
-                grid-template-columns: 1fr;
-                gap: 2px;
-            }
-            .feature-category {
-                background: #000;
-                padding: 5px 10px;
-            }
-            .feature-category h4 {
-                color: #d7fe7b; 
-                margin: 0 0 5px 0; 
-                font-size: 14px; 
-            }
-            .feature-category ul { 
-                list-style: none; 
-                padding: 0; 
-                margin: 0; 
-                font-size: 12px; 
-                color: #bbb; 
-            }
-            .feature-category li { 
-                margin-bottom: 5px; 
-                padding-left: 15px; 
-                position: relative; 
-            }
-            .feature-category li::before { 
-                content: "•"; 
-                position: absolute; 
-                left: 0; 
-                color: #d7fe7b; 
-            }
-            .sub-tag{
-                color: #75b1ff;
-            }
-            .sub-tag2{
-                color: #ff7575;
-            }
-            .info-box{
-                color: #ffffff;
-                background: #143663;
-                padding: 3px 5px;
-                border-radius: 3px;
-                font-size: 9px;
-                margin-bottom: 3px;
-            }
-            .info-box2{
-                color: #ffffff;
-                background: #63142e;
-                padding: 3px 5px;
-                border-radius: 3px;
-                font-size: 9px;
-                margin-bottom: 3px;
-            }
-            .info-box3{
-                color: #ffffff;
-                background: #5e0909;
-                padding: 3px 5px;
-                border-radius: 3px;
-                font-size: 9px;
-                margin-bottom: 3px;
-            }
-        </style>
-
-        <div class="dropdown-wrapper2" id="featuresMenu">
-            <div class="dropdown-content">
-                <div class="dropdown-title">Функционал LUA скрипта</div>
-                <div class="features-list">
-                    <div class="feature-category">
-                        <h4>Утилиты</h4>
-                        <ul>
-                            <li>Встроенный мониторинг HVH серверов.</li>
-                            <li>Discord Rich Presence интеграция.</li>
-                        </ul>
+        </header>
+    </head>
+    <body>
+        <!-- Новый блок с галереей и кнопками -->
+        <div class="product-header">
+            <div class="product-gallery">
+                <div class="gallery-scroll-container">
+                    <div class="gallery-scroll-gradient left" id="galleryGradientLeft"></div>
+                    <div class="gallery-scroll-gradient right" id="galleryGradientRight"></div>
+                    <div class="gallery-scroll-arrow left hidden" id="galleryScrollLeft">
+                        <svg width="16" height="16" viewBox="8 8 16 16" fill="currentColor">
+                            <path d="M19 10L13 16L19 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        </svg>
                     </div>
-                    <div class="feature-category">
-                        <h4>Закупка</h4>
-                        <ul>
-                            <li>Настраиваемый таймер закупки оружия.</li>
-                            <li>Есть совместимость с командой <span class="sub-tag2">!respawn</span>
-                                <br>
-                                на серверах с возраждениями
-                            </li>
-                            <li>Пистолеты:
-                                <br>-> <span class="sub-tag">Desert Eagle</span>
-                                <br>-> <span class="sub-tag">Revolver R8</span>
-                            </li>
-                            <li>Снайперки:
-                                <br>-> <span class="sub-tag">AWP</span>
-                                <br>-> <span class="sub-tag">S3SG1</span>
-                                <br>-> <span class="sub-tag">SCAR-20</span>
-                            </li>
-                            <li>Гранаты:
-                                <br>-> <span class="sub-tag">Димовые</span>
-                                <br>-> <span class="sub-tag">Осколочные</span>
-                                <br>-> <span class="sub-tag">Зажигательные</span>
-                                <br>-> <span class="sub-tag">Молотов</span> 
-                            </li>
-                            <li>Прочее:
-                                <br>-> <span class="sub-tag">Zeus x27</span>
-                                <br>-> <span class="sub-tag">Наборы сапера</span>
-                                <br>-> <span class="sub-tag">Бронижелет</span>
-                                <br>-> <span class="sub-tag">Бронижелет и шлем</span>
-                            </li>
-                        </ul>
+                    <div class="gallery-wrapper">
+                            <div class="gallery-container" id="galleryContainer">
+                                <div class="gallery-item video-item" data-type="video" data-youtube-id="Lch7Ve9ntsA">
+                                    <img src="./images/1.png">
+                                    <div class="video-label">ВИДЕО</div>
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/promo.png">
+                                    <div class="video-label">АКЦИЯ</div>
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/2.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/3.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/4.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/5.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/6.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/7.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/8.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/9.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/10.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/11.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/12.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/13.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/14.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/15.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/16.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/17.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="./images/18.png">
+                                    <div class="gallery-overlay">Нажмите для просмотра</div>
+                                </div>
+                            </div>
                     </div>
-                    <div class="feature-category">
-                        <h4>Убийства</h4>
-                        <ul>
-                            <li>Сохраниение Kill-Feed</li>
-                            <li>Кастомные Kill-Feed статусы:
-                                <br>-> <span class="sub-tag">Убийство в голову</span>
-                                <br>-> <span class="sub-tag">С ослеплением</span>
-                                <br>-> <span class="sub-tag">Без прицела</span>
-                                <br>-> <span class="sub-tag">Прострелы</span>
-                                <br>-> <span class="sub-tag">Через дым</span>
-                                <br>-> <span class="sub-tag">Реванш</span>
-                                <br>-> <span class="sub-tag">Доминирование</span>
-                                <br>-> <span class="sub-tag">В воздухе</span>
-                                <br>-> <span class="sub-tag">С ножа</span>
-                                <br>-> <span class="sub-tag">Уничтожение отряда</span>
-                            </li>
-                            <li>АвтоРеспавн для серверов с возраждениями.</li>
-                            <li>Настройка количевства респавнов.</li>
-                            <li>Натройка респавна по бинду.</li>
-                        </ul>
-                    </div>
-                    <div class="feature-category">
-                        <h4>Звуки</h4>
-                        <ul>
-                            <div class="info-box">Это самая продвинутая функция которой нет именно в такой общирной фунциональностью.</div>
-                            <div class="info-box2">При покупке предусмотрен уже готовый пак кастомных звуков</div>
-                            <li>Поддерживается:
-                                <br>-> <span class="sub-tag">Интеграция радио KetaMeFM</span>
-                                <br>-> <span class="sub-tag">Музыка MVP в конце раунда</span>
-                                <br>-> <span class="sub-tag">Звуки попаданий по игрокам</span>
-                                <br>-> <span class="sub-tag">Звуки убийства игроков</span>
-                            </li>
-                            <li>Натройка громкости звуков/музыки/радио.</li>
-                            <li>Режим: <span class="sub-tag2">[Game]</span> - Встроенные звуки в игру.</li>
-                            <li>Режим: <span class="sub-tag2">[Auto]</span> - Автоматически находит звуки
-                                <br>в папке игры <span class="sub-tag">./sounds/hitsounds/</span></li>
-                            <li>Режим: <span class="sub-tag2">[Custom]</span> - Ипользует звуки 
-                                <br>указаные в <span class="sub-tag">hitsounds.json</span></li>
-                        </ul>
-                    </div>
-                    <div class="feature-category">
-                        <h4>Анти-Аим</h4>
-                        <ul>
-                            <li><span class="sub-tag2">[Fake Pitch]</span>
-                                <br>Фейковый наклон.
-                            </li>
-                            <li><span class="sub-tag2">[Custom Pitch]</span>
-                                <br>Пользовательский наклон.
-                            </li>
-                            <li><span class="sub-tag2">[Random Yaw Offset]</span>
-                                <br>Случайное смещение по оси Y.
-                            </li>
-                            <li><span class="sub-tag2">[Manual AA]</span>
-                                <br>Ручной анти-аим.
-                            </li>
-                            <li><span class="sub-tag2">[Air Flick]</span>
-                                <br>Резкий поворот в воздухе.
-                            </li>
-                            <li><span class="sub-tag2">[Pitch Jitter on Manual]</span>
-                                <br>Дрожание наклона при ручном режиме.
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="feature-category">
-                        <h4>Рейдж</h4>
-                        <ul>
-                            <li><span class="sub-tag2">[Duck Peek Assist]</span>
-                                <br>Помогает автоматически выполнять быстрый выглядывающий пик с приседом.
-                            </li>
-                            <li><span class="sub-tag2">[Отключить RAGE в воздухе]</span>
-                                <br>Выключает агрессивные функции во время прыжка для более естественного поведения.
-                            </li>
-                            <li><span class="sub-tag2">[Auto Stop в прыжке]</span>
-                                <br>Автоматически останавливает движение для повышения точности в прыжке.
-                            </li>
-                            <li><span class="sub-tag2">[AI Peek]</span>
-                                <br>Интеллектуально выбирает момент и способ выхода из укрытия.
-                            </li>
-                            <li><span class="sub-tag2">[Wallbang Helper]</span>
-                                <br>Подсказывает возможность прострела через стены и поверхности.
-                            </li>
-                            <li><span class="sub-tag2">[Безопастный режим]</span>
-                                <br>Снижает риск обнаружения за счёт более осторожных настроек.
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="feature-category">
-                        <h4>Интерфейс</h4>
-                        <ul>
-                            <li>Индикаторы:
-                                <br>-> <span class="sub-tag">FPS</span>
-                                <br>-> <span class="sub-tag">Пинг</span>
-                                <br>-> <span class="sub-tag">Время</span>
-                                <br>-> <span class="sub-tag">Список игроков</span>
-                                <br>-> <span class="sub-tag">Логи попаданий</span>
-                                <br>-> <span class="sub-tag">Индикатор замедления</span>
-                                <br>-> <span class="sub-tag">Индикатор SPEED</span>
-                                <br>-> <span class="sub-tag">MVP уведомления</span>
-                                <br>-> <span class="sub-tag">Отображение HP возле прицела</span>
-                                <br>-> <span class="sub-tag">Отображение SEED возле прицела</span>
-                                <br>-> <span class="sub-tag">Отображение Manual AA [Текст]</span>
-                                <br>-> <span class="sub-tag">Stattrack</span>
-                            </li>
-                            <li>Натройка размера элементов.</li>
-                        </ul>
-                    </div>
-                    <div class="feature-category">
-                        <h4>Визуалы</h4>
-                        <ul>
-                            <li>Камера игрока:
-                                <br>-> <span class="sub-tag">Угол обзора</span>
-                                <br>-> <span class="sub-tag">Дальность обзора</span>
-                            </li>
-                            <li>Камера игрок:
-                                <br>-> <span class="sub-tag">Угол обзора</span>
-                                <br>-> <span class="sub-tag">Дальность обзора</span>
-                            </li>
-                            <li>ESP линии до игроков.</li>
-                            <li>Кастом скоп прицел.</li>
-                        </ul>
-                    </div>
-                    <div class="feature-category">
-                        <h4>Трассера</h4>
-                        <div class="info-box3">
-                            Это временное решение с трасерами, после обновы, как вы знаете,
-                            они больше не работают но мы сделали другой метод отрисовки,
-                            который визуально даёт тот же эффект.
-                        </div>
-                        <ul>
-                            <li>Bullet Tracer:
-                                <br>-> <span class="sub-tag">Цвет</span>
-                                <br>-> <span class="sub-tag">Толщина</span>
-                                <br>-> <span class="sub-tag">Свечение</span>
-                                <br>-> <span class="sub-tag">Сегменты</span>
-                                <br>-> <span class="sub-tag">Время отображения</span>
-                                <br>-> <span class="sub-tag">Настройка лимита</span>
-                            </li>
-                            <li>Bullet Impact <span class="sub-tag2">[sv_cheats 1]</span>.</li>
-                        </ul>
-                    </div>
-                    <style>
-                        @keyframes hueCycle {
-                            from {
-                                filter: hue-rotate(0deg) saturate(3) brightness(1);
-                            }
-                            to {
-                                filter: hue-rotate(360deg) saturate(3) brightness(1);
-                            }
-                        }
-
-                        .rgb {
-                            animation: hueCycle 4s linear infinite;
-                        }
-                    </style>
-                    <div class="feature-category">
-                        <h4>Трейлы</h4>
-                        <ul>
-                            <li>Настройка цвета</li>
-                            <li>Настройка толщины</li>
-                            <li>Настройка сегментов</li>
-                            <li><span class="sub-tag rgb">Настройка RGB режима</span></li>
-                        </ul>
-                    </div>
-                    <div class="feature-category">
-                        <h4>Эффекты</h4>
-                        <ul>
-                            <li><span class="sub-tag2">[Эффект по краям экрана]</span>
-                                <br>при убийстве или смерти.
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="feature-category">
-                        <h4>Настройка</h4>
-                        <ul>
-                            <li>Кастомизация цветовов меню.</li>
-                            <li>Настройки режимов API мониторинга</li>
-                            <li><span class="sub-tag rgb">Настройка RGB Элементов меню</span></li>
-                            <li>Экран загрузки меню</li>
-                            <li>Спец возможность: 
-                                <br>-> <span class="sub-tag">Принудительный Анти-Аим</span>
-                                <br>-> <span class="sub-tag">Информация о HWID и подписке</span>
-                            </li>
-                        </ul>
+                    <div class="gallery-scroll-arrow right" id="galleryScrollRight">
+                            <svg width="16" height="16" viewBox="8 8 16 16" fill="currentColor">
+                                <path d="M13 10L19 16L13 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                            </svg>
                     </div>
                 </div>
-            </div>
+                <div class="product-table">
+                    <div class="table-container-box">
+                        <div class="table-container">
+                            <div class="product-description">
+                                <div class="dropdown-title">Универсальный скрипт для CS2</div>
+                                <p class="description-sub">Это не просто скрипт, это комплексное решение, которое раскроет весь потенциал игры, предоставит тебе невероятные визуальные и игровые преимущества, а также полный контроль над процессом.</p>
+                            </div>
+                            <div class="subscription-header">
+                                <div class="dropdown-title">Гибкая система оплаты</div>
+                                <div class="payment-methods-section">
+                                    <div class="payment-method active-method">
+                                        <img src="cloudtips.svg" alt="">
+                                    </div>
+                                    <div class="payment-method disabled-method">
+                                        <img src="ozonbank.svg" alt="">
+                                    </div>
+                                    <div class="payment-method disabled-method">
+                                        <img src="yoomoney.svg" alt="">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pricing-table">
+                                <div class="dropdown-title">Список товаров</div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Стоимость</th>
+                                            <th>Срок действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="product-actions">
+                                <button href="https://t.me/kelixme" class="action-btn btn-buy" id="buyBtn">
+                                        Купить подписку
+                                </button>
+                                <div class="dropdown-wrapper" id="buyMenu">
+                                    <div class="dropdown-content">
+                                        <div class="dropdown-title">Выберите метод связи для покупки</div>
+                                        <div class="dropdown-box">
+                                            <a href="https://t.me/kelixme" target="_blank" class="dropdown-item">
+                                                <img src="./telegram.ico" width="16" height="16" alt="">
+                                                Чат создателя
+                                            </a>
+                                            <a href="https://vk.me/kensolua" target="_blank" class="dropdown-item">
+                                                <img src="./vk.ico" width="16" height="16" alt="">
+                                                Чат сообщества
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="toggle-features-container">
+                                <button id="toggleFeaturesBtn" class="toggle-features-btn unactive">
+                                    <span class="btn-text btn-func">
+                                        <span class="forum-tag table">ФУНКЦИИ</span>
+                                        KensoUltra
+                                    </span>
+                                </button>
+                                <a href="https://nixware.cc/threads/29483/" class="action-btn btn-support forum" target="_blank">
+                                    <span class="forum-tag">FORUM</span>
+                                    Nixware.cc
+                                </a>
+                            </div>
+                            <div class="dropdown-wrapper2" id="featuresMenu">
+                                <div class="dropdown-content">
+                                    <div class="dropdown-title">Функционал LUA скрипта</div>
+                                    <div class="features-list">
+                                        <div class="feature-category">
+                                            <h4>Утилиты</h4>
+                                            <ul>
+                                                <li>Встроенный мониторинг HVH серверов.</li>
+                                                <li>Discord Rich Presence интеграция.</li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Закупка</h4>
+                                            <ul>
+                                                <li>Настраиваемый таймер закупки оружия.</li>
+                                                <li>Есть совместимость с командой <span class="sub-tag2">!respawn</span>
+                                                    <br>на серверах с возраждениями
+                                                </li>
+                                                <li>Пистолеты:
+                                                    <br>-> <span class="sub-tag">Desert Eagle</span>
+                                                    <br>-> <span class="sub-tag">Revolver R8</span>
+                                                </li>
+                                                <li>Снайперки:
+                                                    <br>-> <span class="sub-tag">AWP</span>
+                                                    <br>-> <span class="sub-tag">S3SG1</span>
+                                                    <br>-> <span class="sub-tag">SCAR-20</span>
+                                                </li>
+                                                <li>Гранаты:
+                                                    <br>-> <span class="sub-tag">Димовые</span>
+                                                    <br>-> <span class="sub-tag">Осколочные</span>
+                                                    <br>-> <span class="sub-tag">Зажигательные</span>
+                                                    <br>-> <span class="sub-tag">Молотов</span> 
+                                                </li>
+                                                <li>Прочее:
+                                                    <br>-> <span class="sub-tag">Zeus x27</span>
+                                                    <br>-> <span class="sub-tag">Наборы сапера</span>
+                                                    <br>-> <span class="sub-tag">Бронижелет</span>
+                                                    <br>-> <span class="sub-tag">Бронижелет и шлем</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Убийства</h4>
+                                            <ul>
+                                                <li>Сохраниение Kill-Feed</li>
+                                                <li>Кастомные Kill-Feed статусы:
+                                                    <br>-> <span class="sub-tag">Убийство в голову</span>
+                                                    <br>-> <span class="sub-tag">С ослеплением</span>
+                                                    <br>-> <span class="sub-tag">Без прицела</span>
+                                                    <br>-> <span class="sub-tag">Прострелы</span>
+                                                    <br>-> <span class="sub-tag">Через дым</span>
+                                                    <br>-> <span class="sub-tag">Реванш</span>
+                                                    <br>-> <span class="sub-tag">Доминирование</span>
+                                                    <br>-> <span class="sub-tag">В воздухе</span>
+                                                    <br>-> <span class="sub-tag">С ножа</span>
+                                                    <br>-> <span class="sub-tag">Уничтожение отряда</span>
+                                                </li>
+                                                <li>АвтоРеспавн для серверов с возраждениями.</li>
+                                                <li>Настройка количевства респавнов.</li>
+                                                <li>Натройка респавна по бинду.</li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Звуки</h4>
+                                            <ul>
+                                                <div class="info-box">Это самая продвинутая функция которой нет именно в такой общирной фунциональностью.</div>
+                                                <div class="info-box2">При покупке предусмотрен уже готовый пак кастомных звуков</div>
+                                                <li>Поддерживается:
+                                                    <br>-> <span class="sub-tag">Интеграция радио KetaMeFM</span>
+                                                    <br>-> <span class="sub-tag">Музыка MVP в конце раунда</span>
+                                                    <br>-> <span class="sub-tag">Звуки попаданий по игрокам</span>
+                                                    <br>-> <span class="sub-tag">Звуки убийства игроков</span>
+                                                </li>
+                                                <li>Натройка громкости звуков/музыки/радио.</li>
+                                                <li>Режим: <span class="sub-tag2">[Game]</span> - Встроенные звуки в игру.</li>
+                                                <li>Режим: <span class="sub-tag2">[Auto]</span> - Автоматически находит звуки
+                                                    <br>в папке игры <span class="sub-tag">./sounds/hitsounds/</span>
+                                                </li>
+                                                <li>Режим: <span class="sub-tag2">[Custom]</span> - Ипользует звуки 
+                                                    <br>указаные в <span class="sub-tag">hitsounds.json</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Анти-Аим</h4>
+                                            <ul>
+                                                <li>
+                                                    <span class="sub-tag2">[Fake Pitch]</span>
+                                                    <br>Фейковый наклон.
+                                                </li>
+                                                <li>
+                                                    <span class="sub-tag2">[Custom Pitch]</span>
+                                                    <br>Пользовательский наклон.
+                                                </li>
+                                                <li>
+                                                    <span class="sub-tag2">[Random Yaw Offset]</span>
+                                                    <br>Случайное смещение по оси Y.
+                                                </li>
+                                                <li>
+                                                    <span class="sub-tag2">[Manual AA]</span>
+                                                    <br>Ручной анти-аим.
+                                                </li>
+                                                <li>
+                                                    <span class="sub-tag2">[Air Flick]</span>
+                                                    <br>Резкий поворот в воздухе.
+                                                </li>
+                                                <li>
+                                                    <span class="sub-tag2">[Pitch Jitter on Manual]</span>
+                                                    <br>Дрожание наклона при ручном режиме.
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Рейдж</h4>
+                                            <ul>
+                                                <li>
+                                                    <span class="sub-tag2">[Duck Peek Assist]</span>
+                                                    <br>Помогает автоматически выполнять быстрый выглядывающий пик с приседом.
+                                                </li>
+                                                <li>
+                                                    <span class="sub-tag2">[Отключить RAGE в воздухе]</span>
+                                                    <br>Выключает агрессивные функции во время прыжка для более естественного поведения.
+                                                </li>
+                                                <li>
+                                                    <span class="sub-tag2">[Auto Stop в прыжке]</span>
+                                                    <br>Автоматически останавливает движение для повышения точности в прыжке.
+                                                </li>
+                                                <li>
+                                                    <span class="sub-tag2">[AI Peek]</span>
+                                                    <br>Интеллектуально выбирает момент и способ выхода из укрытия.
+                                                </li>
+                                                <li>
+                                                    <span class="sub-tag2">[Wallbang Helper]</span>
+                                                    <br>Подсказывает возможность прострела через стены и поверхности.
+                                                </li>
+                                                <li>
+                                                    <span class="sub-tag2">[Безопастный режим]</span>
+                                                    <br>Снижает риск обнаружения за счёт более осторожных настроек.
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Интерфейс</h4>
+                                            <ul>
+                                                <li>Индикаторы:
+                                                    <br>-> <span class="sub-tag">FPS</span>
+                                                    <br>-> <span class="sub-tag">Пинг</span>
+                                                    <br>-> <span class="sub-tag">Время</span>
+                                                    <br>-> <span class="sub-tag">Список игроков</span>
+                                                    <br>-> <span class="sub-tag">Логи попаданий</span>
+                                                    <br>-> <span class="sub-tag">Индикатор замедления</span>
+                                                    <br>-> <span class="sub-tag">Индикатор SPEED</span>
+                                                    <br>-> <span class="sub-tag">MVP уведомления</span>
+                                                    <br>-> <span class="sub-tag">Отображение HP возле прицела</span>
+                                                    <br>-> <span class="sub-tag">Отображение SEED возле прицела</span>
+                                                    <br>-> <span class="sub-tag">Отображение Manual AA [Текст]</span>
+                                                    <br>-> <span class="sub-tag">Stattrack</span>
+                                                </li>
+                                                <li>Натройка размера элементов.</li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Визуалы</h4>
+                                            <ul>
+                                                <li>Камера игрока:
+                                                    <br>-> <span class="sub-tag">Угол обзора</span>
+                                                    <br>-> <span class="sub-tag">Дальность обзора</span>
+                                                </li>
+                                                <li>Камера игрок:
+                                                    <br>-> <span class="sub-tag">Угол обзора</span>
+                                                    <br>-> <span class="sub-tag">Дальность обзора</span>
+                                                </li>
+                                                <li>ESP линии до игроков.</li>
+                                                <li>Кастом скоп прицел.</li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Трассера</h4>
+                                            <div class="info-box3">
+                                                Это временное решение с трасерами, после обновы, как вы знаете,
+                                                они больше не работают но мы сделали другой метод отрисовки,
+                                                который визуально даёт тот же эффект.
+                                            </div>
+                                            <ul>
+                                                <li>Bullet Tracer:
+                                                    <br>-> <span class="sub-tag">Цвет</span>
+                                                    <br>-> <span class="sub-tag">Толщина</span>
+                                                    <br>-> <span class="sub-tag">Свечение</span>
+                                                    <br>-> <span class="sub-tag">Сегменты</span>
+                                                    <br>-> <span class="sub-tag">Время отображения</span>
+                                                    <br>-> <span class="sub-tag">Настройка лимита</span>
+                                                </li>
+                                                <li>Bullet Impact <span class="sub-tag2">[sv_cheats 1]</span>.</li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Трейлы</h4>
+                                            <ul>
+                                                <li>Настройка цвета</li>
+                                                <li>Настройка толщины</li>
+                                                <li>Настройка сегментов</li>
+                                                <li>
+                                                    <span class="sub-tag rgb">Настройка RGB режима</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Эффекты</h4>
+                                            <ul>
+                                                <li>
+                                                    <span class="sub-tag2">[Эффект по краям экрана]</span>
+                                                    <br>при убийстве или смерти.
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="feature-category">
+                                            <h4>Настройка</h4>
+                                            <ul>
+                                                <li>Кастомизация цветовов меню.</li>
+                                                <li>Настройки режимов API мониторинга</li>
+                                                <li>
+                                                    <span class="sub-tag rgb">Настройка RGB Элементов меню</span>
+                                                </li>
+                                                <li>Экран загрузки меню</li>
+                                                <li>Спец возможность:
+                                                    <br>-> <span class="sub-tag">Принудительный Анти-Аим</span>
+                                                    <br>-> <span class="sub-tag">Информация о HWID и подписке</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-container1">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- НОВЫЙ БЛОК ОТЗЫВОВ -->
+<div class="reviews-section">
+    <div class="reviews-header">
+        <div class="reviews-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" fill="#d7fe7b" stroke="#d7fe7b"/>
+            </svg>
+            Отзывы покупателей
+        </div>
+        <div class="review-stats" id="reviewStats">
+            <!-- Статистика будет вставлена динамически -->
         </div>
     </div>
-    <div class="table-container1">
-        <div class="scroll-container">
-            <div class="adminlist_title" id="adminListTitle"></div>
-            <style>
-                .scroll-container{
-                    max-width: 398px !important;
-                    border: 1px solid #303030;
-                    background: #080808 !important;
-                    height: auto;
-                }
-                #adminListTitle{
-                    line-height: normal;
-                    font-size: 10px;
-                    padding: 4px 0px;
-                    text-align: center;
-                    display: flex
-;
-    justify-content: center;
-    justify-items: center;
-    align-items: flex-end;
-    flex-direction: row;
-                    font-weight: 400;
-                    border-bottom: 1px solid #303030 !important;
-                    background: #000000;
-                    margin: 0;
-                }
-            </style>
-            <div class="scroll-gradient top" id="gradientTop" style="display: none;"></div>
-            <div class="scroll-gradient bottom" id="gradientBottom" style="display: none;"></div>
-            <div class="scroll-arrow up hidden" id="scrollUp" style="display: none;">Scroll up</div>
-            <div class="adminlist_blocks" id="adminListBlocks"></div>
-            <div class="scroll-arrow down" id="scrollDown" style="display: none;">Scroll down</div>
-        </div>
-    </div>
-    </div>
-    </div>
-
-        <style>
-            .product-actions {
-                position: relative;
-                max-width: 400px;
-            }
-
-            .dropdown-wrapper2 {
-                margin: 0 auto;
-                display: grid;
-                grid-template-rows: 0fr;
-                transition: all 0.5s ease;
-                opacity: 0;
-                overflow: hidden;
-                background: #1a1a1a;
-                border: 1px solid transparent;
-                border-radius: 5px;
-                margin-bottom: 3px;
-                max-width: 400px;
-                width: 100%;
-            }
-
-            /* Когда меню активно */
-            .dropdown-wrapper2.active {
-                grid-template-rows: 1fr; /* Плавно раскрывается до размера контента */
-                opacity: 1;
-                margin-top: 5px;
-                margin-bottom: 5px;
-                border-color: #303030;
-            }
-
-            /* Внутренний контейнер, который позволяет Grid считать высоту */
-            .dropdown-content {
-                min-height: 0;
-            }
-
-            .dropdown-title {
-                background: #000;
-                color: #d7fe7b !important;
-                font-size: 10px !important;
-                margin: 0;
-                border-bottom: 1px solid #303030;
-                text-align: center;
-                color: #bebebe;
-                /* text-transform: uppercase; */
-                /* letter-spacing: 1px; */
-            }
-
-            .dropdown-box {
-                padding: 5px;
-                display: flex;
-                flex-direction: column;
-            }
-
-            .dropdown-item {
-                background: #0E0E0E;
-                border: 1px solid #303030;
-                background: #0E0E0E;
-                color: #efefef;
-                padding: 12px 15px;
-                text-decoration: none;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                font-size: 12px;
-                transition: all 0.3s;
-            }
-
-            .dropdown-item:hover {
-                background: rgba(215, 254, 123, 0.1);
-                color: #d7fe7b;
-            }
-        </style>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggleBtn = document.getElementById('toggleFeaturesBtn');
-            const featuresTable = document.querySelector('.dropdown-wrapper2');
-            const btnText = toggleBtn.querySelector('.btn-text');
-            const btnIcon = toggleBtn.querySelector('.btn-icon');
-            
-            if (featuresTable) {
-                // featuresTable.classList.add('active');
-                featuresTable.classList.remove('active');
-            }
-            
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', function() {
-                    const isHidden = featuresTable.classList.toggle('active');
-                    
-                    if (isHidden) {
-                        toggleBtn.classList.replace('unactive', 'active');
-                        if (btnIcon) btnIcon.classList.add('rotated');
-                    } else {
-                        toggleBtn.classList.replace('active', 'unactive');
-                        if (btnIcon) btnIcon.classList.remove('rotated');
-                    }
-                });
-            }
-        });
-    </script>
-
-        <style>
-            .toggle-features-container {
-                text-align: center;
-                position: relative;
-                margin: 0 auto !important;
-                /* margin-top: 5px !important; */
-                /* margin: 20px 0 !important; */
-            }
-            .toggle-features-btn {
-                /* background: linear-gradient(45deg, #3278ff, #6a11cb); */
-                color: white;
-                border: none;
-                padding: 12px 25px;
-                border-radius: 5px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                display: inline-flex;
-                align-items: center;
-                background: #0D0D0D;
-                gap: 10px;
-                border: 1px solid #303030;
-                font-family: "Unbounded", sans-serif;
-            }
-            .toggle-features-btn:hover {
-                /* transform: translateY(-2px); */
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-                border-color: #D7FE7B;
-            }
-            .btn-icon {
-                transition: transform 0.3s ease;
-                font-size: 14px;
-            }
-            .btn-icon.rotated {
-                transform: rotate(180deg);
-            }
-            .features-table {
-                transition: all 0.3s ease;
-                overflow: hidden;
-            }
-            .features-table.hidden {
-                display: none;
-            }
-        </style>
+    <div class="reviews-container" id="reviewsContainer">
+        <!-- Отзывы будут загружены динамически -->
     </div>
 </div>
 
 <style>
-    .product-table {
-        padding: 20px;
-        background: rgba(14, 14, 14, 0.8);
-        border-radius: 5px;
-        border: #303030 solid 1px;
-        background: #010101;
-    }
-    .product-header-text {
-        text-align: center;
-        margin-bottom: 10px;
-    }
-    .product-title {
-        color: #c4e870;
-        margin: 0 0 15px 0;
-        text-shadow: 0 0 10px rgba(196, 232, 112, 0.3);
-    }
-    .product-discord, .product-contact {
-        margin: 0px 0;
-        font-weight: bold;
-    }
-    .discord-label {
-        color: #54acd2;
-    }
-    .discord-link, .contact-link {
-        color: #efefef;
-        text-decoration: none;
-    }
-    .discord-link:hover, .contact-link:hover {
-        color: #d7fe7b;
-        text-decoration: underline;
-    }
-    .subscription-header {
-        text-align: center;
-        margin: 0px 0;
-        /* padding: 5px 0; */
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 5px;
-        margin: 0 auto;
-        max-width: 398px;
-    }
-    .subscription-title {
-        color: #fac51c;
-        font-size: 16px;
-        margin: 0 0 1px 0;
-    }
-    .payment-methods {
-        color: #be8ae9;
-        font-size: 10px;
-        font-weight: bold;
-        margin: 0;
-        margin-bottom: 3px;
-    }
-    .pricing-table {
-        font-size: 12px;
-        max-width: 398px;
-        margin: 0 auto;
-        margin-top: 5px;
-        background: #0D0D0D;
-        border: 1px solid #303030;
-        overflow: hidden;
-        border-radius: 5px;
-    }
-    .subscription-header{
-        border: 1px solid #303030 !important;
-    }
-    .pricing-table table {
-        width: 100%;
-        border-collapse: collapse;
-        background: #0D0D0D;
-        overflow: hidden;
-        /* border: 2px solid #c66666; */
-    }
-    .pricing-table th {
-        background: #D7FE7B;
-        color: #000000;
-        padding: 1px 0px;
-        font-size: 8px;
-        text-align: center;
-        border-bottom: 1px solid #000000;
-    }
-    .pricing-table td:first-child {
-        background: #181818;
-        border-right: 1px solid #000000;
-        font-size: 10px;
-        margin: auto 0;
-        align-content: center;
-        width: 140px;
-        /* display: block; */
-        text-align: center;
-        font-weight: bold;
-        color: #c66666;
-        font-size: 16px;
-    }
-    .pricing-table td:last-child {
-        align-content: center;
-        text-align: center;
-        color: #90ffff;
-    }
-    .pricing-table strong {
-        color: #b5ff83;
-        font-weight: 500;
-    }
-    .pricing-table td {
-        padding: 5px 0px;
-        text-align: center;
-        border-bottom: 1px solid #000000;
-        color: #efefef;
-    }
-    .pricing-table tr:last-child td {
-        border-bottom: none;
-    }
-    .forever {
-        color: #66ff66 !important;
-    }
-    .price-note {
-        text-align: center;
-        color: #d1d5d8;
-        font-size: 10px;
-        margin: 15px 0 20px;
-    }
-    .product-tagline {
-        text-align: center;
-        /* margin: 0px 0 10px 0; */
-    }
-    .product-tagline h2 {
-        color: #ffd700;
-        font-size: 12px;
-        margin: 0;
-        text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-    }
-    .product-description {
-        text-align: center;
-        margin: 0px 0;
-        padding: 10px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 5px;
-        overflow: hidden;
-        /* border-left: 4px solid #d7fe7b; */
-    }
-    .description-main {
-        color: #cccccc;
-        font-size: 16px;
-        font-weight: bold;
-        margin: 0 0 5px 0;
-    }
-    .description-sub {
-        color: #fba026;
-        background: #080808;
-        font-size: 10px;
-        padding: 5px 3px;
-        margin: 0;
-    }
-    .features-intro {
-        text-align: center;
-        margin: 20px 0 10px 0;
-    }
-    .features-intro h2 {
-        color: #54acd2;
-        font-size: 14px;
-        margin: 0;
-    }
-    .features-table {
-        font-size: 12px;
-        border: 1px solid #161616 !important;
-        border-radius: 5px;
-        margin-top: 10px;
-    }
-    .features-table table {
-        width: 100%;
-        border-collapse: collapse;
-        background: #0e0e0e;
-        overflow: hidden;
-    }
-    .features-table th {
-        background: #000000;
-        color: #ffffff;
-        padding: 4px 10px;
-        font-size: 12px;
-        text-align: center;
-    }
-    .features-table td {
-        padding:3px 5px;
-        border-bottom: 1px solid #000000;
-        color: #efefef;
-    }
-    .features-table tr:last-child td {
-        border-bottom: none;
-    }
-    .features-table th:first-child,
-    .pricing-table th:first-child {
-        border-right: 1px solid #080808;
-    }
-    .features-table td:first-child {
-        background: rgba(198, 102, 102, 0.1);
-        border-right: 1px solid #000000;
-        font-size: 10px;
-        font-weight: 500 !important;
-        margin: auto 0;
-        align-content: center;
-        width: 40px;
-        text-align: center;
-        font-weight: bold;
-        color: #c66666;
-    }
-    .features-table ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    .features-table li {
-        color: #c3e66f;
-        padding: 3px 0;
-        font-size: 10px;
-        border-bottom: 1px dashed rgba(195, 230, 111, 0.3);
-    }
-    .features-table li:last-child {
-        border-bottom: none;
-    }
-    .product-header{
-        max-width: 1600px;
-        margin: 0 auto;
-    }
-    .scroll-container{
-        max-width: 400px;
-        margin: 0 auto;
-    }
-
-    .gallery-scroll-arrow {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    margin: auto;
-    height: fit-content;
+    /* Стили для блока отзывов */
+.reviews-section {
+    margin-bottom: 5px;
+    background: #0a0a0a;
+    border-radius: 5px;
+    border: 1px solid #303030;
+    overflow: hidden;
 }
-</style>
-        </div>
-    </div>
-    <!-- Существующий блок со списком пользователей -->
-    <!-- <div class="adminlist_title" id="adminListTitle"></div>
-    <div class="scroll-container">
-        <div class="scroll-gradient top" id="gradientTop"></div>
-        <div class="scroll-gradient bottom" id="gradientBottom"></div>
-
-        <div class="scroll-arrow up hidden" id="scrollUp">Scroll up</div>
-        <div class="adminlist_blocks" id="adminListBlocks"></div>
-        <div class="scroll-arrow down" id="scrollDown">Scroll down</div>
-    </div> -->
-
-    <!-- Модальное окно для галереи -->
-<div id="galleryModal">
-    <button id="closeModal">
-        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-        </svg>
-    </button>
-    <div class="modal-content" id="modalContent">
-        <img id="modalImage" src="" alt="">
-        <div id="modalVideo" class="modal-video-container" style="display: none;">
-            <iframe id="youtubePlayer" class="modal-video" 
-                    src="" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
-            </iframe>
-        </div>
-    </div>
-
-    <button class="modal-nav" id="modalPrev">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 18l-6-6 6-6"/>
-        </svg>
-    </button>
-    <div class="modal-counter">
-        <span id="modalCounter">0 / 0</span>
-    </div>
-    <button class="modal-nav" id="modalNext">                    
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 18l6-6-6-6"/>
-        </svg>
-    </button>
-</div>
-    <script src="price.js"></script>
-    <script src="users.js"></script>
-    <script>
-        const adminList = document.getElementById('adminListBlocks');
-        const scrollUp = document.getElementById('scrollUp');
-        const scrollDown = document.getElementById('scrollDown');
-        const gradientTop = document.getElementById('gradientTop');
-        const gradientBottom = document.getElementById('gradientBottom');
-        let scrollInterval;
-        let currentMediaType = 'image'; 
-        const modalVideo = document.getElementById('modalVideo');
-        const youtubePlayer = document.getElementById('youtubePlayer');
-        
-        function startScrolling(direction) {
-            scrollInterval = setInterval(() => {
-                adminList.scrollBy({ top: direction * 520, behavior: 'smooth' });
-                checkScrollEffects();
-            }, 30);
-        }
-        
-        function stopScrolling() {
-            clearInterval(scrollInterval);
-        }
-        
-        function checkScrollEffects() {
-            if (!adminList) return;
-            const scrollTop = adminList.scrollTop;
-            const scrollHeight = adminList.scrollHeight;
-            const clientHeight = adminList.clientHeight;
-            
-            if (scrollTop <= 0) {
-                if (scrollUp) scrollUp.classList.add('hidden');
-                if (gradientTop) gradientTop.classList.add('hidden');
-            } else {
-                if (scrollUp) scrollUp.classList.remove('hidden');
-                if (gradientTop) gradientTop.classList.remove('hidden');
-            }
-            
-            if (scrollTop + clientHeight >= scrollHeight - 1) {
-                if (scrollDown) scrollDown.classList.add('hidden');
-                if (gradientBottom) gradientBottom.classList.add('hidden');
-            } else {
-                if (scrollDown) scrollDown.classList.remove('hidden');
-                if (gradientBottom) gradientBottom.classList.remove('hidden');
-            }
-        }
-        
-        if (scrollUp) {
-            scrollUp.addEventListener('mousedown', () => startScrolling(-1));
-            scrollUp.addEventListener('mouseup', stopScrolling);
-            scrollUp.addEventListener('mouseleave', stopScrolling);
-        }
-        if (scrollDown) {
-            scrollDown.addEventListener('mousedown', () => startScrolling(1));
-            scrollDown.addEventListener('mouseup', stopScrolling);
-            scrollDown.addEventListener('mouseleave', stopScrolling);
-        }
-        if (adminList) {
-            adminList.addEventListener('scroll', checkScrollEffects);
-        }
-        
-        window.addEventListener('load', () => {
-            setTimeout(checkScrollEffects, 500);
-        });
-
-        // Функционал для галереи
-        const galleryContainer = document.getElementById('galleryContainer');
-        const galleryModal = document.getElementById('galleryModal');
-        const modalImage = document.getElementById('modalImage');
-        const closeModal = document.getElementById('closeModal');
-        const modalPrev = document.getElementById('modalPrev');
-        const modalNext = document.getElementById('modalNext');
-        const modalCounter = document.getElementById('modalCounter');
-        
-        const galleryScrollLeft = document.getElementById('galleryScrollLeft');
-        const galleryScrollRight = document.getElementById('galleryScrollRight');
-        const galleryGradientLeft = document.getElementById('galleryGradientLeft');
-        const galleryGradientRight = document.getElementById('galleryGradientRight');
-        
-        const galleryItems = document.querySelectorAll('.gallery-item');
-        let currentImageIndex = 0;
-        let galleryScrollInterval;
-        
-        function startGalleryScrolling(direction) {
-            galleryScrollInterval = setInterval(() => {
-                if (galleryContainer) galleryContainer.scrollBy({ left: direction * 300, behavior: 'smooth' });
-                checkGalleryScrollEffects();
-            }, 30);
-        }
-        
-        function stopGalleryScrolling() {
-            clearInterval(galleryScrollInterval);
-        }
-        
-        function checkGalleryScrollEffects() {
-            if (!galleryContainer) return;
-            const scrollLeft = galleryContainer.scrollLeft;
-            const scrollWidth = galleryContainer.scrollWidth;
-            const clientWidth = galleryContainer.clientWidth;
-            
-            if (scrollLeft <= 0) {
-                if (galleryScrollLeft) galleryScrollLeft.classList.add('hidden');
-                if (galleryGradientLeft) galleryGradientLeft.classList.add('hidden');
-            } else {
-                if (galleryScrollLeft) galleryScrollLeft.classList.remove('hidden');
-                if (galleryGradientLeft) galleryGradientLeft.classList.remove('hidden');
-            }
-            
-            if (scrollLeft + clientWidth >= scrollWidth - 1) {
-                if (galleryScrollRight) galleryScrollRight.classList.add('hidden');
-                if (galleryGradientRight) galleryGradientRight.classList.add('hidden');
-            } else {
-                if (galleryScrollRight) galleryScrollRight.classList.remove('hidden');
-                if (galleryGradientRight) galleryGradientRight.classList.remove('hidden');
-            }
-        }
-        
-        if (galleryScrollLeft) {
-            galleryScrollLeft.addEventListener('mousedown', () => startGalleryScrolling(-1));
-            galleryScrollLeft.addEventListener('mouseup', stopGalleryScrolling);
-            galleryScrollLeft.addEventListener('mouseleave', stopGalleryScrolling);
-        }
-        if (galleryScrollRight) {
-            galleryScrollRight.addEventListener('mousedown', () => startGalleryScrolling(1));
-            galleryScrollRight.addEventListener('mouseup', stopGalleryScrolling);
-            galleryScrollRight.addEventListener('mouseleave', stopGalleryScrolling);
-        }
-        if (galleryContainer) {
-            galleryContainer.addEventListener('scroll', checkGalleryScrollEffects);
-        }
-        
-        function preloadImages() {
-            galleryItems.forEach(item => {
-                const img = item.querySelector('img');
-                if (img) {
-                    const preloadImg = new Image();
-                    preloadImg.src = img.src;
-                }
-            });
-        }
-        
-        galleryItems.forEach((item, index) => {
-            item.addEventListener('click', () => {
-                currentImageIndex = index;
-                openModal();
-            });
-        });
-        
-        function openModal() {
-            if (!galleryModal) return;
-            const imgSrc = galleryItems[currentImageIndex].querySelector('img').src;
-            if (modalImage) modalImage.src = imgSrc;
-            updateModalCounter();
-            
-            galleryModal.style.display = 'flex';
-            const currentItem = galleryItems[currentImageIndex];
-            const mediaType = currentItem.getAttribute('data-type');
-            currentMediaType = mediaType;
-            
-            setTimeout(() => {
-                galleryModal.classList.add('active');
-                document.body.classList.add('modal-open');
-            }, 10);
-            
-            if (mediaType === 'video') {
-                const youtubeId = currentItem.getAttribute('data-youtube-id');
-                const videoUrl = `https://www.youtube.com/embed/${youtubeId}?autoplay=0&modestbranding=1&rel=0&controls=1&showinfo=0`;
-                
-                if (modalImage) modalImage.style.display = 'none';
-                if (modalVideo) modalVideo.style.display = 'block';
-                if (youtubePlayer) youtubePlayer.src = videoUrl;
-            } else {
-                if (modalImage) modalImage.style.display = 'block';
-            }
-        }
-
-        function closeModalFunc() {
-            if (!galleryModal) return;
-            galleryModal.classList.remove('active');
-            document.body.classList.remove('modal-open');
-            
-            setTimeout(() => {
-                galleryModal.style.display = 'none';
-                if (currentMediaType === 'video' && youtubePlayer) {
-                    youtubePlayer.src = '';
-                }
-            }, 300);
-        }
-                
-        function updateModalCounter() {
-            if (modalCounter) {
-                modalCounter.textContent = `${currentImageIndex + 1} / ${galleryItems.length}`;
-            }
-        }
-        
-        function showNextImage(e) {
-            if (e) e.stopPropagation();
-            currentImageIndex = (currentImageIndex + 1) % galleryItems.length;
-            updateModalContent();
-        }
-
-        function showPrevImage(e) {
-            if (e) e.stopPropagation();
-            currentImageIndex = (currentImageIndex - 1 + galleryItems.length) % galleryItems.length;
-            updateModalContent();
-        }
-
-        function updateModalContent() {
-            const currentItem = galleryItems[currentImageIndex];
-            const mediaType = currentItem.getAttribute('data-type');
-            
-            if (modalImage) modalImage.style.display = 'none';
-            if (modalVideo) modalVideo.style.display = 'none';
-            
-            if (mediaType === 'video') {
-                const youtubeId = currentItem.getAttribute('data-youtube-id');
-                const videoUrl = `https://www.youtube.com/embed/${youtubeId}?autoplay=0&modestbranding=1&rel=0&controls=1&showinfo=0`;
-                
-                if (modalVideo) modalVideo.style.display = 'block';
-                if (youtubePlayer) youtubePlayer.src = videoUrl;
-            } else {
-                const imgSrc = currentItem.querySelector('img').src;
-                if (modalImage) {
-                    modalImage.style.display = 'block';
-                    modalImage.src = imgSrc;
-                }
-                if (youtubePlayer) youtubePlayer.src = '';
-            }
-            
-            updateModalCounter();
-        }
-        
-        if (closeModal) closeModal.addEventListener('click', function(e) {
-            e.stopPropagation();
-            closeModalFunc();
-        });
-        
-        if (modalNext) modalNext.addEventListener('click', showNextImage);
-        if (modalPrev) modalPrev.addEventListener('click', showPrevImage);
-        
-        if (galleryModal) {
-            galleryModal.addEventListener('click', (e) => {
-                if (e.target === galleryModal) {
-                    closeModalFunc();
-                }
-            });
-        }
-        
-        document.addEventListener('keydown', (e) => {
-            if (galleryModal && galleryModal.classList.contains('active')) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (e.key === 'Escape') closeModalFunc();
-                if (e.key === 'ArrowRight') showNextImage();
-                if (e.key === 'ArrowLeft') showPrevImage();
-            }
-        });
-        
-        if (galleryModal) {
-            galleryModal.addEventListener('wheel', (e) => {
-                if (galleryModal.classList.contains('active')) {
-                    e.stopPropagation();
-                }
-            });
-        }
-        
-        if (galleryContainer) {
-            galleryContainer.addEventListener('wheel', (e) => {
-                if (!galleryModal || !galleryModal.classList.contains('active') && e.deltaY !== 0) {
-                    e.preventDefault();
-                    galleryContainer.scrollLeft += e.deltaY * 5;
-                    checkGalleryScrollEffects();
-                }
-            });
-        }
-        
-        let isDragging = false;
-        let startX;
-        let scrollLeft;
-        
-        if (galleryContainer) {
-            galleryContainer.addEventListener('mousedown', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) return;
-                
-                isDragging = true;
-                galleryContainer.style.cursor = 'grabbing';
-                startX = e.pageX - galleryContainer.offsetLeft;
-                scrollLeft = galleryContainer.scrollLeft;
-            });
-            
-            galleryContainer.addEventListener('mouseleave', () => {
-                isDragging = false;
-                galleryContainer.style.cursor = 'grab';
-            });
-            
-            galleryContainer.addEventListener('mouseup', () => {
-                isDragging = false;
-                galleryContainer.style.cursor = 'grab';
-            });
-            
-            galleryContainer.addEventListener('mousemove', (e) => {
-                if (!isDragging || (galleryModal && galleryModal.classList.contains('active'))) return;
-                e.preventDefault();
-                const x = e.pageX - galleryContainer.offsetLeft;
-                const walk = (x - startX) * 2;
-                galleryContainer.scrollLeft = scrollLeft - walk;
-                checkGalleryScrollEffects();
-            });
-        }
-        
-        let touchStartX = 0;
-        let touchEndX = 0;
-        
-        if (galleryContainer) {
-            galleryContainer.addEventListener('touchstart', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) return;
-                touchStartX = e.changedTouches[0].screenX;
-            });
-            
-            galleryContainer.addEventListener('touchend', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) return;
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            });
-        }
-        
-        function handleSwipe() {
-            if (!galleryContainer) return;
-            if (touchStartX - touchEndX > 50) {
-                galleryContainer.scrollBy({ left: 300, behavior: 'smooth' });
-            } else if (touchEndX - touchStartX > 50) {
-                galleryContainer.scrollBy({ left: -300, behavior: 'smooth' });
-            }
-            setTimeout(checkGalleryScrollEffects, 100);
-        }
-        
-        window.addEventListener('load', () => {
-            preloadImages();
-            setTimeout(checkGalleryScrollEffects, 500);
-        });
-        
-        if (modalImage) modalImage.style.transition = 'opacity 0.3s ease';
-
-        let lastWheelTime = 0;
-        const WHEEL_DELAY = 50;
-
-        if (galleryModal) {
-            galleryModal.addEventListener('wheel', (e) => {
-                if (galleryModal.classList.contains('active')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const currentTime = Date.now();
-                    if (currentTime - lastWheelTime < WHEEL_DELAY) {
-                        return;
-                    }
-                    
-                    lastWheelTime = currentTime;
-                    
-                    const isVerticalScroll = Math.abs(e.deltaY) > Math.abs(e.deltaX);
-                    
-                    if (isVerticalScroll) {
-                        if (e.deltaY > 0) {
-                            showNextImage();
-                        } else if (e.deltaY < 0) {
-                            showPrevImage();
-                        }
-                    } else {
-                        if (e.deltaX > 0) {
-                            showNextImage();
-                        } else if (e.deltaX < 0) {
-                            showPrevImage();
-                        }
-                    }
-                }
-            });
-        }
-
-        const modalContent = document.getElementById('modalContent');
-        let touchStartXModal = 0;
-        let touchEndXModal = 0;
-        let touchStartYModal = 0;
-        let touchEndYModal = 0;
-        const MIN_SWIPE_DISTANCE = 50;
-
-        if (modalContent) {
-            modalContent.addEventListener('touchstart', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) {
-                    touchStartXModal = e.changedTouches[0].screenX;
-                    touchStartYModal = e.changedTouches[0].screenY;
-                }
-            }, { passive: true });
-
-            modalContent.addEventListener('touchend', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) {
-                    touchEndXModal = e.changedTouches[0].screenX;
-                    touchEndYModal = e.changedTouches[0].screenY;
-                    handleModalSwipe();
-                }
-            }, { passive: true });
-        }
-
-        function handleModalSwipe() {
-            const deltaX = touchStartXModal - touchEndXModal;
-            const deltaY = touchStartYModal - touchEndYModal;
-
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > MIN_SWIPE_DISTANCE) {
-                if (deltaX > 0) {
-                    showNextImage();
-                } else {
-                    showPrevImage();
-                }
-            }
-        }
-
-        if (modalContent) {
-            modalContent.addEventListener('touchmove', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-        }
-    </script>
-</body>
-</html>
-
-
-<!-- <div id="vk_community_messages"></div>
-<script src="https://vk.ru/js/api/openapi.js?168"></script>
-<script>
-    VK.Widgets.CommunityMessages(
-        "vk_community_messages", 
-        236808783, 
-        {
-            expanded: 0,
-            disableButtonTooltip: 1,
-            disableTitleChange: 1,
-            disableExpandChatSound: 0,
-            welcomeScreen: 0,
-        }
-    )
-</script> -->
-
-
-<style>
-.dropdown-wrapper2.active{
-    margin: 6px 0;
-}
-.product-table{
-    padding: 10px;
-}
-.gallery-container{
+.reviews-header {
+    padding: 3px 3px;
+    background: #000000;
+    padding-left: 6px;
+    border-bottom: 1px solid #303030;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* flex-wrap: wrap; */
     gap: 10px;
 }
-/* Базовые стили */
-.table-container-box {
-    justify-content: space-around !important;
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 0 10px !important;
-    align-items: flex-start !important;
+.reviews-title {
+    color: #d7fe7b;
+    font-size: 10px;
+    font-weight: 400;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
-
-.table-container {
-    flex: 0 0 400px !important;
-    max-width: 400px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
+.reviews-title svg {
+    width: 10px;
+    height: 10px;
+    fill: #d7fe7b;
 }
-
-.table-container1 {
-    flex: 1 1 auto !important;
-    width: auto !important;
-    box-sizing: border-box !important;
+.review-stats {
+    display: flex;
+    gap: 2px;
+    font-size: 10px;
+    color: #aaa;
+    align-items: center;
 }
-
-/* Адаптация внутренних элементов */
-.table-container-box .scroll-container,
-.table-container-box .pricing-table,
-.table-container-box .subscription-header,
-.table-container-box .product-description,
-.table-container-box .dropdown-wrapper2,
-.table-container-box .dropdown-wrapper,
-.table-container-box .product-actions,
-.table-container-box .toggle-features-container {
-    max-width: 100% !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    box-sizing: border-box !important;
-}
-
-.table-container-box .scroll-container {
-    width: 100% !important;
-}
-
-/* Медиа-запрос для переключения в одну колонку */
-@media (max-width: 900px) {
-    .table-container-box {
-        flex-direction: column !important;
-        align-items: center !important;
+.stat-item {
+    & {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        border-radius: 2px;
+        padding: 1px 8px;
     }
+    &.ratings {
+        background: #472a00;
+        color: #FFB347;
+    }
+    &.messages {
+        background: #002136;
+        color: #7cb9ff;
+    }
+}
+.stat-item svg {
+    width: 10px;
+    height: 10px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+.reviews-container {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 5px;
     
-    .table-container-box .table-container,
-    .table-container-box .table-container1 {
-        flex: 1 1 auto !important;
-        max-width: 400px !important;
-        min-width: auto !important;
-        width: 100% !important;
-    }
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 3px;
+    width: 100% !important; /* Чтобы контейнер занимал всю доступную ширину */
+    box-sizing: border-box;
+}
+.review-card {
+    /* background: #111111; */
+    background: #0E0E0E;
+    /* border: 1px solid #303030; */
+    border-radius: 5px;
+    /* overflow: hidden; */
+    /* display: flex; */
+    /* overflow:inherit; */
+    /* height: auto; */
+    /* padding: 5px 8px; */
+    /* border-left: 3px solid #d7fe7b; */
+    /* transition: transform 0.2s; */
+}
+.review-card:hover {
+    background: #151515;
+}
+.review-author {
+    /* background: #000000; */
+    padding: 0px 5px;
+    /* padding-left: 8px; */
+    border: 1px solid #303030;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: #000000;
+    border-radius: 3px 3px 0px 0px;
+    flex-direction: column;
+    /* margin-bottom: 3px; */
+}
+.review-avatar {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    color: #d7fe7b;
+    text-transform: uppercase;
+}
+.review-name {
+    font-weight: 600;
+    font-size: 10px;
+    color: #FFB347;
+}
+.review-date {
+    border-radius: 3px;
+    /* background: #0e0800; */
+    padding: 2px 0px;
+    position: relative;
+    font-size: 10px;
+    gap: 10px;
+    width: 100%;
+    font-weight: 400;
+    color: #a7a7a7;
+    /* margin-left: auto; */
+    flex-direction: row;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.review-rating {
+    display: flex;
+    gap: 2px;
+    /* background: #000000; */
+    width: max-content;
+    /* padding: 3px 6px; */
+    
+    border-radius: 3px;
+    /* margin-bottom: 5px; */
+    align-items: center;
+}
+.star-icon {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+.star-icon.filled {
+    fill: #ffb347;
+    stroke: #ffb347;
+}
+.star-icon.empty {
+    fill: none;
+    fill: #505050;
+    stroke: #505050;
+}
+.review-text {
+    font-size: 10px;
+    background: #080808;
+    padding: 5px;
+    color: #bcbcbc;
+    border: 1px solid #303030;
+    border-top-width: 0px;
+    border-radius: 0px 0px 3px 3px;
+}
+.reviews-container::-webkit-scrollbar {
+    width: 4px;
+}
+.reviews-container::-webkit-scrollbar-thumb {
+    background: #d7fe7b;
+    border-radius: 2px;
+}
+/* Стили для заглушки "Нет данных" */
+.empty-reviews {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    gap: 2px;
+}
+.empty-reviews svg {
+    width: 48px;
+    height: 48px;
+    stroke: #555;
+    fill: none;
+    opacity: 0.5;
+}
+.empty-reviews p {
+    color: #777;
+    font-size: 13px;
+    margin: 0;
+}
+.empty-reviews .empty-subtitle {
+    font-size: 11px;
+    color: #555;
 }
 </style>
+
+<script>
+// Данные отзывов
+const reviewsData = [
+    {name: "Aleksey_Petrov", rating: 5, date: "08.09.2025", text: "Лучшая луа советую к покупке :D"},
+    {name: "Toxcik", rating: 5, date: "12.09.2025", text: "Самая лучшая луа,топовые функции и т.к д., келикс <3"},
+    {name: "weqqwrwe", rating: 5, date: "12.09.2025", text: "Охуенная луа заставили насильно оставить отзыв"},
+    {name: "nixwarejk", rating: 5, date: "14.09.2025", text: "Охуенная луа всем советую"},
+    {name: "theanqua", rating: 5, date: "14.09.2025", text: "Во 👍"},
+];
+
+// Функция для расчета среднего рейтинга
+function calculateAverageRating(reviews) {
+    if (reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return sum / reviews.length;
+}
+
+// Функция для форматирования отображения рейтинга
+function formatRatingDisplay(rating) {
+    // Если рейтинг целое число (например 5.0), показываем без десятичной части
+    if (rating % 1 === 0) {
+        return rating.toString();
+    }
+    // Иначе показываем с одним знаком после запятой
+    return rating.toFixed(1);
+}
+
+// Функция для отображения звездного рейтинга с SVG
+function renderStars(rating) {
+    let starsHtml = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= rating) {
+            starsHtml += `
+                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
+                </svg>
+            `;
+        } else {
+            starsHtml += `
+                <svg class="star-icon empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
+                </svg>
+            `;
+        }
+    }
+    return starsHtml;
+}
+
+// Функция для отображения заглушки "Нет данных"
+function renderEmptyState(container) {
+    container.innerHTML = `
+        <div class="empty-reviews">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+                <path d="M12 11v2M12 17h.01"/>
+            </svg>
+            <p>Нет отзывов</p>
+            <div class="empty-subtitle">Будьте первым, кто оставит отзыв</div>
+        </div>
+    `;
+}
+
+// Рендер отзывов и статистики
+function renderReviews() {
+    const container = document.getElementById('reviewsContainer');
+    const statsContainer = document.getElementById('reviewStats');
+    if (!container) return;
+    
+    const totalReviews = reviewsData.length;
+    const avgRating = calculateAverageRating(reviewsData);
+    const formattedRating = formatRatingDisplay(avgRating);
+    
+    // Обновляем статистику с SVG иконками
+    if (statsContainer) {
+        if (totalReviews === 0) {
+            statsContainer.innerHTML = `
+                <div class="stat-item ratings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
+                    </svg>
+                    <span>Р.0</span>
+                </div>
+                <div class="stat-item messages">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+                    </svg>
+                    <span>0</span>
+                </div>
+            `;
+        } else {
+            statsContainer.innerHTML = `
+                <div class="stat-item ratings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
+                    </svg>
+                    <span>${formattedRating}</span>
+                </div>
+                <div class="stat-item messages">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+                    </svg>
+                    <span>${totalReviews === 1 ? 'Отзыв' : (totalReviews < 5 ? 'Отзыва' : 'Отзывов')}: ${totalReviews}</span>
+                </div>
+            `;
+        }
+    }
+    
+    // Проверяем, есть ли отзывы
+    if (totalReviews === 0) {
+        renderEmptyState(container);
+        return;
+    }
+    
+    // Рендерим карточки отзывов
+    container.innerHTML = '';
+    reviewsData.forEach(review => {
+        const reviewEl = document.createElement('div');
+        reviewEl.className = 'review-card';
+        reviewEl.innerHTML = `
+            <div class="review-author">
+                <span class="review-date">
+                    <div class="review-rating">
+                        ${renderStars(review.rating)}
+                        </div>
+                    <span class="review-name">${review.name}</span>
+                    ${review.date}</span>
+            </div>
+            <div class="review-text">${review.text}</div>
+        `;
+        container.appendChild(reviewEl);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderReviews();
+});
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            <div class="scroll-container">
+                                <div class="adminlist_title" id="adminListTitle"></div>
+                                <div class="scroll-gradient top" id="gradientTop" style="display: none;"></div>
+                                <div class="scroll-gradient bottom" id="gradientBottom" style="display: none;"></div>
+                                <div class="scroll-arrow up hidden" id="scrollUp" style="display: none;">Scroll up</div>
+                                <div class="adminlist_blocks" id="adminListBlocks"></div>
+                                <div class="scroll-arrow down" id="scrollDown" style="display: none;">Scroll down</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="galleryModal">
+                        <button id="closeModal">
+                            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+                            </svg>
+                        </button>
+                        <div class="modal-content" id="modalContent">
+                            <img id="modalImage" src="" alt="">
+                            <div id="modalVideo" class="modal-video-container" style="display: none;">
+                                <iframe id="youtubePlayer" class="modal-video" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                        <button class="modal-nav" id="modalPrev">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M15 18l-6-6 6-6"/>
+                            </svg>
+                        </button>
+                        <div class="modal-counter">
+                            <span id="modalCounter">0 / 0</span>
+                        </div>
+                        <button class="modal-nav" id="modalNext">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 18l6-6-6-6"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <script src="main.js"></script>
+                <script src="price.js"></script>
+                <script src="users.js"></script>
+            </div>
+        </div>
+    </body>
+</html>
