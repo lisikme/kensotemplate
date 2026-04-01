@@ -1326,9 +1326,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="table-container1">
 
 
-
-
-<!-- НОВЫЙ БЛОК ОТЗЫВОВ С GOOGLE TABLES -->
+<!-- НОВЫЙ БЛОК ОТЗЫВОВ С GOOGLE TABLES И ФИЛЬТРАМИ -->
 <div class="reviews-section">
     <div class="reviews-header">
         <div class="reviews-title">
@@ -1336,12 +1334,100 @@ document.addEventListener('DOMContentLoaded', () => {
                 <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" fill="#d7fe7b" stroke="#d7fe7b"/>
             </svg>
             Отзывы    
-            <button class="add-review-btn" id="x7k9m2p4_addReviewTrigger_btn">
-                ДОБАВИТЬ
-            </button>
+            <button class="add-review-btn" id="x7k9m2p4_addReviewTrigger_btn">Написать</button>
         </div>
-        <div class="review-stats" id="reviewStats">
-            <div class="stat-item beta"><span>Загрузка...</span></div>
+        <div class="reviews-header-right">
+            <div class="review-stats" id="reviewStats">
+                <div class="stat-item beta"><span>Загрузка...</span></div>
+            </div>
+            <div class="filter-wrapper">
+                <button class="filter-btn" id="filterSortBtn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-linecap="round"/>
+                        <circle cx="18" cy="6" r="2" fill="currentColor" stroke="none"/>
+                        <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+                        <circle cx="6" cy="18" r="2" fill="currentColor" stroke="none"/>
+                    </svg>
+                </button>
+                <div class="filter-menu" id="filterMenu">
+                    <div class="filter-menu-item active" data-sort="newest">
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <span style="font-size: 8px; color: #999;">Даты</span>
+                            <div style="display: flex; align-items: center; gap: 3px;">
+                                Новые
+                            </div>
+                        </div>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke="currentColor" fill="none"></path></svg>
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <span style="font-size: 8px; color: #999;">Даты</span>
+                            <div style="display: flex; align-items: center; gap: 3px;">
+                                Старые
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-menu-item" data-sort="oldest">
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <span style="font-size: 8px; color: #999;">Даты</span>
+                            <div style="display: flex; align-items: center; gap: 3px;">
+                                Старые
+                            </div>
+                        </div>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke="currentColor" fill="none"></path></svg>
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <span style="font-size: 8px; color: #999;">Даты</span>
+                            <div style="display: flex; align-items: center; gap: 3px;">
+                                Новые
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-menu-item" data-sort="rating-high">
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <span style="font-size: 8px; color: #999;">Рейтинг</span>
+                            <div style="display: flex; align-items: center; gap: 1px;">
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                            </div>
+                        </div>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke="currentColor" fill="none"></path></svg>
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <span style="font-size: 8px; color: #999;">Рейтинг</span>
+                            <div style="display: flex; align-items: center; gap: 1px;">
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-menu-item" data-sort="rating-low">
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <span style="font-size: 8px; color: #999;">Рейтинг</span>
+                            <div style="display: flex; align-items: center; gap: 1px;">
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                            </div>
+                        </div>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke="currentColor" fill="none"></path></svg>
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <span style="font-size: 8px; color: #999;">Рейтинг</span>
+                            <div style="display: flex; align-items: center; gap: 1px;">
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                                <svg class="star-icon filled" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="reviews-container" id="reviewsContainer">
@@ -1373,55 +1459,139 @@ const SHEET_GID = '547215109';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
 
 // === НАСТРОЙКИ GOOGLE FORMS ===
-// ВСТАВЬТЕ ССЫЛКУ НА ВАШУ GOOGLE FORM (ПУБЛИЧНУЮ)
 const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfVzcMNwmo6Rj7kXwqssMp7MOmgEUbGH7lav6FF8pW4TQME2w/viewform';
 
-// Функция форматирования даты
+// Текущий режим сортировки
+let currentSortMode = 'newest';
+let allReviewsData = [];
+
+// Функция форматирования даты с поддержкой форматов "2.2.2/4" и "2.2.2/4 2:2"
 function formatDate(dateValue) {
     if (!dateValue || dateValue === '—') return '—';
     
     try {
-        let date;
-        
         if (typeof dateValue === 'string') {
-            const pattern = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/;
-            const match = dateValue.match(pattern);
+            // Убираем слэш и число после него (формат "2.2.2/4" -> "2.2.2")
+            let cleanedDate = dateValue.replace(/\/(\d+)/g, '');
             
-            if (match) {
-                let day = match[1].padStart(2, '0');
-                let month = match[2].padStart(2, '0');
-                let year = match[3];
-                let hour = match[4];
-                let minute = match[5].padStart(2, '0');
+            // Обработка формата "2.2.2/4 2.2" -> "2.2.2 1/2:2"
+            cleanedDate = cleanedDate.replace(/(\d+\.\d+\.\d+)\/(\d+)\s+(\d+\.\d+)/, '$1 $3');
+            
+            // Пробуем найти дату с временем (формат "DD.MM.YY HH:MM" или "DD.MM.YYYY HH:MM")
+            const patternWithTime = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/;
+            const matchWithTime = cleanedDate.match(patternWithTime);
+            
+            if (matchWithTime) {
+                let day = matchWithTime[1].padStart(2, '0');
+                let month = matchWithTime[2].padStart(2, '0');
+                let year = matchWithTime[3];
+                let hour = matchWithTime[4];
+                let minute = matchWithTime[5].padStart(2, '0');
                 
                 if (year.length === 2) year = '20' + year;
                 return `${day}.${month}.${year.slice(-2)} ${hour}:${minute}`;
             }
             
-            date = new Date(dateValue);
+            // Пробуем найти только дату (формат "DD.MM.YY" или "DD.MM.YYYY")
+            const patternOnlyDate = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})/;
+            const matchOnlyDate = cleanedDate.match(patternOnlyDate);
+            
+            if (matchOnlyDate) {
+                let day = matchOnlyDate[1].padStart(2, '0');
+                let month = matchOnlyDate[2].padStart(2, '0');
+                let year = matchOnlyDate[3];
+                
+                if (year.length === 2) year = '20' + year;
+                return `${day}.${month}.${year.slice(-2)}`;
+            }
+            
+            // Попытка парсинга как стандартной даты
+            const date = new Date(dateValue);
             if (!isNaN(date.getTime())) {
                 const day = String(date.getDate()).padStart(2, '0');
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const year = String(date.getFullYear()).slice(-2);
                 const hours = date.getHours();
                 const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${day}.${month}.${year} ${hours}:${minutes}`;
+                
+                // Если время не 00:00, добавляем его
+                if (hours !== 0 || minutes !== '00') {
+                    return `${day}.${month}.${year} ${hours}:${minutes}`;
+                }
+                return `${day}.${month}.${year}`;
             }
+            
+            // Если ничего не подошло, возвращаем очищенную строку
+            return cleanedDate;
         }
         
-        date = new Date(dateValue);
+        const date = new Date(dateValue);
         if (!isNaN(date.getTime())) {
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = String(date.getFullYear()).slice(-2);
             const hours = date.getHours();
             const minutes = String(date.getMinutes()).padStart(2, '0');
-            return `${day}.${month}.${year} ${hours}:${minutes}`;
+            
+            if (hours !== 0 || minutes !== '00') {
+                return `${day}.${month}.${year} ${hours}:${minutes}`;
+            }
+            return `${day}.${month}.${year}`;
         }
         
         return dateValue;
     } catch (e) {
         return dateValue;
+    }
+}
+
+// Функция для парсинга даты в timestamp для сортировки
+function parseDateToTimestamp(dateStr) {
+    if (!dateStr || dateStr === '—') return 0;
+    
+    try {
+        // Очищаем от лишних символов
+        let cleaned = String(dateStr).replace(/\/(\d+)/g, '');
+        cleaned = cleaned.replace(/(\d+\.\d+\.\d+)\/(\d+)\s+(\d+\.\d+)/, '$1 $3');
+        
+        // Пробуем парсить с временем (формат "DD.MM.YY HH:MM" или "DD.MM.YYYY HH:MM")
+        let patternWithTime = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{1,2})/;
+        let match = cleaned.match(patternWithTime);
+        
+        if (match) {
+            let day = parseInt(match[1]);
+            let month = parseInt(match[2]) - 1;
+            let year = parseInt(match[3]);
+            let hour = parseInt(match[4]);
+            let minute = parseInt(match[5]);
+            
+            if (year < 100) year += 2000;
+            
+            return new Date(year, month, day, hour, minute).getTime();
+        }
+        
+        // Пробуем парсить только дату (формат "DD.MM.YY" или "DD.MM.YYYY")
+        let patternOnlyDate = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})/;
+        match = cleaned.match(patternOnlyDate);
+        
+        if (match) {
+            let day = parseInt(match[1]);
+            let month = parseInt(match[2]) - 1;
+            let year = parseInt(match[3]);
+            
+            if (year < 100) year += 2000;
+            
+            // Для дат без времени устанавливаем время на 12:00, чтобы сортировка была корректной
+            return new Date(year, month, day, 12, 0, 0).getTime();
+        }
+        
+        // Пробуем стандартный парсинг
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) return date.getTime();
+        
+        return 0;
+    } catch (e) {
+        return 0;
     }
 }
 
@@ -1505,6 +1675,91 @@ function parseCSV(text) {
     return rows;
 }
 
+// Функция сортировки отзывов
+function sortReviews(reviews, sortMode) {
+    const sorted = [...reviews];
+    
+    switch(sortMode) {
+        case 'newest':
+            return sorted.sort((a, b) => b.timestamp - a.timestamp);
+        case 'oldest':
+            return sorted.sort((a, b) => a.timestamp - b.timestamp);
+        case 'rating-high':
+            return sorted.sort((a, b) => b.rating - a.rating);
+        case 'rating-low':
+            return sorted.sort((a, b) => a.rating - b.rating);
+        default:
+            return sorted.sort((a, b) => b.timestamp - a.timestamp);
+    }
+}
+
+// Обновление UI отзывов с текущей сортировкой
+function renderReviewsWithCurrentSort(container, statsContainer) {
+    if (!allReviewsData.length) {
+        renderEmptyState(
+            container, 
+            'Нет отзывов', 
+            'Будьте первым, кто оставит отзыв!', 
+            `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+                <path d="M12 11v2M12 17h.01"/>
+            </svg>`);
+        updateStatsEmpty(statsContainer);
+        return;
+    }
+    
+    const sortedReviews = sortReviews(allReviewsData, currentSortMode);
+    const totalReviews = sortedReviews.length;
+    const avgRating = calculateAverageRating(sortedReviews);
+    const formattedRating = formatRatingDisplay(avgRating);
+    
+    if (statsContainer) {
+        statsContainer.innerHTML = `
+            <div class="stat-item beta"><span>БЕТА</span></div>
+            <div class="stat-item ratings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>
+                <span>${formattedRating}</span>
+            </div>
+            <div class="stat-item messages">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+                <span>${totalReviews}</span>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = '';
+    sortedReviews.forEach(review => {
+        const reviewEl = document.createElement('div');
+        reviewEl.className = 'review-card';
+        reviewEl.innerHTML = `
+            <div class="review-author">
+                <span class="review-date">
+                    <div class="review-rating">${renderStars(review.rating)}</div>
+                    <span class="review-name">${escapeHtml(review.name)}</span>
+                    <span class="review-time">${escapeHtml(review.displayDate)}</span>
+                </span>
+            </div>
+            <div class="review-text">${escapeHtml(review.text)}</div>
+        `;
+        container.appendChild(reviewEl);
+    });
+}
+
+function updateStatsEmpty(statsContainer) {
+    if (!statsContainer) return;
+    statsContainer.innerHTML = `
+        <div class="stat-item beta"><span>БЕТА</span></div>
+        <div class="stat-item ratings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>
+            <span>0</span>
+        </div>
+        <div class="stat-item messages">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+            <span>0</span>
+        </div>
+    `;
+}
+
 async function loadReviewsFromGoogleSheets() {
     const container = document.getElementById('reviewsContainer');
     const statsContainer = document.getElementById('reviewStats');
@@ -1528,6 +1783,7 @@ async function loadReviewsFromGoogleSheets() {
                     <path d="M12 11v2M12 17h.01"/>
                 </svg>`);
             updateStatsEmpty(statsContainer);
+            allReviewsData = [];
             return;
         }
         
@@ -1582,6 +1838,7 @@ async function loadReviewsFromGoogleSheets() {
             
             const rawDate = dateIndex < row.length ? row[dateIndex] : '';
             const formattedDate = formatDate(rawDate);
+            const timestamp = parseDateToTimestamp(rawDate);
             
             let text = textIndex < row.length ? (row[textIndex] || '') : '';
             if (text === '') text = '*Без комментария*';
@@ -1589,10 +1846,14 @@ async function loadReviewsFromGoogleSheets() {
             reviewsData.push({
                 name: name,
                 rating: rating,
-                date: formattedDate,
+                rawDate: rawDate,
+                displayDate: formattedDate,
+                timestamp: timestamp,
                 text: text
             });
         }
+        
+        allReviewsData = reviewsData;
         
         if (reviewsData.length === 0) {
             renderEmptyState(
@@ -1607,7 +1868,7 @@ async function loadReviewsFromGoogleSheets() {
             return;
         }
         
-        renderReviewsFromData(reviewsData, container, statsContainer);
+        renderReviewsWithCurrentSort(container, statsContainer);
         
     } catch (error) {
         console.error('Ошибка загрузки из Google Sheets:', error);
@@ -1619,58 +1880,6 @@ async function loadReviewsFromGoogleSheets() {
             statsContainer.innerHTML = `<div class="stat-item beta"><span>Ошибка!</span></div>`;
         }
     }
-}
-
-function updateStatsEmpty(statsContainer) {
-    if (!statsContainer) return;
-    statsContainer.innerHTML = `
-        <div class="stat-item beta"><span>БЕТА</span></div>
-        <div class="stat-item ratings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>
-            <span>0</span>
-        </div>
-        <div class="stat-item messages">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
-            <span>0</span>
-        </div>
-    `;
-}
-
-function renderReviewsFromData(reviewsData, container, statsContainer) {
-    const totalReviews = reviewsData.length;
-    const avgRating = calculateAverageRating(reviewsData);
-    const formattedRating = formatRatingDisplay(avgRating);
-    
-    if (statsContainer) {
-        statsContainer.innerHTML = `
-            <div class="stat-item beta"><span>БЕТА</span></div>
-            <div class="stat-item ratings">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>
-                <span>${formattedRating}</span>
-            </div>
-            <div class="stat-item messages">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
-                <span>${totalReviews}</span>
-            </div>
-        `;
-    }
-    
-    container.innerHTML = '';
-    reviewsData.forEach(review => {
-        const reviewEl = document.createElement('div');
-        reviewEl.className = 'review-card';
-        reviewEl.innerHTML = `
-            <div class="review-author">
-                <span class="review-date">
-                    <div class="review-rating">${renderStars(review.rating)}</div>
-                    <span class="review-name">${escapeHtml(review.name)}</span>
-                    <span class="review-time">${escapeHtml(review.date)}</span>
-                </span>
-            </div>
-            <div class="review-text">${escapeHtml(review.text)}</div>
-        `;
-        container.appendChild(reviewEl);
-    });
 }
 
 function escapeHtml(str) {
@@ -1692,12 +1901,9 @@ function x7k9m2p4_openModalSystem() {
         console.error('Modal elements not found');
         return;
     }
-    // Перезагружаем iframe при каждом открытии
     const discord_name = document.querySelector(".btn_logout").querySelector(".nav-bt-title")
     iframeElement.src = GOOGLE_FORM_URL+`?usp=pp_url&entry.1516320113=${discord_name.innerHTML}&embedded=true`;
-    // Показываем модальное окно
     modalElement.classList.add('active');
-    // Блокируем прокрутку body
     document.body.style.overflow = 'hidden';
 }
 
@@ -1707,13 +1913,9 @@ function x7k9m2p4_closeModalSystem() {
     
     if (!modalElement) return;
     
-    // Скрываем модальное окно
     modalElement.classList.remove('active');
-    
-    // Восстанавливаем прокрутку body
     document.body.style.overflow = '';
     
-    // Очищаем src через задержку для плавного закрытия
     if (iframeElement) {
         setTimeout(() => {
             iframeElement.src = '';
@@ -1721,34 +1923,61 @@ function x7k9m2p4_closeModalSystem() {
     }
 }
 
+// === УПРАВЛЕНИЕ ФИЛЬТРОМ ===
+function initFilterMenu() {
+    const filterBtn = document.getElementById('filterSortBtn');
+    const filterMenu = document.getElementById('filterMenu');
+    
+    if (!filterBtn || !filterMenu) return;
+    
+    filterBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        filterMenu.classList.toggle('active');
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!filterMenu.contains(e.target) && e.target !== filterBtn) {
+            filterMenu.classList.remove('active');
+        }
+    });
+    
+    const menuItems = filterMenu.querySelectorAll('.filter-menu-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const sortValue = item.getAttribute('data-sort');
+            if (sortValue) {
+                currentSortMode = sortValue;
+                
+                menuItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                const container = document.getElementById('reviewsContainer');
+                const statsContainer = document.getElementById('reviewStats');
+                renderReviewsWithCurrentSort(container, statsContainer);
+                
+                filterMenu.classList.remove('active');
+            }
+        });
+    });
+}
+
 // === ИНИЦИАЛИЗАЦИЯ ВСЕХ КОМПОНЕНТОВ ===
 document.addEventListener('DOMContentLoaded', function() {
-    // Загружаем отзывы
     loadReviewsFromGoogleSheets();
+    initFilterMenu();
+    
     const triggerButton = document.getElementById('x7k9m2p4_addReviewTrigger_btn');
-    // const discord_name = document.querySelector(".btn_logout").querySelector(".nav-bt-title")
-    // if (discord_name.innerHTML == 'Гость') {
-    //     console.log(triggerButton.style.display = 'none')
-    // } else {
-    //     console.log(triggerButton.style.display = 'inline-flex')
-    // }
-    // Получаем элементы с уникальными ID
     const closeButton = document.getElementById('x7k9m2p4_closeModal_trigger');
     const modalOverlay = document.getElementById('x7k9m2p4_reviewModal_system');
     
-    // Настраиваем открытие модального окна
     if (triggerButton) {
         triggerButton.addEventListener('click', x7k9m2p4_openModalSystem);
-    } else {
-        console.warn('Trigger button not found');
     }
     
-    // Настраиваем закрытие по кнопке
     if (closeButton) {
         closeButton.addEventListener('click', x7k9m2p4_closeModalSystem);
     }
     
-    // Закрытие по клику на overlay (фон)
     if (modalOverlay) {
         modalOverlay.addEventListener('click', function(event) {
             if (event.target === modalOverlay) {
@@ -1757,7 +1986,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Закрытие по клавише Escape
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             const modalActive = document.getElementById('x7k9m2p4_reviewModal_system');
@@ -1767,14 +1995,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Дополнительная защита: предотвращаем конфликты с другими скриптами
     window.x7k9m2p4_modalController = {
         open: x7k9m2p4_openModalSystem,
         close: x7k9m2p4_closeModalSystem
     };
 });
 </script>
-
 
 
 
