@@ -44,6 +44,8 @@
             height: 100%;
             object-fit: cover;
             border-radius: 5px;
+            transition: opacity 0.3s ease;
+            opacity: 0;
         }
         
         .avatar-letter {
@@ -292,11 +294,7 @@
             border-radius: 5px;
             background: #010101;
         }
-
-
-
-
-</style>
+    </style>
 </head>
 <body>
     <!-- Шапка сайта -->
@@ -346,14 +344,21 @@
             discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
             telegramJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/telegrams.json',
             bansJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/bans.json',
-            discordApiBase: 'https://dis-api.sakuri.ru/api/discord/user/',
+            discordApiBase: 'https://dis-api.sakuri.ru/api/discord',
             proxy: 'https://proxy.sakuri.ru/api/proxy?url='
         };
         
-        // Функция для добавления параметра обхода кеша
+        // Кэш для данных Discord (1 час)
+        const CACHE_DURATION = 60 * 60 * 1000; // 1 час
+        const DISCORD_DATA_CACHE_KEY = 'discord_users_batch_cache_profile';
+        
+        // Хранилище для данных пользователей Discord
+        let batchUserData = null;
+        const avatarQueue = [];
+        let isProcessingQueue = false;
+        
         function addCacheBuster(url) {
-            const timestamp = new Date().getTime();
-            return url + (url.includes('?') ? '&' : '?') + 't=' + timestamp;
+            return url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
         }
         
         async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
@@ -370,6 +375,263 @@
                 }
                 throw error;
             }
+        }
+        
+        // Функция для получения данных пользователей Discord через batch-запрос
+        async function fetchBatchDiscordUsers(discordIds) {
+            if (!discordIds || discordIds.length === 0) return {};
+            
+            const uniqueIds = [...new Set(discordIds.filter(id => id && id !== 'null'))];
+            if (uniqueIds.length === 0) return {};
+            
+            // Проверяем кэш
+            const cachedData = getCachedDiscordData();
+            if (cachedData) {
+                console.log('Используем кэшированные данные Discord для профиля');
+                return cachedData;
+            }
+            
+            console.log(`Загружаем данные для ${uniqueIds.length} пользователей Discord (profile)`);
+            
+            // Пробуем сначала без прокси
+            let response = null;
+            
+            try {
+                const url = `${config.discordApiBase}/users`;
+                const directResponse = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ids: uniqueIds })
+                });
+                
+                if (directResponse.ok) {
+                    response = await directResponse.json();
+                } else {
+                    throw new Error(`HTTP ${directResponse.status}`);
+                }
+            } catch (error) {
+                console.warn('Прямой запрос не удался, используем прокси:', error.message);
+                
+                try {
+                    const proxyUrl = `${config.proxy}"${encodeURIComponent(`${config.discordApiBase}/users`)}"`;
+                    const proxyResponse = await fetch(proxyUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ ids: uniqueIds })
+                    });
+                    
+                    if (proxyResponse.ok) {
+                        response = await proxyResponse.json();
+                    } else {
+                        throw new Error(`Proxy HTTP ${proxyResponse.status}`);
+                    }
+                } catch (proxyError) {
+                    console.error('Ошибка при запросе через прокси:', proxyError);
+                    return {};
+                }
+            }
+            
+            // Обрабатываем ответ
+            const userDataMap = {};
+            
+            if (response && response.results) {
+                for (const result of response.results) {
+                    if (result.success && result.data) {
+                        const userId = result.user_id || result.data.id;
+                        userDataMap[userId] = {
+                            username: result.data.username,
+                            global_name: result.data.global_name,
+                            discriminator: result.data.discriminator,
+                            avatar: result.data.avatar,
+                            avatar_url: result.data.avatar_url,
+                            bot: result.data.bot || false
+                        };
+                    }
+                }
+            }
+            
+            // Сохраняем в кэш
+            saveCachedDiscordData(userDataMap);
+            
+            return userDataMap;
+        }
+        
+        // Сохранение данных Discord в кэш
+        function saveCachedDiscordData(data) {
+            const cacheData = {
+                timestamp: Date.now(),
+                data: data
+            };
+            localStorage.setItem(DISCORD_DATA_CACHE_KEY, JSON.stringify(cacheData));
+        }
+        
+        // Получение данных из кэша
+        function getCachedDiscordData() {
+            const cached = localStorage.getItem(DISCORD_DATA_CACHE_KEY);
+            if (!cached) return null;
+            
+            try {
+                const cacheData = JSON.parse(cached);
+                const now = Date.now();
+                
+                if (now - cacheData.timestamp < CACHE_DURATION) {
+                    return cacheData.data;
+                }
+            } catch (e) {
+                console.warn('Ошибка чтения кэша:', e);
+            }
+            
+            return null;
+        }
+        
+        // Функция для получения аватарки из кэша или batch данных
+        function getDiscordAvatar(discordId) {
+            if (!discordId) return null;
+            
+            // Проверяем кэш аватарок
+            const cachedAvatar = localStorage.getItem(`avatar_profile_${discordId}`);
+            if (cachedAvatar) return cachedAvatar;
+            
+            // Проверяем batch данные
+            if (batchUserData && batchUserData[discordId]) {
+                const userData = batchUserData[discordId];
+                if (userData.avatar_url) return userData.avatar_url;
+                if (userData.avatar) {
+                    return `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png?size=256`;
+                }
+            }
+            
+            return null;
+        }
+        
+        // Функция для получения имени пользователя из batch данных
+        function getDiscordUsername(discordId, fallbackName) {
+            if (!discordId) return fallbackName;
+            
+            // Проверяем кэш localStorage
+            const cachedName = localStorage.getItem(`discord_name_profile_${discordId}`);
+            if (cachedName && cachedName !== 'undefined') {
+                return cachedName;
+            }
+            
+            // Проверяем batch данные
+            if (batchUserData && batchUserData[discordId]) {
+                const userData = batchUserData[discordId];
+                let displayName = fallbackName;
+                
+                if (userData.username) {
+                    displayName = userData.username;
+                    if (userData.discriminator && userData.discriminator !== '0') {
+                        displayName = `${userData.username}#${userData.discriminator}`;
+                    }
+                } else if (userData.global_name) {
+                    displayName = userData.global_name;
+                }
+                
+                localStorage.setItem(`discord_name_profile_${discordId}`, displayName);
+                return displayName;
+            }
+            
+            return fallbackName;
+        }
+        
+        // Последовательная загрузка аватаров
+        async function loadAvatarSequentially(discordId, imgElement, avatarUrl) {
+            return new Promise((resolve) => {
+                const task = async () => {
+                    try {
+                        if (!avatarUrl) {
+                            resolve(null);
+                            return;
+                        }
+                        
+                        // Пробуем загрузить напрямую
+                        try {
+                            await tryLoadImage(avatarUrl, 5000);
+                            if (imgElement) {
+                                imgElement.src = avatarUrl;
+                                imgElement.style.opacity = '1';
+                                localStorage.setItem(`avatar_profile_${discordId}`, avatarUrl);
+                            }
+                            resolve(avatarUrl);
+                            return;
+                        } catch (directError) {
+                            // Пробуем через прокси
+                            try {
+                                const proxyUrl = `${config.proxy}"${encodeURIComponent(avatarUrl)}"`;
+                                await tryLoadImage(proxyUrl, 5000);
+                                if (imgElement) {
+                                    imgElement.src = proxyUrl;
+                                    imgElement.style.opacity = '1';
+                                    localStorage.setItem(`avatar_profile_${discordId}`, proxyUrl);
+                                }
+                                resolve(proxyUrl);
+                                return;
+                            } catch (proxyError) {
+                                console.warn(`Не удалось загрузить аватар для ${discordId}`);
+                                if (imgElement) {
+                                    imgElement.style.opacity = '1';
+                                }
+                                resolve(null);
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Ошибка загрузки аватара для ${discordId}:`, error.message);
+                        if (imgElement) {
+                            imgElement.style.opacity = '1';
+                        }
+                        resolve(null);
+                    }
+                };
+                
+                avatarQueue.push(task);
+                processAvatarQueue();
+            });
+        }
+        
+        function processAvatarQueue() {
+            if (isProcessingQueue || avatarQueue.length === 0) return;
+            
+            isProcessingQueue = true;
+            
+            const processNext = async () => {
+                if (avatarQueue.length === 0) {
+                    isProcessingQueue = false;
+                    return;
+                }
+                
+                const task = avatarQueue.shift();
+                await task();
+                
+                // Задержка между загрузками для визуальной плавности
+                setTimeout(processNext, 200);
+            };
+            
+            processNext();
+        }
+        
+        function tryLoadImage(url, timeoutMs) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const timeout = setTimeout(() => {
+                    cleanup();
+                    reject(new Error(`Таймаут ${timeoutMs}ms`));
+                }, timeoutMs);
+                
+                function cleanup() {
+                    clearTimeout(timeout);
+                    img.onload = null;
+                    img.onerror = null;
+                }
+                
+                img.onload = () => { cleanup(); resolve(url); };
+                img.onerror = () => { cleanup(); reject(new Error('Ошибка загрузки')); };
+                img.src = url.includes('?') ? `${url}&_=${Date.now()}` : `${url}?_=${Date.now()}`;
+            });
         }
         
         function getUserRole(discordId, adminList) {
@@ -391,36 +653,30 @@
             }
         }
         
-        // Функция для преобразования даты в timestamp
         function parseDateToTimestamp(dateString) {
             try {
                 if (typeof dateString === 'number') {
                     return dateString;
                 }
-                
-                if (dateString.includes('T')) {
+                if (dateString && dateString.includes('T')) {
                     return Math.floor(new Date(dateString).getTime() / 1000);
-                } else {
+                } else if (dateString) {
                     return Math.floor(new Date(dateString).getTime() / 1000);
                 }
+                return 0;
             } catch (e) {
-                console.warn(`Не удалось распарсить дату: ${dateString}`, e);
                 return 0;
             }
         }
         
-        // Функция для форматирования даты
         function formatDate(timestamp) {
             if (timestamp === 0) return 'Навсегда';
-            
             const date = new Date(timestamp * 1000);
             return `До ${date.toLocaleDateString('ru-RU') + ' ' + date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}`;
         }
         
-        // Функция для получения статуса подписки
         function getSubscriptionStatus(endTime) {
             if (endTime === 0) return { status: 'forever', text: 'Безлимит' };
-            
             const now = Math.floor(Date.now() / 1000);
             if (endTime > now) {
                 const daysLeft = Math.ceil((endTime - now) / (60 * 60 * 24));
@@ -430,63 +686,48 @@
             }
         }
         
-        // Функция для проверки статуса бана
         function getBanStatus(userHwid, bansData) {
-            if (!bansData || typeof bansData !== 'object') {
-                return null;
-            }
+            if (!bansData || typeof bansData !== 'object') return null;
             
             const banInfo = bansData[userHwid];
-            if (!banInfo) {
-                return null;
-            }
+            if (!banInfo) return null;
             
             const now = new Date();
             const banTime = new Date(banInfo.ban_time);
             const banTemp = banInfo.ban_temp;
             
-            // Проверяем, является ли бан вечным
             if (banTemp === "-1") {
                 return {
                     isBanned: true,
                     isPermanent: true,
                     reason: banInfo.ban_reason || 'Причина не указана',
                     banTime: banTime,
-                    remainingTime: null,
-                    banInfo: banInfo
+                    remainingTime: null
                 };
             }
             
-            // Проверяем временный бан
             const banEnd = new Date(banTemp);
             if (banEnd > now) {
-                // Бан еще активен
-                const remainingMs = banEnd - now;
-                const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
-                
+                const remainingDays = Math.ceil((banEnd - now) / (1000 * 60 * 60 * 24));
                 return {
                     isBanned: true,
                     isPermanent: false,
                     reason: banInfo.ban_reason || 'Причина не указана',
                     banTime: banTime,
                     banEnd: banEnd,
-                    remainingTime: remainingDays,
-                    banInfo: banInfo
+                    remainingTime: remainingDays
                 };
             } else {
-                // Бан истек
                 return {
                     isBanned: false,
                     wasBanned: true,
                     reason: banInfo.ban_reason,
                     banTime: banTime,
-                    banEnd: banEnd,
-                    banInfo: banInfo
+                    banEnd: banEnd
                 };
             }
         }
         
-        // Функция для форматирования даты бана
         function formatBanDate(date) {
             return date.toLocaleDateString('ru-RU', {
                 day: '2-digit',
@@ -497,156 +738,23 @@
             });
         }
         
-        // Кэш для аватаров
-        const avatarCache = new Map();
-
-        // Функция для загрузки аватара Discord
-        async function loadDiscordAvatar(discordId, username, avatarElement = null) {
-            if (!discordId) return null;
-            
-            // Проверяем кэш
-            const cacheKey = `${discordId}_${username}`;
-            if (avatarCache.has(cacheKey)) {
-                const cached = avatarCache.get(cacheKey);
-                if (cached && avatarElement) {
-                    avatarElement.src = cached.avatarUrl;
-                    avatarElement.style.opacity = '1';
-                }
-                return cached;
-            }
-            
-            try {
-                // Получаем данные пользователя
-                const cacheBustedUrl = addCacheBuster(`${config.discordApiBase}${discordId}`);
-                const userData = await fetchWithRetry(cacheBustedUrl);
-                
-                if (!userData.avatar) {
-                    console.warn(`User ${discordId} has no avatar`);
-                    return null;
-                }
-                
-                // Пытаемся загрузить аватар
-                let avatarUrl = null;
-                const discord_cdn = `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}`;
-                
-                // Сначала пробуем GIF (для анимированных аватаров)
-                try {
-                    const gifUrl = `${config.proxy}${discord_cdn}.gif?size=256`;
-                    avatarUrl = await tryLoadImage(gifUrl, 8000);
-                } catch (gifError) {
-                    console.log(`GIF не загрузился для ${discordId}, пробуем PNG:`, gifError.message);
-                    // Если GIF не загрузился, пробуем PNG
-                    try {
-                        const pngUrl = `${config.proxy}${discord_cdn}.png?size=256`;
-                        avatarUrl = await tryLoadImage(pngUrl, 5000);
-                    } catch (pngError) {
-                        console.warn(`Не удалось загрузить аватар для ${discordId}:`, pngError.message);
-                        return null;
-                    }
-                }
-                
-                // Формируем результат
-                const result = {
-                    avatarUrl: avatarUrl,
-                    username: userData.username || username,
-                    global_name: userData.global_name || username,
-                    discordId: discordId
-                };
-                
-                // Если передан элемент, устанавливаем аватар
-                if (avatarUrl && avatarElement) {
-                    avatarElement.src = avatarUrl;
-                    avatarElement.style.opacity = '1';
-                }
-                
-                // Сохраняем в кэш
-                avatarCache.set(cacheKey, result);
-                
-                // Очищаем старые записи из кэша (если больше 100)
-                if (avatarCache.size > 100) {
-                    const firstKey = avatarCache.keys().next().value;
-                    avatarCache.delete(firstKey);
-                }
-                
-                return result;
-                
-            } catch (error) {
-                console.error(`Failed to load avatar for ${discordId}:`, {
-                    message: error.message,
-                    discordId,
-                    username
-                });
-                return null;
-            }
-        }
-
-        // Вспомогательная функция для попытки загрузки изображения с таймаутом
-        function tryLoadImage(url, timeoutMs) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                let timeout = setTimeout(() => {
-                    cleanup();
-                    reject(new Error(`Таймаут загрузки (${timeoutMs}ms): ${url}`));
-                }, timeoutMs);
-                
-                function cleanup() {
-                    clearTimeout(timeout);
-                    img.onload = null;
-                    img.onerror = null;
-                }
-                
-                img.onload = function() {
-                    cleanup();
-                    resolve(url);
-                };
-                
-                img.onerror = function() {
-                    cleanup();
-                    reject(new Error(`Ошибка загрузки изображения: ${url}`));
-                };
-                
-                img.src = url;
-            });
-        }
-
-        // Функция для обновления аватара с загрузкой
-        async function updateDiscordAvatar(discordId, username, avatarElement) {
-            if (!avatarElement || !discordId) return;
-            try {
-                await loadDiscordAvatar(discordId, username, avatarElement);
-            } catch (error) {
-                console.error('Error updating avatar:', error);
-                avatarElement.style.opacity = '1';
-                avatarElement.src = 'default-avatar.png'; // Опционально: аватар по умолчанию
-            }
-        }
-                
-        // Функция для поиска Discord ID по HWID
         function getDiscordIdByHwid(hwid, discordData) {
             if (discordData.hwids && Array.isArray(discordData.hwids)) {
-                for (const entry of discordData.hwids) {
-                    if (entry.HWID === hwid) {
-                        return `${entry.DISCORD}`;
-                    }
-                }
+                const entry = discordData.hwids.find(e => e.HWID === hwid);
+                return entry ? `${entry.DISCORD}` : null;
             }
             return null;
         }
         
-        // Функция для поиска Telegram ID по HWID
         function getTelegramIdByHwid(hwid, telegramData) {
             if (telegramData.bindings && Array.isArray(telegramData.bindings)) {
-                for (const entry of telegramData.bindings) {
-                    if (entry.HWID === hwid) {
-                        return `${entry.TELEGRAM}`;
-                    }
-                }
+                const entry = telegramData.bindings.find(e => e.HWID === hwid);
+                return entry ? `${entry.TELEGRAM}` : null;
             }
             return null;
         }
         
-        // Функция для отображения профиля
-        function displayProfile(userData, banStatus) {
+        async function displayProfile(userData, banStatus) {
             const profileContent = document.getElementById('profileContent');
             
             if (!userData) {
@@ -660,20 +768,24 @@
             }
             
             const subscriptionStatus = getSubscriptionStatus(userData.end);
+            const discordUsername = userData.discordId ? getDiscordUsername(userData.discordId, userData.name) : null;
             
-            // Определяем роль и статус пользователя
             let userRole = userData.role;
             let roleText = userRole === 'creator' ? 'Создатель' : 
                 userRole === 'admin' ? 'Партнёр' : 
-                userRole === 'bot' ? 'Служба' : 'Игрок';
+                userRole === 'bot' ? 'Служба' : 
+                userRole === 'banned' ? 'Забанен' : 'Игрок';
             
-            const roleClass = `profile-role ${userRole}`;
+            const roleClass = `profile-role ${userRole === 'banned' ? 'banned' : userRole}`;
+            
+            // Получаем URL аватарки
+            const avatarUrl = userData.discordId ? getDiscordAvatar(userData.discordId) : null;
             
             profileContent.innerHTML = `
                 <div class="profile-header">
                     <div class="profile-avatar">
-                        ${userData.avatarUrl ? 
-                            `<img src="${userData.avatarUrl}" alt="${userData.name}" id="profileAvatar">` : 
+                        ${avatarUrl ? 
+                            `<img src="${avatarUrl}" alt="${userData.name}" id="profileAvatar" style="opacity: 0;">` : 
                             `<div class="avatar-letter">${userData.name.charAt(0).toUpperCase()}</div>`
                         }
                     </div>
@@ -686,7 +798,7 @@
                                     <svg viewBox="0 0 24 24">
                                         <path d="M14.82 4.26a10.14 10.14 0 0 0-.53 1.1 14.66 14.66 0 0 0-4.58 0 10.14 10.14 0 0 0-.53-1.1 16 16 0 0 0-4.13 1.3 17.33 17.33 0 0 0-3 11.59 16.6 16.6 0 0 0 5.07 2.59A12.89 12.89 0 0 0 8.23 18a9.65 9.65 0 0 1-1.71-.83 3.39 3.39 0 0 0 .42-.33 11.66 11.66 0 0 0 10.12 0c.14.09.28.19.42.33a10.14 10.14 0 0 1-1.71.83 12.89 12.89 0 0 0 1.08 1.78 16.44 16.44 0 0 0 5.06-2.59 17.22 17.22 0 0 0-3-11.59 16.09 16.09 0 0 0-4.09-1.35zM8.68 14.81a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.93 1.93 0 0 1 1.8 2 1.93 1.93 0 0 1-1.8 2zm6.64 0a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.92 1.92 0 0 1 1.8 2 1.92 1.92 0 0 1-1.8 2z"/>
                                     </svg>
-                                    <span>${userData.discordUsername || 'Discord'}</span>
+                                    <span>${discordUsername || 'Discord'}</span>
                                 </a>` : 
                                 ''
                             }
@@ -791,34 +903,25 @@
                 </div>
             `;
             
-            // Загружаем аватар, если он доступен
-            if (userData.avatarUrl) {
-                const img = new Image();
-                img.onload = function() {
+            // Загружаем аватар последовательно
+            if (userData.discordId && avatarUrl) {
+                const avatarElement = document.getElementById('profileAvatar');
+                if (avatarElement) {
+                    loadAvatarSequentially(userData.discordId, avatarElement, avatarUrl);
+                }
+            } else if (userData.discordId && !avatarUrl && batchUserData && batchUserData[userData.discordId]) {
+                // Если аватар не был получен из кэша, пробуем загрузить через API
+                const userDiscordData = batchUserData[userData.discordId];
+                if (userDiscordData && userDiscordData.avatar) {
+                    const fullAvatarUrl = `https://cdn.discordapp.com/avatars/${userData.discordId}/${userDiscordData.avatar}.png?size=256`;
                     const avatarElement = document.getElementById('profileAvatar');
                     if (avatarElement) {
-                        avatarElement.style.opacity = '1';
+                        loadAvatarSequentially(userData.discordId, avatarElement, fullAvatarUrl);
                     }
-                };
-                img.onerror = function() {
-                    // Если аватар не загрузился, показываем букву
-                    const avatarElement = document.getElementById('profileAvatar');
-                    if (avatarElement) {
-                        avatarElement.style.display = 'none';
-                        const avatarContainer = document.querySelector('.profile-avatar');
-                        if (avatarContainer && !avatarContainer.querySelector('.avatar-letter')) {
-                            const letterElement = document.createElement('div');
-                            letterElement.className = 'avatar-letter';
-                            letterElement.textContent = userData.name.charAt(0).toUpperCase();
-                            avatarContainer.appendChild(letterElement);
-                        }
-                    }
-                };
-                img.src = userData.avatarUrl;
+                }
             }
         }
         
-        // Основная функция загрузки данных профиля
         async function loadProfileData() {
             const urlParams = new URLSearchParams(window.location.search);
             const hwid = urlParams.get('hwid');
@@ -838,7 +941,6 @@
                     fetchJsonData(config.bansJsonUrl)
                 ]);
                 
-                // Обработка результатов
                 const admins = adminsData.status === 'fulfilled' ? adminsData.value : { "Admins": [] };
                 const hwidList = hwidData.status === 'fulfilled' ? hwidData.value : { "users:": [] };
                 const temp = tempData.status === 'fulfilled' ? tempData.value : {};
@@ -848,20 +950,18 @@
                 
                 const adminDiscordIds = admins.Admins || [];
                 
-                // Поиск пользователя по HWID
                 const activeUsers = hwidList["users:"] || hwidList.users || [];
                 const userIndex = activeUsers.findIndex(username => username === hwid);
-                
-                // Проверяем статус бана
                 const banStatus = getBanStatus(hwid, bans);
                 
                 let userData;
+                let discordId = null;
+                let telegramId = null;
                 
                 if (userIndex !== -1) {
-                    // Пользователь найден в активных
                     const username = activeUsers[userIndex];
-                    const discordId = getDiscordIdByHwid(username, discord);
-                    const telegramId = getTelegramIdByHwid(username, telegram);
+                    discordId = getDiscordIdByHwid(username, discord);
+                    telegramId = getTelegramIdByHwid(username, telegram);
                     const endTime = temp[username] || 0;
                     
                     userData = {
@@ -876,38 +976,31 @@
                         immunity: 0,
                         role: getUserRole(discordId, adminDiscordIds)
                     };
+                } else if (banStatus && banStatus.isBanned) {
+                    discordId = getDiscordIdByHwid(hwid, discord);
+                    telegramId = getTelegramIdByHwid(hwid, telegram);
+                    
+                    userData = {
+                        id: 0,
+                        hwid: hwid,
+                        name: hwid,
+                        discordId: discordId,
+                        telegramId: telegramId,
+                        end: 0,
+                        group_id: 'Забанен',
+                        flags: '0',
+                        immunity: 0,
+                        role: 'banned'
+                    };
                 } else {
-                    // Пользователь не найден в активных, но может быть в банах
-                    if (banStatus && banStatus.isBanned) {
-                        const discordId = getDiscordIdByHwid(hwid, discord);
-                        const telegramId = getTelegramIdByHwid(hwid, telegram);
-                        
-                        userData = {
-                            id: 0,
-                            hwid: hwid,
-                            name: hwid,
-                            discordId: discordId,
-                            telegramId: telegramId,
-                            end: 0,
-                            group_id: 'Забанен',
-                            flags: '0',
-                            immunity: 0,
-                            role: 'banned'
-                        };
-                    } else {
-                        // Пользователь не найден вообще
-                        displayProfile(null);
-                        return;
-                    }
+                    displayProfile(null);
+                    return;
                 }
                 
-                // Загружаем данные Discord, если есть ID
-                if (userData.discordId) {
-                    const discordInfo = await loadDiscordAvatar(userData.discordId, userData.name);
-                    if (discordInfo) {
-                        userData.avatarUrl = discordInfo.avatarUrl;
-                        userData.discordUsername = discordInfo.username;
-                    }
+                // Загружаем данные Discord через batch-запрос, если есть ID
+                if (discordId) {
+                    const discordIdsToFetch = [discordId];
+                    batchUserData = await fetchBatchDiscordUsers(discordIdsToFetch);
                 }
                 
                 displayProfile(userData, banStatus);
@@ -923,7 +1016,6 @@
             }
         }
         
-        // Запуск загрузки данных при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             loadProfileData();
         });
