@@ -6,13 +6,19 @@ document.addEventListener('DOMContentLoaded', function() {
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
         telegramJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/telegrams.json',
         bansJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/bans.json',
-        discordApiBase: 'https://dis-api.sakuri.ru/api/discord/user/',
+        discordApiBase: 'https://dis-api.sakuri.ru/api/discord',
         proxy: 'https://proxy.sakuri.ru/api/proxy?url='
     };
     
+    // Кэш для данных пользователей Discord (сроком на 1 час)
+    const CACHE_DURATION = 60 * 60 * 1000; // 1 час в миллисекундах
+    const DISCORD_DATA_CACHE_KEY = 'discord_users_batch_cache';
+    const PROXY_FAILURE_CACHE_KEY = 'proxy_failure_cache';
+    
     // Хранилище для имен пользователей Discord
     const discordUsernames = new Map();
-    const usernamePromises = new Map();
+    const discordAvatars = new Map();
+    let batchUserData = null; // Данные из batch-запроса
     
     function addCacheBuster(url) {
         return url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
@@ -30,6 +36,178 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             throw error;
         }
+    }
+    
+    // Функция для получения данных пользователей Discord через batch-запрос
+    async function fetchBatchDiscordUsers(discordIds) {
+        if (!discordIds || discordIds.length === 0) return {};
+        
+        const uniqueIds = [...new Set(discordIds.filter(id => id && id !== 'null'))];
+        if (uniqueIds.length === 0) return {};
+        
+        // Проверяем кэш
+        const cachedData = getCachedDiscordData();
+        if (cachedData) {
+            console.log('Используем кэшированные данные Discord');
+            return cachedData;
+        }
+        
+        console.log(`Загружаем данные для ${uniqueIds.length} пользователей Discord`);
+        
+        // Пробуем сначала без прокси
+        let response = null;
+        let usedProxy = false;
+        
+        try {
+            // Используем POST запрос для batch получения
+            const url = `${config.discordApiBase}/users`;
+            const directResponse = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ids: uniqueIds })
+            });
+            
+            if (directResponse.ok) {
+                response = await directResponse.json();
+            } else {
+                throw new Error(`HTTP ${directResponse.status}`);
+            }
+        } catch (error) {
+            console.warn('Прямой запрос не удался, используем прокси:', error.message);
+            usedProxy = true;
+            
+            try {
+                const proxyUrl = `${config.proxy}"${encodeURIComponent(`${config.discordApiBase}/users`)}"`;
+                const proxyResponse = await fetch(proxyUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ids: uniqueIds })
+                });
+                
+                if (proxyResponse.ok) {
+                    response = await proxyResponse.json();
+                } else {
+                    throw new Error(`Proxy HTTP ${proxyResponse.status}`);
+                }
+            } catch (proxyError) {
+                console.error('Ошибка при запросе через прокси:', proxyError);
+                return {};
+            }
+        }
+        
+        // Обрабатываем ответ
+        const userDataMap = {};
+        
+        if (response && response.results) {
+            for (const result of response.results) {
+                if (result.success && result.data) {
+                    const userId = result.user_id || result.data.id;
+                    userDataMap[userId] = {
+                        username: result.data.username,
+                        global_name: result.data.global_name,
+                        discriminator: result.data.discriminator,
+                        avatar: result.data.avatar,
+                        avatar_url: result.data.avatar_url,
+                        bot: result.data.bot || false
+                    };
+                }
+            }
+        }
+        
+        // Сохраняем в кэш
+        saveCachedDiscordData(userDataMap);
+        
+        return userDataMap;
+    }
+    
+    // Сохранение данных Discord в кэш
+    function saveCachedDiscordData(data) {
+        const cacheData = {
+            timestamp: Date.now(),
+            data: data
+        };
+        localStorage.setItem(DISCORD_DATA_CACHE_KEY, JSON.stringify(cacheData));
+    }
+    
+    // Получение данных из кэша
+    function getCachedDiscordData() {
+        const cached = localStorage.getItem(DISCORD_DATA_CACHE_KEY);
+        if (!cached) return null;
+        
+        try {
+            const cacheData = JSON.parse(cached);
+            const now = Date.now();
+            
+            if (now - cacheData.timestamp < CACHE_DURATION) {
+                return cacheData.data;
+            }
+        } catch (e) {
+            console.warn('Ошибка чтения кэша:', e);
+        }
+        
+        return null;
+    }
+    
+    // Функция для получения аватарки из кэша или batch данных
+    function getDiscordAvatar(discordId) {
+        if (!discordId) return null;
+        
+        // Проверяем кэш аватарок
+        const cachedAvatar = localStorage.getItem(`avatar_${discordId}`);
+        if (cachedAvatar) return cachedAvatar;
+        
+        // Проверяем batch данные
+        if (batchUserData && batchUserData[discordId]) {
+            const userData = batchUserData[discordId];
+            if (userData.avatar_url) return userData.avatar_url;
+            if (userData.avatar) {
+                return `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png`;
+            }
+        }
+        
+        return null;
+    }
+    
+    // Функция для получения имени пользователя из batch данных
+    function getDiscordUsername(discordId, fallbackName) {
+        if (!discordId) return fallbackName;
+        
+        // Проверяем Map
+        if (discordUsernames.has(discordId)) {
+            return discordUsernames.get(discordId);
+        }
+        
+        // Проверяем кэш localStorage
+        const cachedName = localStorage.getItem(`discord_name_${discordId}`);
+        if (cachedName && cachedName !== 'undefined') {
+            discordUsernames.set(discordId, cachedName);
+            return cachedName;
+        }
+        
+        // Проверяем batch данные
+        if (batchUserData && batchUserData[discordId]) {
+            const userData = batchUserData[discordId];
+            let displayName = fallbackName;
+            
+            if (userData.username) {
+                displayName = userData.username;
+                if (userData.discriminator && userData.discriminator !== '0') {
+                    displayName = `${userData.username}#${userData.discriminator}`;
+                }
+            } else if (userData.global_name) {
+                displayName = userData.global_name;
+            }
+            
+            discordUsernames.set(discordId, displayName);
+            localStorage.setItem(`discord_name_${discordId}`, displayName);
+            return displayName;
+        }
+        
+        return fallbackName;
     }
     
     function getUserRole(discordId, adminList) {
@@ -93,158 +271,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    const cacheQueue = new AvatarQueue(5, 100);
-    const updateQueue = new AvatarQueue(1, 500);
-    const avatarPromises = new Map();
-    const discordNameQueue = new AvatarQueue(3, 1000); // Очередь для запросов имен
+    const avatarQueue = new AvatarQueue(1, 30); // Последовательная загрузка аватаров
     
-    async function loadDiscordAvatar(discordId, elementId, username) {
+    async function loadDiscordAvatar(discordId, elementId) {
         if (!discordId) return;
         
-        if (avatarPromises.has(discordId)) return avatarPromises.get(discordId);
-        
-        const promise = (async () => {
+        return avatarQueue.add(async () => {
             try {
                 const avatarElement = document.getElementById(elementId);
-                const cacheKey = `avatar_${discordId}`;
+                if (!avatarElement) return;
                 
-                if (avatarElement) {
-                    avatarElement.src = '';
-                    avatarElement.removeAttribute('src');
-                }
+                // Показываем заглушку
+                avatarElement.style.opacity = '0';
                 
-                cacheQueue.add(async () => {
-                    const cachedAvatar = localStorage.getItem(cacheKey);
-                    if (cachedAvatar && avatarElement) {
-                        try {
-                            await tryLoadImage(cachedAvatar, 3000);
-                            avatarElement.src = cachedAvatar;
-                            avatarElement.style.opacity = '1';
-                        } catch (cacheError) {
-                            localStorage.removeItem(cacheKey);
-                        }
-                    }
-                });
+                // Получаем URL аватарки
+                let avatarUrl = getDiscordAvatar(discordId);
                 
-                updateQueue.add(async () => {
+                if (avatarUrl) {
+                    // Пробуем загрузить изображение
                     try {
-                        const cachedAvatar = localStorage.getItem(cacheKey);
-                        const userData = await fetchWithRetry(addCacheBuster(`${config.proxy}"${config.discordApiBase}${discordId}"`));
-                        
-                        if (userData.avatar && avatarElement) {
-                            let avatarUrl = null;
-                            const avatarHash = userData.avatar;
-                            const discord_cdn = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}`;
-                            const isSameAvatar = cachedAvatar && cachedAvatar.includes(avatarHash);
-                            
-                            if (!isSameAvatar) {
-                                try {
-                                    avatarUrl = await tryLoadImage(`${config.proxy}"${discord_cdn}.gif"`, 8000);
-                                } catch {
-                                    avatarUrl = await tryLoadImage(`${config.proxy}"${discord_cdn}.png"`, 5000);
-                                }
-                                
-                                if (avatarUrl) {
-                                    avatarElement.src = avatarUrl;
-                                    avatarElement.style.opacity = '1';
-                                    localStorage.setItem(cacheKey, avatarUrl);
-                                }
-                            }
-                        } else if (!userData.avatar) {
-                            localStorage.removeItem(cacheKey);
-                            if (avatarElement) {
-                                avatarElement.src = '';
-                                avatarElement.removeAttribute('src');
-                            }
+                        await tryLoadImage(avatarUrl, 5000);
+                        avatarElement.src = avatarUrl;
+                        avatarElement.style.opacity = '1';
+                    } catch (imgError) {
+                        // Если не удалось загрузить, пробуем через прокси
+                        try {
+                            const proxyUrl = `${config.proxy}"${encodeURIComponent(avatarUrl)}"`;
+                            await tryLoadImage(proxyUrl, 5000);
+                            avatarElement.src = proxyUrl;
+                            avatarElement.style.opacity = '1';
+                            localStorage.setItem(`avatar_${discordId}`, proxyUrl);
+                        } catch (proxyError) {
+                            console.warn(`Не удалось загрузить аватар для ${discordId}`);
+                            avatarElement.style.opacity = '1';
                         }
-                    } catch (error) {
-                        console.warn(`Ошибка для ${discordId}:`, error.message);
                     }
-                });
-            } finally {
-                avatarPromises.delete(discordId);
-            }
-        })();
-        
-        avatarPromises.set(discordId, promise);
-        return promise;
-    }
-    
-    // Функция для получения имени пользователя Discord
-    async function loadDiscordUsername(discordId, usernameElement, originalName) {
-        if (!discordId) return;
-        
-        // Проверяем кэш
-        if (discordUsernames.has(discordId)) {
-            const cachedName = discordUsernames.get(discordId);
-            if (usernameElement) {
-                usernameElement.textContent = cachedName;
-            }
-            return;
-        }
-        
-        // Проверяем, не идет ли уже запрос
-        if (usernamePromises.has(discordId)) {
-            const name = await usernamePromises.get(discordId);
-            if (usernameElement) {
-                usernameElement.textContent = name;
-            }
-            return;
-        }
-        
-        const promise = discordNameQueue.add(async () => {
-            try {
-                // Проверяем localStorage кэш
-                const cacheKey = `discord_name_${discordId}`;
-                const cachedName = localStorage.getItem(cacheKey);
-                
-                if (cachedName && cachedName !== 'undefined') {
-                    discordUsernames.set(discordId, cachedName);
-                    if (usernameElement) {
-                        usernameElement.textContent = cachedName;
-                    }
-                    return cachedName;
-                }
-                
-                // Запрос к API
-                const userData = await fetchWithRetry(addCacheBuster(`${config.proxy}"${config.discordApiBase}${discordId}"`));
-                
-                let displayName = originalName;
-                if (userData && userData.username) {
-                    displayName = userData.username;
-                    if (userData.discriminator && userData.discriminator !== '0') {
-                        displayName = `${userData.username}#${userData.discriminator}`;
-                    }
-                    // Сохраняем в кэш
-                    localStorage.setItem(cacheKey, displayName);
-                    discordUsernames.set(discordId, displayName);
-                } else if (userData && userData.global_name) {
-                    displayName = userData.global_name;
-                    localStorage.setItem(cacheKey, displayName);
-                    discordUsernames.set(discordId, displayName);
                 } else {
-                    // Если не удалось получить имя, используем ID
-                    displayName = `${user.name}`;
+                    avatarElement.style.opacity = '1';
                 }
-                
-                if (usernameElement) {
-                    usernameElement.textContent = displayName;
-                }
-                return displayName;
             } catch (error) {
-                console.warn(`Ошибка получения имени для ${discordId}:`, error.message);
-                const fallbackName = `${user.name}`;
-                if (usernameElement) {
-                    usernameElement.textContent = fallbackName;
-                }
-                return fallbackName;
+                console.warn(`Ошибка загрузки аватара для ${discordId}:`, error.message);
             }
         });
-        
-        usernamePromises.set(discordId, promise);
-        const result = await promise;
-        usernamePromises.delete(discordId);
-        return result;
     }
     
     function tryLoadImage(url, timeoutMs) {
@@ -346,6 +414,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const bannedUsersList = [];
             const activeUsers = hwid["users:"] || hwid.users || [];
             
+            // Собираем все Discord ID для batch-запроса
+            const discordIdsToFetch = [];
+            
+            activeUsers.forEach((username) => {
+                const discordId = getDiscordIdByHwid(username, discord);
+                if (discordId) discordIdsToFetch.push(discordId);
+            });
+            
+            // Дополнительно проверяем забаненных пользователей
+            if (bans && typeof bans === 'object') {
+                Object.keys(bans).forEach(bannedHwid => {
+                    const discordId = getDiscordIdByHwid(bannedHwid, discord);
+                    if (discordId && !discordIdsToFetch.includes(discordId)) {
+                        discordIdsToFetch.push(discordId);
+                    }
+                });
+            }
+            
+            // Загружаем данные Discord одним batch-запросом
+            batchUserData = await fetchBatchDiscordUsers(discordIdsToFetch);
+            
+            // Формируем список пользователей
             activeUsers.forEach((username) => {
                 const discordId = getDiscordIdByHwid(username, discord);
                 const telegramId = getTelegramIdByHwid(username, telegram);
@@ -441,7 +531,6 @@ document.addEventListener('DOMContentLoaded', function() {
         adminListBlocks.innerHTML = '';
         
         const avatarPromisesList = [];
-        const usernamePromisesList = [];
         
         users.forEach(user => {
             const userRole = getUserRole(user.sid, adminDiscordIds);
@@ -474,8 +563,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Генерируем уникальный ID для элемента username
             const usernameSpanId = `username-${user.sid || user.hwid}`.replace(/[^a-zA-Z0-9-]/g, '_');
+            const displayName = user.sid ? getDiscordUsername(user.sid, user.name) : user.name;
             
             userCard.innerHTML = `
             <div id="admins_card">
@@ -512,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 data-discord-id="${user.sid}" 
                                 data-original-name="${user.name}">
                                     <svg viewBox="0 0 24 24"><path d="M14.82 4.26a10.14 10.14 0 0 0-.53 1.1 14.66 14.66 0 0 0-4.58 0 10.14 10.14 0 0 0-.53-1.1 16 16 0 0 0-4.13 1.3 17.33 17.33 0 0 0-3 11.59 16.6 16.6 0 0 0 5.07 2.59A12.89 12.89 0 0 0 8.23 18a9.65 9.65 0 0 1-1.71-.83 3.39 3.39 0 0 0 .42-.33 11.66 11.66 0 0 0 10.12 0c.14.09.28.19.42.33a10.14 10.14 0 0 1-1.71.83 12.89 12.89 0 0 0 1.08 1.78 16.44 16.44 0 0 0 5.06-2.59 17.22 17.22 0 0 0-3-11.59 16.09 16.09 0 0 0-4.09-1.35zM8.68 14.81a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.93 1.93 0 0 1 1.8 2 1.93 1.93 0 0 1-1.8 2zm6.64 0a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.92 1.92 0 0 1 1.8 2 1.92 1.92 0 0 1-1.8 2z"/></svg>
-                                    <span class="discord-username" id="${usernameSpanId}">Loading...</span>
+                                    <span class="discord-username" id="${usernameSpanId}">${displayName}</span>
                                 </a>` : ''}
                                 ${user.telegramId ? `<a 
                                 target="_blank"
@@ -543,22 +632,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             adminListBlocks.appendChild(userCard);
             
-            // Загружаем аватар
+            // Загружаем аватар последовательно
             if (user.sid) {
-                avatarPromisesList.push(loadDiscordAvatar(user.sid, `user-${user.sid}-avatar`, user.name));
-            }
-            
-            // Загружаем имя пользователя Discord
-            if (user.sid) {
-                const usernameSpan = document.getElementById(usernameSpanId);
-                if (usernameSpan) {
-                    // Сразу показываем ID, потом заменим на имя
-                    usernamePromisesList.push(loadDiscordUsername(user.sid, usernameSpan, user.name));
-                }
+                avatarPromisesList.push(loadDiscordAvatar(user.sid, `user-${user.sid}-avatar`));
             }
         });
         
-        Promise.allSettled([...avatarPromisesList, ...usernamePromisesList]).then(() => console.log('Все данные загружены'));
+        // Не ждем загрузки всех аватаров, чтобы не блокировать отображение
+        Promise.allSettled(avatarPromisesList).then(() => console.log('Все аватары загружены'));
     }
     
     function init() {

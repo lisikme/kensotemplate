@@ -63,7 +63,7 @@ function renderPricingTable() {
 // Запускаем отображение при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     renderPricingTable();
-    updateBuyButton(0);
+    // updateBuyButton(0);
 });
 
 

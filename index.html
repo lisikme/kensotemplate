@@ -1793,6 +1793,191 @@ async function loadReviewsFromGoogleSheets() {
         let ratingIndex = -1;
         let dateIndex = -1;
         let textIndex = -1;
+        let importIndex = -1;
+        
+        for (let i = 0; i < headers.length; i++) {
+            const header = headers[i];
+            if (header.includes('ваше имя или никнейм')) {
+                nameIndex = i;
+            } else if (header.includes('оценить проект')) {
+                ratingIndex = i;
+            } else if (header.includes('отметка времени')) {
+                dateIndex = i;
+            } else if (header.includes('ваш комментарий')) {
+                textIndex = i;
+            } else if (header.includes('категория')) {
+                importIndex = i;
+            }
+        }
+        
+        if (nameIndex === -1) nameIndex = 0;
+        if (ratingIndex === -1) ratingIndex = 1;
+        if (dateIndex === -1) dateIndex = 2;
+        if (textIndex === -1) textIndex = 3;
+        if (importIndex === -1) importIndex = 4;
+        
+        console.log(`Индексы: Имя=${nameIndex}, Рейтинг=${ratingIndex}, Дата=${dateIndex}, Текст=${textIndex}, Категория=${importIndex}`);
+        
+        const reviewsData = [];
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length === 0) continue;
+            
+            let name = (row[nameIndex] || 'Аноним').toString().trim();
+            if (name === '') name = 'Аноним';
+            
+            let rating = 5;
+            if (ratingIndex < row.length) {
+                const ratingVal = parseFloat(row[ratingIndex]);
+                if (!isNaN(ratingVal) && ratingVal >= 1 && ratingVal <= 5) {
+                    rating = ratingVal;
+                } else {
+                    const match = String(row[ratingIndex]).match(/(\d+(?:\.\d+)?)/);
+                    if (match) {
+                        const num = parseFloat(match[1]);
+                        if (!isNaN(num) && num >= 1 && num <= 5) rating = num;
+                    }
+                }
+            }
+            
+            const rawDate = dateIndex < row.length ? row[dateIndex] : '';
+            const formattedDate = formatDate(rawDate);
+            const timestamp = parseDateToTimestamp(rawDate);
+            
+            let text = textIndex < row.length ? (row[textIndex] || '') : '';
+            if (text === '') text = '*Без комментария*';
+            let importtext = importIndex < row.length ? (row[importIndex] || '') : '';
+            if (importtext === '') {
+                importtext = '';
+            } else if (importtext === 'Нет') {
+                importtext = '';
+            } else {
+                importtext = `${importtext} - `
+            }
+            
+            reviewsData.push({
+                name: name,
+                rating: rating,
+                rawDate: rawDate,
+                displayDate: `${importtext}${formattedDate}`,
+                timestamp: timestamp,
+                text: text
+            });
+        }
+        
+        allReviewsData = reviewsData;
+        
+        if (reviewsData.length === 0) {
+            renderEmptyState(
+                container, 
+                'Нет отзывов', 
+                'Будьте первым, кто оставит отзыв! ', 
+                `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+                    <path d="M12 11v2M12 17h.01"/>
+                </svg>`);
+            updateStatsEmpty(statsContainer);
+            return;
+        }
+        
+        renderReviewsWithCurrentSort(container, statsContainer);
+        
+    } catch (error) {
+        console.error('Ошибка загрузки из Google Sheets:', error);
+        renderEmptyState(
+            container, 
+            'Ошибка API', 
+            'Сервер недоступен!');
+        if (statsContainer) {
+            statsContainer.innerHTML = `<div class="stat-item beta"><span>Ошибка!</span></div>`;
+        }
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// === УПРАВЛЕНИЕ МОДАЛЬНЫМ ОКНОМ С УНИКАЛЬНЫМИ ИДЕНТИФИКАТОРАМИ ===
+function x7k9m2p4_openModalSystem() {
+    const modalElement = document.getElementById('x7k9m2p4_reviewModal_system');
+    const iframeElement = document.getElementById('x7k9m2p4_googleForm_iframe_element');
+    
+    if (!modalElement || !iframeElement) {
+        console.error('Modal elements not found');
+        return;
+    }
+    const discord_name = document.querySelector(".btn_logout").querySelector(".nav-bt-title");
+    if (discord_name && discord_name.innerHTML !== 'Гость') {
+        iframeElement.src = GOOGLE_FORM_URL + `?usp=pp_url&entry.1516320113=${encodeURIComponent(discord_name.innerHTML)}&embedded=true`;
+    } else {
+        iframeElement.src = GOOGLE_FORM_URL + `?usp=pp_url&embedded=true`;
+    }
+    modalElement.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Опционально: можно обновить отзывы перед открытием, если нужно
+    // forceReloadReviews();
+}
+
+// --- ДОБАВЬТЕ ЭТУ НОВУЮ ФУНКЦИЮ ---
+// Функция для принудительной перезагрузки отзывов с обходом кеша
+async function forceReloadReviews() {
+    const container = document.getElementById('reviewsContainer');
+    const statsContainer = document.getElementById('reviewStats');
+    
+    if (!container) return;
+    
+    // Показываем индикатор загрузки
+    container.innerHTML = '<div class="empty-reviews"><p>Обновление отзывов...</p></div>';
+    
+    try {
+        // Добавляем уникальный параметр для обхода кеша браузера и CDN
+        const cacheBuster = `&_nocache=${Date.now()}`;
+        const freshUrl = CSV_URL + (CSV_URL.includes('?') ? cacheBuster : `?t=${Date.now()}`);
+        
+        const response = await fetch(freshUrl, {
+            cache: 'no-store', // Запрещаем использование кеша браузера
+            headers: {
+                'Pragma': 'no-cache',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const csvText = await response.text();
+        
+        // Переиспользуем существующую логику парсинга
+        const rows = parseCSV(csvText);
+        
+        if (rows.length < 2) {
+            renderEmptyState(
+                container, 
+                'Нет отзывов', 
+                'Будьте первым, кто оставит отзыв!', 
+                `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+                    <path d="M12 11v2M12 17h.01"/>
+                </svg>`);
+            updateStatsEmpty(statsContainer);
+            allReviewsData = [];
+            return;
+        }
+        
+        // Определяем индексы колонок (копируем логику из loadReviewsFromGoogleSheets)
+        const headers = rows[0].map(h => String(h || '').toLowerCase().trim());
+        
+        let nameIndex = -1;
+        let ratingIndex = -1;
+        let dateIndex = -1;
+        let textIndex = -1;
         
         for (let i = 0; i < headers.length; i++) {
             const header = headers[i];
@@ -1811,8 +1996,6 @@ async function loadReviewsFromGoogleSheets() {
         if (ratingIndex === -1) ratingIndex = 1;
         if (dateIndex === -1) dateIndex = 2;
         if (textIndex === -1) textIndex = 3;
-        
-        console.log(`Индексы: Имя=${nameIndex}, Рейтинг=${ratingIndex}, Дата=${dateIndex}, Текст=${textIndex}`);
         
         const reviewsData = [];
         for (let i = 1; i < rows.length; i++) {
@@ -1868,43 +2051,23 @@ async function loadReviewsFromGoogleSheets() {
             return;
         }
         
+        // Отрисовываем обновленный список с текущей сортировкой
         renderReviewsWithCurrentSort(container, statsContainer);
         
+        console.log('Отзывы успешно обновлены');
+        
     } catch (error) {
-        console.error('Ошибка загрузки из Google Sheets:', error);
-        renderEmptyState(
-            container, 
-            'Ошибка API', 
-            'Сервер недоступен!');
-        if (statsContainer) {
-            statsContainer.innerHTML = `<div class="stat-item beta"><span>Ошибка!</span></div>`;
-        }
+        console.error('Ошибка при обновлении отзывов:', error);
+        container.innerHTML = `
+            <div class="empty-reviews">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32">
+                    <path d="M12 8v4M12 16h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p>Ошибка обновления</p>
+                <div class="empty-subtitle">Попробуйте перезагрузить страницу</div>
+            </div>
+        `;
     }
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-// === УПРАВЛЕНИЕ МОДАЛЬНЫМ ОКНОМ С УНИКАЛЬНЫМИ ИДЕНТИФИКАТОРАМИ ===
-function x7k9m2p4_openModalSystem() {
-    const modalElement = document.getElementById('x7k9m2p4_reviewModal_system');
-    const iframeElement = document.getElementById('x7k9m2p4_googleForm_iframe_element');
-    
-    if (!modalElement || !iframeElement) {
-        console.error('Modal elements not found');
-        return;
-    }
-    const discord_name = document.querySelector(".btn_logout").querySelector(".nav-bt-title")
-    iframeElement.src = GOOGLE_FORM_URL+`?usp=pp_url&entry.1516320113=${discord_name.innerHTML}&embedded=true`;
-    modalElement.classList.add('active');
-    document.body.style.overflow = 'hidden';
 }
 
 function x7k9m2p4_closeModalSystem() {
@@ -1916,11 +2079,17 @@ function x7k9m2p4_closeModalSystem() {
     modalElement.classList.remove('active');
     document.body.style.overflow = '';
     
-    if (iframeElement) {
-        setTimeout(() => {
-            iframeElement.src = '';
-        }, 350);
-    }
+    // if (iframeElement) {
+    //     setTimeout(() => {
+    //         iframeElement.src = '';
+    //     }, 350);
+    // }
+    
+    // --- ДОБАВЛЕНА АВТОМАТИЧЕСКАЯ ПЕРЕЗАГРУЗКА ОТЗЫВОВ ---
+    // Небольшая задержка перед обновлением, чтобы форма успела отправить данные на сервер Google
+    setTimeout(() => {
+        forceReloadReviews();
+    }, 0);
 }
 
 // === УПРАВЛЕНИЕ ФИЛЬТРОМ ===
