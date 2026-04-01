@@ -542,10 +542,10 @@ body{
     z-index: 2;
     opacity: 1;
     transition: all 0.3s ease;
-    background: linear-gradient(20deg, #006eff, #00ff81 52%, #fff 50%, #93cbff);
+    background: linear-gradient(20deg, #94ffd6, #00a2ff 100%);
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 5px #00ffcf80;
+    text-shadow: 0 0 10px #00ffcf80;
 }
 .gallery-item.video-item:hover::before {
     opacity: 0;
