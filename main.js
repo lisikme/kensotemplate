@@ -1,3 +1,5 @@
+// main.js - галерея с бесконечной прокруткой, без кружков снизу
+
 // price.js - данные о ценах и функция отображения
 
 // Функция для отображения цен в таблице
@@ -5,13 +7,10 @@ function renderPricingTable() {
     const tableBody = document.querySelector('.pricing-table tbody');
     if (!tableBody) return;
     
-    // Очищаем существующие строки
     tableBody.innerHTML = '';
     
-    // Функция для вычисления старой цены на основе скидки
     function getOriginalPrice(currentPrice, discountPercent) {
         if (!discountPercent || discountPercent === 0) return null;
-        // currentPrice - это строка вида "70 Руб" или "400 РУБ"
         const priceMatch = currentPrice.match(/(\d+)/);
         if (!priceMatch) return null;
         const price = parseInt(priceMatch[0]);
@@ -19,12 +18,8 @@ function renderPricingTable() {
         return discountedPrice + ' ' + currentPrice.replace(/\d+/, '').trim();
     }
     
-    // Добавляем строки из pricelist, но пропускаем те, у которых item_discount === -1
     pricelist.forEach(item => {
-        // Скрываем лот, если скидка равна -1
-        if (item.item_discount === -1) {
-            return; // пропускаем этот элемент, не добавляем в таблицу
-        }
+        if (item.item_discount === -1) return;
         
         const row = document.createElement('tr');
         row.className = 'price-row';
@@ -35,7 +30,6 @@ function renderPricingTable() {
         const termCell = document.createElement('td');
         termCell.className = 'term-cell';
         
-        // Проверяем наличие скидки
         const discount = item.item_discount || 0;
         const hasDiscount = discount > 0;
         
@@ -60,65 +54,33 @@ function renderPricingTable() {
     });
 }
 
-// Запускаем отображение при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     renderPricingTable();
-    // updateBuyButton(0);
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// Меню покупки
 const buyBtn = document.getElementById('buyBtn');
 const buyMenu = document.getElementById('buyMenu');
 
-// Открытие/закрытие меню по клику на кнопку
-buyBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    buyMenu.classList.toggle('active');
-});
+if (buyBtn && buyMenu) {
+    buyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        buyMenu.classList.toggle('active');
+    });
 
-// Закрытие меню при клике вне его области
-document.addEventListener('click', (e) => {
-    if (!buyMenu.contains(e.target) && e.target !== buyBtn) {
-        buyMenu.classList.remove('active');
-    }
-});
+    document.addEventListener('click', (e) => {
+        if (!buyMenu.contains(e.target) && e.target !== buyBtn) {
+            buyMenu.classList.remove('active');
+        }
+    });
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// Toggle features menu
 document.addEventListener('DOMContentLoaded', function() {
     const toggleBtn = document.getElementById('toggleFeaturesBtn');
     const featuresTable = document.querySelector('.dropdown-wrapper2');
-    const btnText = toggleBtn.querySelector('.btn-text');
-    const btnIcon = toggleBtn.querySelector('.btn-icon');
     
     if (featuresTable) {
-        // featuresTable.classList.add('active');
         featuresTable.classList.remove('active');
     }
     
@@ -128,448 +90,445 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (isHidden) {
                 toggleBtn.classList.replace('unactive', 'active');
-                if (btnIcon) btnIcon.classList.add('rotated');
             } else {
                 toggleBtn.classList.replace('active', 'unactive');
-                if (btnIcon) btnIcon.classList.remove('rotated');
             }
         });
     }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        const adminList = document.getElementById('adminListBlocks');
-        const scrollUp = document.getElementById('scrollUp');
-        const scrollDown = document.getElementById('scrollDown');
-        const gradientTop = document.getElementById('gradientTop');
-        const gradientBottom = document.getElementById('gradientBottom');
-        let scrollInterval;
-        let currentMediaType = 'image'; 
+// ========== ГАЛЕРЕЯ-КАРУСЕЛЬ С БЕСКОНЕЧНОЙ ПРОКРУТКОЙ ==========
+(function() {
+    // Данные слайдов (оригинальные)
+    const originalSlides = [
+        { type: 'video', youtubeId: 'Lch7Ve9ntsA', img: '/images/1.png', label: 'ВИДЕО' },
+        { type: 'image', img: '/images/promo.png', label: 'АКЦИЯ' },
+        { type: 'image', img: '/images/2.png', label: null },
+        { type: 'image', img: '/images/3.png', label: null },
+        { type: 'image', img: '/images/4.png', label: null },
+        { type: 'image', img: '/images/5.png', label: null },
+        { type: 'image', img: '/images/6.png', label: null },
+        { type: 'image', img: '/images/7.png', label: null },
+        { type: 'image', img: '/images/8.png', label: null },
+        { type: 'image', img: '/images/9.png', label: null },
+        { type: 'image', img: '/images/10.png', label: null },
+        { type: 'image', img: '/images/11.png', label: null },
+        { type: 'image', img: '/images/12.png', label: null },
+        { type: 'image', img: '/images/13.png', label: null },
+        { type: 'image', img: '/images/14.png', label: null },
+        { type: 'image', img: '/images/15.png', label: null },
+        { type: 'image', img: '/images/16.png', label: null },
+        { type: 'image', img: '/images/17.png', label: null },
+        { type: 'image', img: '/images/18.png', label: null }
+    ];
+    
+    // Для бесконечной прокрутки добавляем клоны: последний в начало, первый в конец
+    const slides = [
+        originalSlides[originalSlides.length - 1], // клон последнего в начало
+        ...originalSlides,
+        originalSlides[0]  // клон первого в конец
+    ];
+    
+    let currentIndex = 1; // начинаем с первого реального слайда (индекс 1)
+    let isAnimating = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    let autoResetTimeout = null;
+    
+    // DOM элементы
+    const galleryContainer = document.querySelector('.product-gallery');
+    if (!galleryContainer) return;
+    
+    // Создаем структуру карусели
+    galleryContainer.innerHTML = `
+        <div class="gallery-carousel">
+            <div class="carousel-container">
+                <div class="carousel-track" id="carouselTrack"></div>
+                <button class="carousel-btn prev" id="carouselPrev">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button class="carousel-btn next" id="carouselNext">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="carousel-counter" id="carouselCounter">1 / ${originalSlides.length}</div>
+            </div>
+        </div>
+    `;
+    
+    const track = document.getElementById('carouselTrack');
+    const prevBtn = document.getElementById('carouselPrev');
+    const nextBtn = document.getElementById('carouselNext');
+    const counterEl = document.getElementById('carouselCounter');
+    
+    // Функция для получения реального индекса (без клонов)
+    function getRealIndex(clonedIndex) {
+        if (clonedIndex === 0) return originalSlides.length - 1;
+        if (clonedIndex === slides.length - 1) return 0;
+        return clonedIndex - 1;
+    }
+    
+    // Обновление счетчика
+    function updateCounter() {
+        if (counterEl) {
+            const realIndex = getRealIndex(currentIndex);
+            counterEl.textContent = `${realIndex + 1} / ${originalSlides.length}`;
+        }
+    }
+    
+    // Создаем слайды
+    function buildSlides() {
+        track.innerHTML = '';
+        slides.forEach((slide, idx) => {
+            const slideDiv = document.createElement('div');
+            slideDiv.className = 'carousel-slide';
+            slideDiv.setAttribute('data-index', idx);
+            slideDiv.setAttribute('data-type', slide.type);
+            if (slide.type === 'video') {
+                slideDiv.setAttribute('data-youtube-id', slide.youtubeId);
+            }
+            
+            const img = document.createElement('img');
+            img.src = slide.img;
+            img.alt = `Скриншот ${idx + 1}`;
+            img.loading = 'lazy';
+            slideDiv.appendChild(img);
+            
+            if (slide.label) {
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'video-label';
+                labelSpan.textContent = slide.label;
+                slideDiv.appendChild(labelSpan);
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'gallery-overlay';
+            overlay.innerHTML = '<span>Открыть</span>';
+            slideDiv.appendChild(overlay);
+            
+            // Открытие модалки с реальным индексом
+            slideDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const realIndex = getRealIndex(idx);
+                openModalByIndex(realIndex);
+            });
+            
+            track.appendChild(slideDiv);
+        });
+    }
+    
+    // Установка позиции без анимации
+    function setPositionWithoutAnimation(index) {
+        if (!track) return;
+        const slideWidth = track.parentElement.clientWidth;
+        const offset = -index * slideWidth;
+        track.style.transition = 'none';
+        track.style.transform = `translateX(${offset}px)`;
+        // Форсируем reflow
+        void track.offsetHeight;
+        track.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+    }
+    
+    // Плавный переход к слайду
+    function goToSlide(newIndex, skipReset = false) {
+        if (isAnimating) return;
+        
+        isAnimating = true;
+        const oldIndex = currentIndex;
+        currentIndex = newIndex;
+        
+        const slideWidth = track.parentElement.clientWidth;
+        const offset = -currentIndex * slideWidth;
+        
+        track.style.transform = `translateX(${offset}px)`;
+        updateCounter();
+        
+        // После анимации проверяем, не нужно ли сделать "телепорт" для бесконечности
+        setTimeout(() => {
+            isAnimating = false;
+            
+            // Если дошли до клона последнего (индекс 0) - телепортируем на реальный последний
+            if (currentIndex === 0) {
+                currentIndex = originalSlides.length;
+                setPositionWithoutAnimation(currentIndex);
+                updateCounter();
+            }
+            // Если дошли до клона первого (индекс slides.length-1) - телепортируем на реальный первый
+            else if (currentIndex === slides.length - 1) {
+                currentIndex = 1;
+                setPositionWithoutAnimation(currentIndex);
+                updateCounter();
+            }
+        }, 400);
+    }
+    
+    // Следующий слайд
+    function nextSlide() {
+        if (isAnimating) return;
+        goToSlide(currentIndex + 1);
+    }
+    
+    // Предыдущий слайд
+    function prevSlide() {
+        if (isAnimating) return;
+        goToSlide(currentIndex - 1);
+    }
+    
+    // Обработчик ресайза
+    function handleResize() {
+        if (isAnimating) return;
+        const slideWidth = track.parentElement.clientWidth;
+        const offset = -currentIndex * slideWidth;
+        track.style.transition = 'none';
+        track.style.transform = `translateX(${offset}px)`;
+        setTimeout(() => {
+            track.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        }, 50);
+    }
+    
+    // ========== СВАЙПЫ ==========
+    function handleTouchStart(e) {
+        if (isAnimating) return;
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }
+    
+    function handleTouchEnd(e) {
+        if (isAnimating) return;
+        touchEndX = e.changedTouches[0].screenX;
+        touchEndY = e.changedTouches[0].screenY;
+        
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
+            if (deltaX > 0) {
+                prevSlide();
+            } else {
+                nextSlide();
+            }
+        }
+    }
+    
+    // ========== МОДАЛЬНОЕ ОКНО ==========
+    function openModalByIndex(index) {
+        const slide = originalSlides[index];
+        if (!slide) return;
+        
+        let modal = document.getElementById('galleryModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'galleryModal';
+            modal.innerHTML = `
+                <button id="closeModal">
+                    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+                    </svg>
+                </button>
+                <div class="modal-content" id="modalContent">
+                    <img id="modalImage" src="" alt="">
+                    <div id="modalVideo" class="modal-video-container" style="display: none;">
+                        <iframe id="youtubePlayer" class="modal-video" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                </div>
+                <button class="modal-nav" id="modalPrev">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                </button>
+                <div class="modal-counter">
+                    <span id="modalCounter">0 / 0</span>
+                </div>
+                <button class="modal-nav" id="modalNext">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        const modalImage = document.getElementById('modalImage');
         const modalVideo = document.getElementById('modalVideo');
         const youtubePlayer = document.getElementById('youtubePlayer');
-        
-        function startScrolling(direction) {
-            scrollInterval = setInterval(() => {
-                adminList.scrollBy({ top: direction * 520, behavior: 'smooth' });
-                checkScrollEffects();
-            }, 30);
-        }
-        
-        function stopScrolling() {
-            clearInterval(scrollInterval);
-        }
-        
-        function checkScrollEffects() {
-            if (!adminList) return;
-            const scrollTop = adminList.scrollTop;
-            const scrollHeight = adminList.scrollHeight;
-            const clientHeight = adminList.clientHeight;
-            
-            if (scrollTop <= 0) {
-                if (scrollUp) scrollUp.classList.add('hidden');
-                if (gradientTop) gradientTop.classList.add('hidden');
-            } else {
-                if (scrollUp) scrollUp.classList.remove('hidden');
-                if (gradientTop) gradientTop.classList.remove('hidden');
-            }
-            
-            if (scrollTop + clientHeight >= scrollHeight - 1) {
-                if (scrollDown) scrollDown.classList.add('hidden');
-                if (gradientBottom) gradientBottom.classList.add('hidden');
-            } else {
-                if (scrollDown) scrollDown.classList.remove('hidden');
-                if (gradientBottom) gradientBottom.classList.remove('hidden');
-            }
-        }
-        
-        if (scrollUp) {
-            scrollUp.addEventListener('mousedown', () => startScrolling(-1));
-            scrollUp.addEventListener('mouseup', stopScrolling);
-            scrollUp.addEventListener('mouseleave', stopScrolling);
-        }
-        if (scrollDown) {
-            scrollDown.addEventListener('mousedown', () => startScrolling(1));
-            scrollDown.addEventListener('mouseup', stopScrolling);
-            scrollDown.addEventListener('mouseleave', stopScrolling);
-        }
-        if (adminList) {
-            adminList.addEventListener('scroll', checkScrollEffects);
-        }
-        
-        window.addEventListener('load', () => {
-            setTimeout(checkScrollEffects, 500);
-        });
-
-        // Функционал для галереи
-        const galleryContainer = document.getElementById('galleryContainer');
-        const galleryModal = document.getElementById('galleryModal');
-        const modalImage = document.getElementById('modalImage');
-        const closeModal = document.getElementById('closeModal');
-        const modalPrev = document.getElementById('modalPrev');
-        const modalNext = document.getElementById('modalNext');
         const modalCounter = document.getElementById('modalCounter');
         
-        const galleryScrollLeft = document.getElementById('galleryScrollLeft');
-        const galleryScrollRight = document.getElementById('galleryScrollRight');
-        const galleryGradientLeft = document.getElementById('galleryGradientLeft');
-        const galleryGradientRight = document.getElementById('galleryGradientRight');
+        let modalCurrentIndex = index;
         
-        const galleryItems = document.querySelectorAll('.gallery-item');
-        let currentImageIndex = 0;
-        let galleryScrollInterval;
-        
-        function startGalleryScrolling(direction) {
-            galleryScrollInterval = setInterval(() => {
-                if (galleryContainer) galleryContainer.scrollBy({ left: direction * 300, behavior: 'smooth' });
-                checkGalleryScrollEffects();
-            }, 30);
-        }
-        
-        function stopGalleryScrolling() {
-            clearInterval(galleryScrollInterval);
-        }
-        
-        function checkGalleryScrollEffects() {
-            if (!galleryContainer) return;
-            const scrollLeft = galleryContainer.scrollLeft;
-            const scrollWidth = galleryContainer.scrollWidth;
-            const clientWidth = galleryContainer.clientWidth;
-            
-            if (scrollLeft <= 0) {
-                if (galleryScrollLeft) galleryScrollLeft.classList.add('hidden');
-                if (galleryGradientLeft) galleryGradientLeft.classList.add('hidden');
-            } else {
-                if (galleryScrollLeft) galleryScrollLeft.classList.remove('hidden');
-                if (galleryGradientLeft) galleryGradientLeft.classList.remove('hidden');
-            }
-            
-            if (scrollLeft + clientWidth >= scrollWidth - 1) {
-                if (galleryScrollRight) galleryScrollRight.classList.add('hidden');
-                if (galleryGradientRight) galleryGradientRight.classList.add('hidden');
-            } else {
-                if (galleryScrollRight) galleryScrollRight.classList.remove('hidden');
-                if (galleryGradientRight) galleryGradientRight.classList.remove('hidden');
-            }
-        }
-        
-        if (galleryScrollLeft) {
-            galleryScrollLeft.addEventListener('mousedown', () => startGalleryScrolling(-1));
-            galleryScrollLeft.addEventListener('mouseup', stopGalleryScrolling);
-            galleryScrollLeft.addEventListener('mouseleave', stopGalleryScrolling);
-        }
-        if (galleryScrollRight) {
-            galleryScrollRight.addEventListener('mousedown', () => startGalleryScrolling(1));
-            galleryScrollRight.addEventListener('mouseup', stopGalleryScrolling);
-            galleryScrollRight.addEventListener('mouseleave', stopGalleryScrolling);
-        }
-        if (galleryContainer) {
-            galleryContainer.addEventListener('scroll', checkGalleryScrollEffects);
-        }
-        
-        function preloadImages() {
-            galleryItems.forEach(item => {
-                const img = item.querySelector('img');
-                if (img) {
-                    const preloadImg = new Image();
-                    preloadImg.src = img.src;
-                }
-            });
-        }
-        
-        galleryItems.forEach((item, index) => {
-            item.addEventListener('click', () => {
-                currentImageIndex = index;
-                openModal();
-            });
-        });
-        
-        function openModal() {
-            if (!galleryModal) return;
-            const imgSrc = galleryItems[currentImageIndex].querySelector('img').src;
-            if (modalImage) modalImage.src = imgSrc;
-            updateModalCounter();
-            
-            galleryModal.style.display = 'flex';
-            const currentItem = galleryItems[currentImageIndex];
-            const mediaType = currentItem.getAttribute('data-type');
-            currentMediaType = mediaType;
-            
-            setTimeout(() => {
-                galleryModal.classList.add('active');
-                document.body.classList.add('modal-open');
-            }, 10);
-            
-            if (mediaType === 'video') {
-                const youtubeId = currentItem.getAttribute('data-youtube-id');
-                const videoUrl = `https://www.youtube.com/embed/${youtubeId}?autoplay=0&modestbranding=1&rel=0&controls=1&showinfo=0`;
-                
-                if (modalImage) modalImage.style.display = 'none';
-                if (modalVideo) modalVideo.style.display = 'block';
-                if (youtubePlayer) youtubePlayer.src = videoUrl;
-            } else {
-                if (modalImage) modalImage.style.display = 'block';
-            }
-        }
-
-        function closeModalFunc() {
-            if (!galleryModal) return;
-            galleryModal.classList.remove('active');
-            document.body.classList.remove('modal-open');
-            
-            setTimeout(() => {
-                galleryModal.style.display = 'none';
-                if (currentMediaType === 'video' && youtubePlayer) {
-                    youtubePlayer.src = '';
-                }
-            }, 300);
-        }
-                
-        function updateModalCounter() {
-            if (modalCounter) {
-                modalCounter.textContent = `${currentImageIndex + 1} / ${galleryItems.length}`;
-            }
-        }
-        
-        function showNextImage(e) {
-            if (e) e.stopPropagation();
-            currentImageIndex = (currentImageIndex + 1) % galleryItems.length;
-            updateModalContent();
-        }
-
-        function showPrevImage(e) {
-            if (e) e.stopPropagation();
-            currentImageIndex = (currentImageIndex - 1 + galleryItems.length) % galleryItems.length;
-            updateModalContent();
-        }
-
         function updateModalContent() {
-            const currentItem = galleryItems[currentImageIndex];
-            const mediaType = currentItem.getAttribute('data-type');
-            
+            const currentSlide = originalSlides[modalCurrentIndex];
             if (modalImage) modalImage.style.display = 'none';
             if (modalVideo) modalVideo.style.display = 'none';
+            if (youtubePlayer) youtubePlayer.src = '';
             
-            if (mediaType === 'video') {
-                const youtubeId = currentItem.getAttribute('data-youtube-id');
-                const videoUrl = `https://www.youtube.com/embed/${youtubeId}?autoplay=0&modestbranding=1&rel=0&controls=1&showinfo=0`;
-                
+            if (currentSlide.type === 'video') {
                 if (modalVideo) modalVideo.style.display = 'block';
-                if (youtubePlayer) youtubePlayer.src = videoUrl;
+                if (youtubePlayer) {
+                    youtubePlayer.src = `https://www.youtube.com/embed/${currentSlide.youtubeId}?autoplay=0&modestbranding=1&rel=0&controls=1&showinfo=0`;
+                }
             } else {
-                const imgSrc = currentItem.querySelector('img').src;
                 if (modalImage) {
                     modalImage.style.display = 'block';
-                    modalImage.src = imgSrc;
+                    modalImage.src = currentSlide.img;
                 }
+            }
+            
+            if (modalCounter) {
+                modalCounter.textContent = `${modalCurrentIndex + 1} / ${originalSlides.length}`;
+            }
+        }
+        
+        function modalNext() {
+            if (modalCurrentIndex < originalSlides.length - 1) {
+                modalCurrentIndex++;
+                updateModalContent();
+            }
+        }
+        
+        function modalPrev() {
+            if (modalCurrentIndex > 0) {
+                modalCurrentIndex--;
+                updateModalContent();
+            }
+        }
+        
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+            setTimeout(() => {
+                modal.style.display = 'none';
                 if (youtubePlayer) youtubePlayer.src = '';
-            }
-            
-            updateModalCounter();
+            }, 300);
         }
         
-        if (closeModal) closeModal.addEventListener('click', function(e) {
-            e.stopPropagation();
-            closeModalFunc();
-        });
+        modalCurrentIndex = index;
+        updateModalContent();
         
-        if (modalNext) modalNext.addEventListener('click', showNextImage);
-        if (modalPrev) modalPrev.addEventListener('click', showPrevImage);
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.classList.add('active');
+            document.body.classList.add('modal-open');
+        }, 10);
         
-        if (galleryModal) {
-            galleryModal.addEventListener('click', (e) => {
-                if (e.target === galleryModal) {
-                    closeModalFunc();
-                }
-            });
+        const closeModalBtn = document.getElementById('closeModal');
+        const modalPrevBtn = document.getElementById('modalPrev');
+        const modalNextBtn = document.getElementById('modalNext');
+        
+        const closeHandler = () => closeModal();
+        const prevHandler = () => modalPrev();
+        const nextHandler = () => modalNext();
+        
+        closeModalBtn.removeEventListener('click', closeHandler);
+        modalPrevBtn.removeEventListener('click', prevHandler);
+        modalNextBtn.removeEventListener('click', nextHandler);
+        
+        closeModalBtn.addEventListener('click', closeHandler);
+        modalPrevBtn.addEventListener('click', prevHandler);
+        modalNextBtn.addEventListener('click', nextHandler);
+        
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal();
+        };
+        
+        function keyHandler(e) {
+            if (!modal.classList.contains('active')) return;
+            if (e.key === 'Escape') closeModal();
+            if (e.key === 'ArrowRight') modalNext();
+            if (e.key === 'ArrowLeft') modalPrev();
         }
         
-        document.addEventListener('keydown', (e) => {
-            if (galleryModal && galleryModal.classList.contains('active')) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (e.key === 'Escape') closeModalFunc();
-                if (e.key === 'ArrowRight') showNextImage();
-                if (e.key === 'ArrowLeft') showPrevImage();
-            }
-        });
+        document.removeEventListener('keydown', keyHandler);
+        document.addEventListener('keydown', keyHandler);
+    }
+    
+    // Инициализация
+    function init() {
+        buildSlides();
         
-        if (galleryModal) {
-            galleryModal.addEventListener('wheel', (e) => {
-                if (galleryModal.classList.contains('active')) {
-                    e.stopPropagation();
-                }
-            });
+        // Устанавливаем начальную позицию (первый реальный слайд, индекс 1)
+        setTimeout(() => {
+            const slideWidth = track.parentElement.clientWidth;
+            const offset = -currentIndex * slideWidth;
+            track.style.transform = `translateX(${offset}px)`;
+            updateCounter();
+        }, 50);
+        
+        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+        
+        window.addEventListener('resize', handleResize);
+        
+        const carouselContainer = document.querySelector('.carousel-container');
+        if (carouselContainer) {
+            carouselContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+            carouselContainer.addEventListener('touchend', handleTouchEnd);
         }
-        
-        if (galleryContainer) {
-            galleryContainer.addEventListener('wheel', (e) => {
-                if (!galleryModal || !galleryModal.classList.contains('active') && e.deltaY !== 0) {
-                    e.preventDefault();
-                    galleryContainer.scrollLeft += e.deltaY * 5;
-                    checkGalleryScrollEffects();
-                }
-            });
-        }
-        
-        let isDragging = false;
-        let startX;
-        let scrollLeft;
-        
-        if (galleryContainer) {
-            galleryContainer.addEventListener('mousedown', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) return;
-                
-                isDragging = true;
-                galleryContainer.style.cursor = 'grabbing';
-                startX = e.pageX - galleryContainer.offsetLeft;
-                scrollLeft = galleryContainer.scrollLeft;
-            });
-            
-            galleryContainer.addEventListener('mouseleave', () => {
-                isDragging = false;
-                galleryContainer.style.cursor = 'grab';
-            });
-            
-            galleryContainer.addEventListener('mouseup', () => {
-                isDragging = false;
-                galleryContainer.style.cursor = 'grab';
-            });
-            
-            galleryContainer.addEventListener('mousemove', (e) => {
-                if (!isDragging || (galleryModal && galleryModal.classList.contains('active'))) return;
-                e.preventDefault();
-                const x = e.pageX - galleryContainer.offsetLeft;
-                const walk = (x - startX) * 2;
-                galleryContainer.scrollLeft = scrollLeft - walk;
-                checkGalleryScrollEffects();
-            });
-        }
-        
-        let touchStartX = 0;
-        let touchEndX = 0;
-        
-        if (galleryContainer) {
-            galleryContainer.addEventListener('touchstart', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) return;
-                touchStartX = e.changedTouches[0].screenX;
-            });
-            
-            galleryContainer.addEventListener('touchend', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) return;
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            });
-        }
-        
-        function handleSwipe() {
-            if (!galleryContainer) return;
-            if (touchStartX - touchEndX > 50) {
-                galleryContainer.scrollBy({ left: 300, behavior: 'smooth' });
-            } else if (touchEndX - touchStartX > 50) {
-                galleryContainer.scrollBy({ left: -300, behavior: 'smooth' });
-            }
-            setTimeout(checkGalleryScrollEffects, 100);
-        }
-        
-        window.addEventListener('load', () => {
-            preloadImages();
-            setTimeout(checkGalleryScrollEffects, 500);
-        });
-        
-        if (modalImage) modalImage.style.transition = 'opacity 0.3s ease';
+    }
+    
+    init();
+})();
 
-        let lastWheelTime = 0;
-        const WHEEL_DELAY = 50;
+// ========== АДМИН ЛИСТ И СКРОЛЛ ==========
+const adminList = document.getElementById('adminListBlocks');
+const scrollUp = document.getElementById('scrollUp');
+const scrollDown = document.getElementById('scrollDown');
+const gradientTop = document.getElementById('gradientTop');
+const gradientBottom = document.getElementById('gradientBottom');
+let scrollInterval;
 
-        if (galleryModal) {
-            galleryModal.addEventListener('wheel', (e) => {
-                if (galleryModal.classList.contains('active')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const currentTime = Date.now();
-                    if (currentTime - lastWheelTime < WHEEL_DELAY) {
-                        return;
-                    }
-                    
-                    lastWheelTime = currentTime;
-                    
-                    const isVerticalScroll = Math.abs(e.deltaY) > Math.abs(e.deltaX);
-                    
-                    if (isVerticalScroll) {
-                        if (e.deltaY > 0) {
-                            showNextImage();
-                        } else if (e.deltaY < 0) {
-                            showPrevImage();
-                        }
-                    } else {
-                        if (e.deltaX > 0) {
-                            showNextImage();
-                        } else if (e.deltaX < 0) {
-                            showPrevImage();
-                        }
-                    }
-                }
-            });
-        }
+function startScrolling(direction) {
+    scrollInterval = setInterval(() => {
+        adminList.scrollBy({ top: direction * 520, behavior: 'smooth' });
+        checkScrollEffects();
+    }, 30);
+}
 
-        const modalContent = document.getElementById('modalContent');
-        let touchStartXModal = 0;
-        let touchEndXModal = 0;
-        let touchStartYModal = 0;
-        let touchEndYModal = 0;
-        const MIN_SWIPE_DISTANCE = 50;
+function stopScrolling() {
+    clearInterval(scrollInterval);
+}
 
-        if (modalContent) {
-            modalContent.addEventListener('touchstart', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) {
-                    touchStartXModal = e.changedTouches[0].screenX;
-                    touchStartYModal = e.changedTouches[0].screenY;
-                }
-            }, { passive: true });
+function checkScrollEffects() {
+    if (!adminList) return;
+    const scrollTop = adminList.scrollTop;
+    const scrollHeight = adminList.scrollHeight;
+    const clientHeight = adminList.clientHeight;
+    
+    if (scrollTop <= 0) {
+        if (scrollUp) scrollUp.classList.add('hidden');
+        if (gradientTop) gradientTop.classList.add('hidden');
+    } else {
+        if (scrollUp) scrollUp.classList.remove('hidden');
+        if (gradientTop) gradientTop.classList.remove('hidden');
+    }
+    
+    if (scrollTop + clientHeight >= scrollHeight - 1) {
+        if (scrollDown) scrollDown.classList.add('hidden');
+        if (gradientBottom) gradientBottom.classList.add('hidden');
+    } else {
+        if (scrollDown) scrollDown.classList.remove('hidden');
+        if (gradientBottom) gradientBottom.classList.remove('hidden');
+    }
+}
 
-            modalContent.addEventListener('touchend', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) {
-                    touchEndXModal = e.changedTouches[0].screenX;
-                    touchEndYModal = e.changedTouches[0].screenY;
-                    handleModalSwipe();
-                }
-            }, { passive: true });
-        }
+if (scrollUp) {
+    scrollUp.addEventListener('mousedown', () => startScrolling(-1));
+    scrollUp.addEventListener('mouseup', stopScrolling);
+    scrollUp.addEventListener('mouseleave', stopScrolling);
+}
+if (scrollDown) {
+    scrollDown.addEventListener('mousedown', () => startScrolling(1));
+    scrollDown.addEventListener('mouseup', stopScrolling);
+    scrollDown.addEventListener('mouseleave', stopScrolling);
+}
+if (adminList) {
+    adminList.addEventListener('scroll', checkScrollEffects);
+}
 
-        function handleModalSwipe() {
-            const deltaX = touchStartXModal - touchEndXModal;
-            const deltaY = touchStartYModal - touchEndYModal;
-
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > MIN_SWIPE_DISTANCE) {
-                if (deltaX > 0) {
-                    showNextImage();
-                } else {
-                    showPrevImage();
-                }
-            }
-        }
-
-        if (modalContent) {
-            modalContent.addEventListener('touchmove', (e) => {
-                if (galleryModal && galleryModal.classList.contains('active')) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-        }
+window.addEventListener('load', () => {
+    setTimeout(checkScrollEffects, 500);
+});

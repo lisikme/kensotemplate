@@ -932,106 +932,20 @@ document.addEventListener('DOMContentLoaded', () => {
     <body>
         <!-- Новый блок с галереей и кнопками -->
         <div class="product-header">
-            <div class="product-gallery">
-                <div class="gallery-scroll-container">
-                    <div class="gallery-scroll-gradient left" id="galleryGradientLeft"></div>
-                    <div class="gallery-scroll-gradient right" id="galleryGradientRight"></div>
-                    <div class="gallery-scroll-arrow left hidden" id="galleryScrollLeft">
-                        <svg width="16" height="16" viewBox="8 8 16 16" fill="currentColor">
-                            <path d="M19 10L13 16L19 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-                        </svg>
-                    </div>
-                    <div class="gallery-wrapper">
-                            <div class="gallery-container" id="galleryContainer">
-                                <div class="gallery-item video-item" data-type="video" data-youtube-id="Lch7Ve9ntsA">
-                                    <img src="/images/1.png">
-                                    <div class="video-label">ВИДЕО</div>
-                                    <div class="gallery-overlay"><span>Смотреть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/promo.png">
-                                    <div class="video-label">АКЦИЯ</div>
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/2.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/3.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/4.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/5.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/6.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/7.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/8.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/9.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/10.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/11.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/12.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/13.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/14.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/15.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/16.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/17.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                                <div class="gallery-item">
-                                    <img src="/images/18.png">
-                                    <div class="gallery-overlay"><span>Открыть</span></div>
-                                </div>
-                            </div>
-                    </div>
-                    <div class="gallery-scroll-arrow right" id="galleryScrollRight">
-                            <svg width="16" height="16" viewBox="8 8 16 16" fill="currentColor">
-                                <path d="M13 10L19 16L13 22" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-                            </svg>
-                    </div>
-                </div>
                 <div class="product-table">
                     <div class="table-container-box">
                         <div class="table-container">
+                            <div class="product-gallery">
+                                <div class="gallery-wrapper">
+                                    <button class="gallery-nav prev">&#10094;</button>
+                                    <div class="gallery-viewport">
+                                        <div id="galleryTrack" class="gallery-track">
+                                            <!-- autoload -->
+                                        </div>
+                                    </div>
+                                    <button class="gallery-nav next">&#10095;</button>
+                                </div>
+                            </div>
                             <div class="product-description">
                                 <div class="dropdown-title">Универсальный скрипт для CS2</div>
                                 <p class="description-sub">Это не просто скрипт, это комплексное решение, которое раскроет весь потенциал игры, предоставит тебе невероятные визуальные и игровые преимущества, а также полный контроль над процессом.</p>

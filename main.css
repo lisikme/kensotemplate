@@ -222,11 +222,15 @@ body {
     margin-bottom: 30px;
 }
 .product-gallery {
-    background: #0e0e0e;
+    overflow: hidden;
+    /* background: #0e0e0e; */
+    border: 1px solid #303030;
+    border-radius: 5px;
+    
     /* padding: 20px; */
     /* border-radius: 5px; */
     /* border: #575757 solid 1px; */
-    margin-bottom: 20px;
+    margin-bottom: 5px;
 }
 .gallery-title {
     font-size: 30px;
@@ -2663,3 +2667,203 @@ a:link, a:visited, a:hover, a:active {
     .x7k9m2p4_modal_content_wrapper::-webkit-scrollbar-thumb:hover {
         background: #b8e35e;
     }
+
+
+
+    /* main.css - только измененные/добавленные стили для галереи-карусели */
+/* Остальные стили остаются без изменений */
+
+/* НОВЫЕ СТИЛИ ДЛЯ КАРУСЕЛИ ГАЛЕРЕИ */
+.gallery-carousel {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    overflow: visible;
+    /* border-radius: 5px; */
+    background: #000000;
+    /* border: 1px solid #303030; */
+}
+
+.carousel-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 5px;
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.carousel-slide {
+    flex-shrink: 0;
+    width: 100%;
+    position: relative;
+    cursor: pointer;
+}
+
+.carousel-slide:hover[data-type="video"]::after {
+    /* display: none; */
+    opacity: 0;
+}
+.carousel-slide[data-type="video"]::after {
+    content: 'Обзор';
+    position: absolute;
+    margin: auto;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 2;
+    opacity: 1;
+    transition: all 0.3s ease;
+    background: linear-gradient(20deg, #94ffd6, #00a2ff 100%);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 10px #00ffcf80;
+}
+
+.carousel-slide img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    background: #050505;
+    display: block;
+}
+
+.video-label {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #ff2d2d;
+    color: white;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 8px;
+    font-weight: bold;
+    z-index: 2;
+}
+
+.gallery-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    backdrop-filter: blur(2px);
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+.carousel-slide:hover .gallery-overlay {
+    opacity: 1;
+}
+
+.gallery-overlay span {
+    background: linear-gradient(20deg, #94ffd6, #00a2ff 100%);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 10px #00ffcf80;
+}
+
+.carousel-btn {
+    position: absolute;
+    margin: auto 0;
+    top: 0;
+    bottom: 0;
+    padding: 0px;
+    /* transform: translateY(-50%); */
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    width: 23px;
+    height: 40px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.carousel-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: #d7fe7b;
+}
+
+.carousel-btn.prev {
+    left: 3px;
+}
+
+.carousel-btn.next {
+    right: 3px;
+}
+
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 0;
+}
+
+.carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #303030;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.carousel-dot.active {
+    background: #d7fe7b;
+    width: 20px;
+    border-radius: 4px;
+}
+
+.carousel-counter {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    color: #fff;
+    z-index: 10;
+}
+
+/* Свайп-индикатор для мобильных */
+@media (max-width: 768px) {
+    .carousel-btn {
+        width: 32px;
+        height: 32px;
+    }
+    .carousel-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Убираем старые стили галереи, если они конфликтуют */
+.gallery-scroll-container,
+.gallery-wrapper,
+.gallery-container,
+.gallery-scroll-gradient,
+.gallery-scroll-arrow {
+    /* Эти стили больше не используются, можно оставить или удалить */
+}

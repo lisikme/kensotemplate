@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KensoUltra+ | Главная</title>
+    <meta name="description" content="KensoUltra - профессиональный LUA скрипт для CS2.">
+    <link rel="stylesheet" href="main.css">
+    <style>
+        /* Дополнительные стили для реализации слайдера вместо прокрутки */
+        .gallery-scroll-container {
+            max-width: 400px; /* Ограничение ширины по ТЗ */
+            margin: 0 auto 20px auto;
+            position: relative;
+            border: #303030 solid 1px;
+            border-radius: 5px;
+            background: #010101;
+            overflow: hidden;
+        }
+
+        .gallery-container {
+            display: flex;
+            transition: opacity 0.4s ease-in-out;
+            justify-content: center;
+            align-items: center;
+            height: 225px; /* Соотношение 16:9 для 400px */
+            cursor: pointer;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .gallery-item {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+            display: none; /* Скрываем все, кроме активного */
+            animation: fadeInGallery 0.5s;
+        }
+
+        .gallery-item.active {
+            display: block;
+        }
+
+        @keyframes fadeInGallery {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Навигация внутри основного блока галереи */
+        .gallery-main-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #d7fe7b;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        .gallery-main-nav:hover {
+            background: #d7fe7b;
+            color: #000;
+        }
+
+        .gallery-prev { left: 10px; }
+        .gallery-next { right: 10px; }
+
+        /* Скрытие стандартного градиента и скролла, так как теперь это слайдер */
+        .gallery-scroll-gradient { display: none; }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-container">
+            <div class="logo">
+                <div class="site-name">KensoUltra+</div>
+                <span class="by-kelix">For nixware.cc - by Kelix.me</span>
+            </div>
+        </div>
+    </header>
+
+    <main style="padding-top: 100px;">
+        <div class="product-gallery">
+            <h2 class="gallery-title">ГАЛЕРЕЯ</h2>
+            
+            <div class="gallery-wrapper">
+                <div class="gallery-scroll-container">
+                    <div class="gallery-main-nav gallery-prev" onclick="changeSlide(-1)">❮</div>
+                    <div class="gallery-main-nav gallery-next" onclick="changeSlide(1)">❯</div>
+
+                    <div class="gallery-container" id="mainGallery">
+                        <div class="gallery-item active"><img src="1.png" alt="Screen 1"></div>
+                        <div class="gallery-item"><img src="2.png" alt="Screen 2"></div>
+                        <div class="gallery-item"><img src="3.png" alt="Screen 3"></div>
+                        <div class="gallery-item"><img src="4.png" alt="Screen 4"></div>
+                        <div class="gallery-item"><img src="5.png" alt="Screen 5"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="galleryModal">
+        <button id="closeModal">&times;</button>
+        <div class="modal-content">
+            <img id="modalImage" src="" alt="Full View">
+            <button class="modal-nav" id="modalPrev">❮</button>
+            <button class="modal-nav" id="modalNext">❯</button>
+            <div class="modal-counter">
+                <span id="modalCounter">1 / 5</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Логика слайдера
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('#mainGallery .gallery-item');
+        const totalSlides = slides.length;
+
+        function updateGallery() {
+            slides.forEach((slide, index) => {
+                slide.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        function changeSlide(direction) {
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+            updateGallery();
+        }
+
+        // Интеграция с модальным окном из вашего main.js
+        const modal = document.getElementById('galleryModal');
+        const modalImg = document.getElementById('modalImage');
+        const counter = document.getElementById('modalCounter');
+
+        // Открытие модального окна при клике на текущий слайд
+        document.getElementById('mainGallery').addEventListener('click', () => {
+            const currentImgSrc = slides[currentSlide].querySelector('img').src;
+            modalImg.src = currentImgSrc;
+            modal.classList.add('active');
+            updateModalCounter();
+        });
+
+        function updateModalCounter() {
+            counter.innerText = `${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        document.getElementById('closeModal').onclick = () => modal.classList.remove('active');
+
+        document.getElementById('modalNext').onclick = () => {
+            changeSlide(1);
+            modalImg.src = slides[currentSlide].querySelector('img').src;
+            updateModalCounter();
+        };
+
+        document.getElementById('modalPrev').onclick = () => {
+            changeSlide(-1);
+            modalImg.src = slides[currentSlide].querySelector('img').src;
+            updateModalCounter();
+        };
+
+        // Закрытие по клику вне картинки
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        };
+    </script>
+</body>
+</html>
