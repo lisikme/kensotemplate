@@ -2689,12 +2689,12 @@ a:link, a:visited, a:hover, a:active {
     position: relative;
     width: 100%;
     overflow: hidden;
-    border-radius: 5px;
+    /* border-radius: 5px; */
 }
 
 .carousel-track {
     display: flex;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s;
     will-change: transform;
 }
 
@@ -2705,26 +2705,46 @@ a:link, a:visited, a:hover, a:active {
     cursor: pointer;
 }
 
-.carousel-slide:hover[data-type="video"]::after {
-    /* display: none; */
-    opacity: 0;
-}
-.carousel-slide[data-type="video"]::after {
-    content: 'Обзор';
+.carousel-slide::after {
     position: absolute;
     margin: auto;
-    bottom: 5px;
+    top: calc(50% + 12px);
     left: 50%;
+    transform: translateY(-50%);
     transform: translateX(-50%);
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 0px;
+    font-weight: 600;
+    /* padding: 0px 8px; */
+    /* height: 0px; */
     z-index: 2;
-    opacity: 1;
-    transition: all 0.3s ease;
+    opacity: 0;
+    transition: all 0.1s ease;
+    color: #6cd3ff;
     background: linear-gradient(20deg, #94ffd6, #00a2ff 100%);
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 10px #00ffcf80;
+    /* text-shadow: 0 0 5px #0adeff; */
+    /* border: #1a1a1a solid 1px !important; */
+    /* backdrop-filter: blur(5px) !important; */
+    border-radius: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* background: rgba(0, 0, 0, 0.9) !important; */
+    overflow: hidden;
+    /* align-items: flex-end; */
+}
+/* .carousel-slide[data-type="video"]::after {
+    content: 'ВИДЕОПЛЕЕР';
+} */
+.carousel-slide::after {
+    content: 'ГАЛЕРЕЮ';
+}
+.carousel-slide:hover::after {
+    /* height: 16px; */
+    font-size: 12px;
+    opacity: 1;
+    transition: all 0.2s;
 }
 
 .carousel-slide img {
@@ -2733,6 +2753,18 @@ a:link, a:visited, a:hover, a:active {
     object-fit: contain;
     background: #000000;
     display: block;
+}
+.carousel-counter{
+    text-shadow: 0 0 5px #ffffff;
+    overflow: hidden;
+    backdrop-filter: blur(5px) !important;
+    border: #1a1a1a solid 1px !important;
+    background: rgba(0, 0, 0, 0.9) !important;
+    padding: 1px 8px !important;
+    font-weight: 400;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .video-label {
@@ -2843,7 +2875,7 @@ a:link, a:visited, a:hover, a:active {
     backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(5px);
-    padding: 2px 8px;
+    padding: 1px 8px;
     border-radius: 3px;
     font-size: 10px;
     color: #fff;
@@ -2851,7 +2883,7 @@ a:link, a:visited, a:hover, a:active {
 }
 
 /* Свайп-индикатор для мобильных */
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
     .carousel-btn {
         width: 32px;
         height: 32px;
@@ -2860,13 +2892,30 @@ a:link, a:visited, a:hover, a:active {
         width: 16px;
         height: 16px;
     }
-}
+} */
 
-/* Убираем старые стили галереи, если они конфликтуют */
-.gallery-scroll-container,
-.gallery-wrapper,
-.gallery-container,
-.gallery-scroll-gradient,
-.gallery-scroll-arrow {
-    /* Эти стили больше не используются, можно оставить или удалить */
+#dev-shop{
+    position: absolute;
+    top: 48px;
+    /* background: #ffffff; */
+    cursor: default;
+    font-size: 0;
+    display: block;
+    height: 20px;
+    width: 6px;
+    left: 0;
+}
+.gallery-overlay{
+    opacity: 0;
+    padding: 5px;
+    font-size: 0px !important;
+    transition: all 0.3s;
+    backdrop-filter: blur(0px);
+    background: radial-gradient(50% 50% at center, #005d694e, #00000041);
+}
+.carousel-slide:hover .gallery-overlay {
+    backdrop-filter: blur(3px);
+    border-color: #117ba555;
+    font-size: 25px !important;
+    opacity: 1;
 }

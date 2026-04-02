@@ -1,613 +1,751 @@
-// main.js - обновленный скрипт для галереи с прокруткой колесиком в модальном окне
-
-// price.js - данные о ценах и функция отображения
-
-// Функция для отображения цен в таблице
-function renderPricingTable() {
-    const tableBody = document.querySelector('.pricing-table tbody');
-    if (!tableBody) return;
-    
-    tableBody.innerHTML = '';
-    
-    function getOriginalPrice(currentPrice, discountPercent) {
-        if (!discountPercent || discountPercent === 0) return null;
-        const priceMatch = currentPrice.match(/(\d+)/);
-        if (!priceMatch) return null;
-        const price = parseInt(priceMatch[0]);
-        const discountedPrice = Math.round(price * (1 - discountPercent / 100));
-        return discountedPrice + ' ' + currentPrice.replace(/\d+/, '').trim();
-    }
-    
-    pricelist.forEach(item => {
-        if (item.item_discount === -1) return;
-        
-        const row = document.createElement('tr');
-        row.className = 'price-row';
-        
-        const priceCell = document.createElement('td');
-        priceCell.className = 'price-cell';
-        
-        const termCell = document.createElement('td');
-        termCell.className = 'term-cell';
-        
-        const discount = item.item_discount || 0;
-        const hasDiscount = discount > 0;
-        
-        if (hasDiscount) {
-            const originalPrice = getOriginalPrice(item.item_price, discount);
-            priceCell.innerHTML = `
-                <div class="price-with-discount">
-                    <span class="old-price">${item.item_price}</span>
-                    <span class="discount-badge">${discount}%</span>
-                    <span class="new-price"><strong>${originalPrice || item.item_price}</strong></span>
-                </div>
-            `;
-        } else {
-            priceCell.innerHTML = `<strong>${item.item_price}</strong>`;
-        }
-        
-        termCell.innerHTML = `<span class="${item.item_term.includes('Навсегда') ? 'forever' : ''}">${item.item_term}</span>`;
-        
-        row.appendChild(priceCell);
-        row.appendChild(termCell);
-        tableBody.appendChild(row);
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    renderPricingTable();
-});
-
-// Меню покупки
-const buyBtn = document.getElementById('buyBtn');
-const buyMenu = document.getElementById('buyMenu');
-
-if (buyBtn && buyMenu) {
-    buyBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        buyMenu.classList.toggle('active');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!buyMenu.contains(e.target) && e.target !== buyBtn) {
-            buyMenu.classList.remove('active');
-        }
-    });
-}
-
-// Toggle features menu
 document.addEventListener('DOMContentLoaded', function() {
-    const toggleBtn = document.getElementById('toggleFeaturesBtn');
-    const featuresTable = document.querySelector('.dropdown-wrapper2');
+    const config = {
+        adminsJsonUrl: 'https://lisikme.github.io/Nixware-allowed/admins.json',
+        hwidJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwid4.json',
+        tempJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/temps.json',
+        discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
+        telegramJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/telegrams.json',
+        bansJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/bans.json',
+        discordApiBase: 'https://dis-api.sakuri.ru/api/discord',
+        proxy: 'https://proxy.sakuri.ru/api/proxy?url='
+    };
     
-    if (featuresTable) {
-        featuresTable.classList.remove('active');
+    // Кэш для данных пользователей Discord (сроком на 1 час)
+    const CACHE_DURATION = 60 * 60 * 1000; // 1 час в миллисекундах
+    const DISCORD_DATA_CACHE_KEY = 'discord_users_batch_cache';
+    
+    // Хранилище для имен пользователей Discord
+    const discordUsernames = new Map();
+    let batchUserData = null;
+    
+    // Хранилище для failed запросов (чтобы не спамить API)
+    const failedRequests = new Map(); // discordId -> timestamp
+    const FAILED_REQUEST_TIMEOUT = 10 * 60 * 1000; // 10 минут
+    
+    function addCacheBuster(url) {
+        return url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
     }
     
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
-            const isHidden = featuresTable.classList.toggle('active');
-            
-            if (isHidden) {
-                toggleBtn.classList.replace('unactive', 'active');
-            } else {
-                toggleBtn.classList.replace('active', 'unactive');
+    async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
+        try {
+            const response = await fetch(addCacheBuster(url), options);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return fetchWithRetry(url, options, retries - 1, delay * 2);
             }
-        });
-    }
-});
-
-// ========== ГАЛЕРЕЯ-КАРУСЕЛЬ С БЕСКОНЕЧНОЙ ПРОКРУТКОЙ ==========
-(function() {
-    // Данные слайдов (оригинальные)
-    const originalSlides = [
-        { type: 'video', youtubeId: 'Lch7Ve9ntsA', img: '/images/1.png', label: 'ВИДЕО' },
-        { type: 'image', img: '/images/promo.png', label: 'АКЦИЯ' },
-        { type: 'image', img: '/images/2.png', label: null },
-        { type: 'image', img: '/images/3.png', label: null },
-        { type: 'image', img: '/images/4.png', label: null },
-        { type: 'image', img: '/images/5.png', label: null },
-        { type: 'image', img: '/images/6.png', label: null },
-        { type: 'image', img: '/images/7.png', label: null },
-        { type: 'image', img: '/images/8.png', label: null },
-        { type: 'image', img: '/images/9.png', label: null },
-        { type: 'image', img: '/images/10.png', label: null },
-        { type: 'image', img: '/images/11.png', label: null },
-        { type: 'image', img: '/images/12.png', label: null },
-        { type: 'image', img: '/images/13.png', label: null },
-        { type: 'image', img: '/images/14.png', label: null },
-        { type: 'image', img: '/images/15.png', label: null },
-        { type: 'image', img: '/images/16.png', label: null },
-        { type: 'image', img: '/images/17.png', label: null },
-        { type: 'image', img: '/images/18.png', label: null }
-    ];
-    
-    // Для бесконечной прокрутки добавляем клоны: последний в начало, первый в конец
-    const slides = [
-        originalSlides[originalSlides.length - 1], // клон последнего в начало
-        ...originalSlides,
-        originalSlides[0]  // клон первого в конец
-    ];
-    
-    let currentIndex = 1; // начинаем с первого реального слайда (индекс 1)
-    let isAnimating = false;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
-    let autoResetTimeout = null;
-    
-    // DOM элементы
-    const galleryContainer = document.querySelector('.product-gallery');
-    if (!galleryContainer) return;
-    
-    // Создаем структуру карусели
-    galleryContainer.innerHTML = `
-        <div class="gallery-carousel">
-            <div class="carousel-container">
-                <div class="carousel-track" id="carouselTrack"></div>
-                <button class="carousel-btn prev" id="carouselPrev">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-linecap="round"/>
-                    </svg>
-                </button>
-                <button class="carousel-btn next" id="carouselNext">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-linecap="round"/>
-                    </svg>
-                </button>
-                <div class="carousel-counter" id="carouselCounter">1 / ${originalSlides.length}</div>
-            </div>
-        </div>
-    `;
-    
-    const track = document.getElementById('carouselTrack');
-    const prevBtn = document.getElementById('carouselPrev');
-    const nextBtn = document.getElementById('carouselNext');
-    const counterEl = document.getElementById('carouselCounter');
-    
-    // Функция для получения реального индекса (без клонов)
-    function getRealIndex(clonedIndex) {
-        if (clonedIndex === 0) return originalSlides.length - 1;
-        if (clonedIndex === slides.length - 1) return 0;
-        return clonedIndex - 1;
-    }
-    
-    // Обновление счетчика
-    function updateCounter() {
-        if (counterEl) {
-            const realIndex = getRealIndex(currentIndex);
-            counterEl.textContent = `${realIndex + 1} / ${originalSlides.length}`;
+            throw error;
         }
     }
     
-    // Создаем слайды
-    function buildSlides() {
-        track.innerHTML = '';
-        slides.forEach((slide, idx) => {
-            const slideDiv = document.createElement('div');
-            slideDiv.className = 'carousel-slide';
-            slideDiv.setAttribute('data-index', idx);
-            slideDiv.setAttribute('data-type', slide.type);
-            if (slide.type === 'video') {
-                slideDiv.setAttribute('data-youtube-id', slide.youtubeId);
+    // Функция для получения данных пользователей Discord с обработкой ошибок
+    async function fetchBatchDiscordUsers(discordIds) {
+        if (!discordIds || discordIds.length === 0) return {};
+        
+        // Фильтруем ID, которые недавно failed
+        const now = Date.now();
+        const validIds = discordIds.filter(id => {
+            if (!id || id === 'null') return false;
+            const failedTime = failedRequests.get(id);
+            if (failedTime && (now - failedTime) < FAILED_REQUEST_TIMEOUT) {
+                console.log(`Пропускаем ${id} (недавний failed запрос)`);
+                return false;
+            }
+            return true;
+        });
+        
+        const uniqueIds = [...new Set(validIds)];
+        if (uniqueIds.length === 0) return {};
+        
+        // Проверяем кэш
+        const cachedData = getCachedDiscordData();
+        if (cachedData) {
+            // Проверяем, какие данные отсутствуют в кэше
+            const missingIds = uniqueIds.filter(id => !cachedData[id]);
+            
+            if (missingIds.length === 0) {
+                console.log('Все данные из кэша');
+                return cachedData;
             }
             
-            const img = document.createElement('img');
-            img.src = slide.img;
-            img.alt = `Скриншот ${idx + 1}`;
-            img.loading = 'lazy';
-            slideDiv.appendChild(img);
+            console.log(`Загружаем ${missingIds.length} недостающих пользователей из ${uniqueIds.length}`);
             
-            if (slide.label) {
-                const labelSpan = document.createElement('span');
-                labelSpan.className = 'video-label';
-                labelSpan.textContent = slide.label;
-                slideDiv.appendChild(labelSpan);
+            // Загружаем только недостающих пользователей
+            const missingData = await fetchSpecificDiscordUsers(missingIds);
+            
+            // Объединяем с кэшем
+            const mergedData = { ...cachedData, ...missingData };
+            saveCachedDiscordData(mergedData);
+            return mergedData;
+        }
+        
+        console.log(`Загружаем данные для ${uniqueIds.length} пользователей Discord`);
+        return await fetchSpecificDiscordUsers(uniqueIds);
+    }
+    
+    // Функция для загрузки конкретных пользователей Discord
+    async function fetchSpecificDiscordUsers(discordIds) {
+        if (!discordIds || discordIds.length === 0) return {};
+        
+        // Разбиваем на чанки по 50 пользователей (если API имеет ограничение)
+        const chunkSize = 50;
+        const chunks = [];
+        for (let i = 0; i < discordIds.length; i += chunkSize) {
+            chunks.push(discordIds.slice(i, i + chunkSize));
+        }
+        
+        const allResults = {};
+        
+        for (const chunk of chunks) {
+            try {
+                const chunkResults = await fetchDiscordUsersChunk(chunk);
+                Object.assign(allResults, chunkResults);
+            } catch (error) {
+                console.error(`Ошибка загрузки чанка:`, error);
+                // Отмечаем failed пользователей в этом чанке
+                chunk.forEach(id => {
+                    if (!allResults[id]) {
+                        markFailedRequest(id);
+                    }
+                });
             }
-            
-            const overlay = document.createElement('div');
-            overlay.className = 'gallery-overlay';
-            overlay.innerHTML = '<span>Открыть</span>';
-            slideDiv.appendChild(overlay);
-            
-            // Открытие модалки с реальным индексом
-            slideDiv.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const realIndex = getRealIndex(idx);
-                openModalByIndex(realIndex);
+        }
+        
+        return allResults;
+    }
+    
+    async function fetchDiscordUsersChunk(discordIds) {
+        const userDataMap = {};
+        
+        // Пробуем сначала без прокси
+        let response = null;
+        
+        try {
+            const url = `${config.discordApiBase}/users`;
+            const directResponse = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ids: discordIds })
             });
             
-            track.appendChild(slideDiv);
-        });
-    }
-    
-    // Установка позиции без анимации
-    function setPositionWithoutAnimation(index) {
-        if (!track) return;
-        const slideWidth = track.parentElement.clientWidth;
-        const offset = -index * slideWidth;
-        track.style.transition = 'none';
-        track.style.transform = `translateX(${offset}px)`;
-        // Форсируем reflow
-        void track.offsetHeight;
-        track.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-    }
-    
-    // Плавный переход к слайду
-    function goToSlide(newIndex, skipReset = false) {
-        if (isAnimating) return;
-        
-        isAnimating = true;
-        const oldIndex = currentIndex;
-        currentIndex = newIndex;
-        
-        const slideWidth = track.parentElement.clientWidth;
-        const offset = -currentIndex * slideWidth;
-        
-        track.style.transform = `translateX(${offset}px)`;
-        updateCounter();
-        
-        // После анимации проверяем, не нужно ли сделать "телепорт" для бесконечности
-        setTimeout(() => {
-            isAnimating = false;
-            
-            // Если дошли до клона последнего (индекс 0) - телепортируем на реальный последний
-            if (currentIndex === 0) {
-                currentIndex = originalSlides.length;
-                setPositionWithoutAnimation(currentIndex);
-                updateCounter();
-            }
-            // Если дошли до клона первого (индекс slides.length-1) - телепортируем на реальный первый
-            else if (currentIndex === slides.length - 1) {
-                currentIndex = 1;
-                setPositionWithoutAnimation(currentIndex);
-                updateCounter();
-            }
-        }, 400);
-    }
-    
-    // Следующий слайд
-    function nextSlide() {
-        if (isAnimating) return;
-        goToSlide(currentIndex + 1);
-    }
-    
-    // Предыдущий слайд
-    function prevSlide() {
-        if (isAnimating) return;
-        goToSlide(currentIndex - 1);
-    }
-    
-    // Обработчик ресайза
-    function handleResize() {
-        if (isAnimating) return;
-        const slideWidth = track.parentElement.clientWidth;
-        const offset = -currentIndex * slideWidth;
-        track.style.transition = 'none';
-        track.style.transform = `translateX(${offset}px)`;
-        setTimeout(() => {
-            track.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-        }, 50);
-    }
-    
-    // ========== СВАЙПЫ ==========
-    function handleTouchStart(e) {
-        if (isAnimating) return;
-        touchStartX = e.changedTouches[0].screenX;
-        touchStartY = e.changedTouches[0].screenY;
-    }
-    
-    function handleTouchEnd(e) {
-        if (isAnimating) return;
-        touchEndX = e.changedTouches[0].screenX;
-        touchEndY = e.changedTouches[0].screenY;
-        
-        const deltaX = touchEndX - touchStartX;
-        const deltaY = touchEndY - touchStartY;
-        
-        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
-            if (deltaX > 0) {
-                prevSlide();
+            if (directResponse.ok) {
+                response = await directResponse.json();
             } else {
-                nextSlide();
+                throw new Error(`HTTP ${directResponse.status}`);
             }
-        }
-    }
-    
-    // ========== МОДАЛЬНОЕ ОКНО С ПОДДЕРЖКОЙ КОЛЕСИКА МЫШИ ==========
-    let modalWheelTimeout = null;
-    let modalWheelDelta = 0;
-    let isModalWheelScrolling = false;
-    
-    function openModalByIndex(index) {
-        const slide = originalSlides[index];
-        if (!slide) return;
-        
-        let modal = document.getElementById('galleryModal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'galleryModal';
-            modal.innerHTML = `
-                <button id="closeModal">
-                    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-                    </svg>
-                </button>
-                <div class="modal-content" id="modalContent">
-                    <img id="modalImage" src="" alt="">
-                    <div id="modalVideo" class="modal-video-container" style="display: none;">
-                        <iframe id="youtubePlayer" class="modal-video" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                    </div>
-                </div>
-                <button class="modal-nav" id="modalPrev">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round">
-                        <path d="M15 18l-6-6 6-6"/>
-                    </svg>
-                </button>
-                <div class="modal-counter">
-                    <span id="modalCounter">0 / 0</span>
-                </div>
-                <button class="modal-nav" id="modalNext">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round">
-                        <path d="M9 18l6-6-6-6"/>
-                    </svg>
-                </button>
-            `;
-            document.body.appendChild(modal);
-        }
-        
-        const modalImage = document.getElementById('modalImage');
-        const modalVideo = document.getElementById('modalVideo');
-        const youtubePlayer = document.getElementById('youtubePlayer');
-        const modalCounter = document.getElementById('modalCounter');
-        
-        let modalCurrentIndex = index;
-        
-        // Функция для проверки, находится ли мышь над iframe YouTube
-        function isMouseOverYouTubeIframe(e) {
-            if (!youtubePlayer) return false;
-            const iframe = youtubePlayer;
-            const rect = iframe.getBoundingClientRect();
-            const mouseX = e.clientX;
-            const mouseY = e.clientY;
-            return mouseX >= rect.left && mouseX <= rect.right && mouseY >= rect.top && mouseY <= rect.bottom;
-        }
-        
-        // Функция для обновления контента модального окна
-        function updateModalContent() {
-            const currentSlide = originalSlides[modalCurrentIndex];
-            if (modalImage) modalImage.style.display = 'none';
-            if (modalVideo) modalVideo.style.display = 'none';
-            if (youtubePlayer) youtubePlayer.src = '';
+        } catch (error) {
+            console.warn('Прямой запрос не удался, используем прокси:', error.message);
             
-            if (currentSlide.type === 'video') {
-                if (modalVideo) modalVideo.style.display = 'block';
-                if (youtubePlayer) {
-                    youtubePlayer.src = `https://www.youtube.com/embed/${currentSlide.youtubeId}?autoplay=0&modestbranding=1&rel=0&controls=1&showinfo=0`;
+            try {
+                const proxyUrl = `${config.proxy}"${encodeURIComponent(`${config.discordApiBase}/users`)}"`;
+                const proxyResponse = await fetch(proxyUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ids: discordIds })
+                });
+                
+                if (proxyResponse.ok) {
+                    response = await proxyResponse.json();
+                } else {
+                    throw new Error(`Proxy HTTP ${proxyResponse.status}`);
                 }
-            } else {
-                if (modalImage) {
-                    modalImage.style.display = 'block';
-                    modalImage.src = currentSlide.img;
+            } catch (proxyError) {
+                console.error('Ошибка при запросе через прокси:', proxyError);
+                throw proxyError;
+            }
+        }
+        
+        // Обрабатываем ответ
+        if (response && response.results) {
+            for (const result of response.results) {
+                if (result.success && result.data) {
+                    const userId = result.user_id || result.data.id;
+                    userDataMap[userId] = {
+                        username: result.data.username || `User_${userId.slice(-4)}`,
+                        global_name: result.data.global_name,
+                        discriminator: result.data.discriminator,
+                        avatar: result.data.avatar,
+                        avatar_url: result.data.avatar_url,
+                        bot: result.data.bot || false,
+                        exists: true
+                    };
+                } else if (result.user_id) {
+                    // Пользователь не найден, создаем fallback данные
+                    const userId = result.user_id;
+                    console.warn(`Пользователь ${userId} не найден в API, создаем fallback`);
+                    userDataMap[userId] = {
+                        username: `User_${userId.slice(-6)}`,
+                        global_name: null,
+                        discriminator: '0',
+                        avatar: null,
+                        avatar_url: null,
+                        bot: false,
+                        exists: false
+                    };
+                    markFailedRequest(userId);
                 }
             }
+        }
+        
+        // Проверяем, какие ID не были обработаны
+        for (const id of discordIds) {
+            if (!userDataMap[id]) {
+                console.warn(`Не удалось загрузить данные для пользователя ${id}`);
+                // Создаем fallback данные
+                userDataMap[id] = {
+                    username: `User_${id.slice(-6)}`,
+                    global_name: null,
+                    discriminator: '0',
+                    avatar: null,
+                    avatar_url: null,
+                    bot: false,
+                    exists: false
+                };
+                markFailedRequest(id);
+            }
+        }
+        
+        return userDataMap;
+    }
+    
+    function markFailedRequest(discordId) {
+        failedRequests.set(discordId, Date.now());
+        // Очищаем старые записи через 10 минут
+        setTimeout(() => {
+            if (failedRequests.get(discordId) === Date.now() - FAILED_REQUEST_TIMEOUT) {
+                failedRequests.delete(discordId);
+            }
+        }, FAILED_REQUEST_TIMEOUT);
+    }
+    
+    // Сохранение данных Discord в кэш
+    function saveCachedDiscordData(data) {
+        const cacheData = {
+            timestamp: Date.now(),
+            data: data
+        };
+        localStorage.setItem(DISCORD_DATA_CACHE_KEY, JSON.stringify(cacheData));
+    }
+    
+    // Получение данных из кэша
+    function getCachedDiscordData() {
+        const cached = localStorage.getItem(DISCORD_DATA_CACHE_KEY);
+        if (!cached) return null;
+        
+        try {
+            const cacheData = JSON.parse(cached);
+            const now = Date.now();
             
-            if (modalCounter) {
-                modalCounter.textContent = `${modalCurrentIndex + 1} / ${originalSlides.length}`;
+            if (now - cacheData.timestamp < CACHE_DURATION) {
+                return cacheData.data;
+            }
+        } catch (e) {
+            console.warn('Ошибка чтения кэша:', e);
+        }
+        
+        return null;
+    }
+    
+    // Функция для получения аватарки
+    function getDiscordAvatar(discordId) {
+        if (!discordId) return null;
+        
+        // Проверяем batch данные
+        if (batchUserData && batchUserData[discordId]) {
+            const userData = batchUserData[discordId];
+            if (userData.avatar_url) return userData.avatar_url;
+            if (userData.avatar) {
+                return `https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png`;
             }
         }
         
-        // Функции навигации
-        function modalNext() {
-            if (modalCurrentIndex < originalSlides.length - 1) {
-                modalCurrentIndex++;
-                updateModalContent();
-            } else if (modalCurrentIndex === originalSlides.length - 1) {
-                // Бесконечная прокрутка: с последнего на первый
-                modalCurrentIndex = 0;
-                updateModalContent();
-            }
+        // Fallback аватарка
+        return `https://cdn.discordapp.com/embed/avatars/${parseInt(discordId) % 5}.png`;
+    }
+    
+    // Функция для получения имени пользователя
+    function getDiscordUsername(discordId, fallbackName) {
+        if (!discordId) return fallbackName;
+        
+        // Проверяем Map
+        if (discordUsernames.has(discordId)) {
+            return discordUsernames.get(discordId);
         }
         
-        function modalPrev() {
-            if (modalCurrentIndex > 0) {
-                modalCurrentIndex--;
-                updateModalContent();
-            } else if (modalCurrentIndex === 0) {
-                // Бесконечная прокрутка: с первого на последний
-                modalCurrentIndex = originalSlides.length - 1;
-                updateModalContent();
-            }
+        // Проверяем кэш localStorage
+        const cachedName = localStorage.getItem(`discord_name_${discordId}`);
+        if (cachedName && cachedName !== 'undefined') {
+            discordUsernames.set(discordId, cachedName);
+            return cachedName;
         }
         
-        // Обработчик колесика мыши для модального окна
-        function handleModalWheel(e) {
-            // Проверяем, находится ли мышь над iframe YouTube
-            if (isMouseOverYouTubeIframe(e)) {
-                // Если мышь над YouTube iframe - не переключаем слайды
+        // Проверяем batch данные
+        if (batchUserData && batchUserData[discordId]) {
+            const userData = batchUserData[discordId];
+            let displayName = fallbackName;
+            
+            if (userData.username && userData.username !== `User_${discordId.slice(-6)}`) {
+                displayName = userData.username;
+                if (userData.discriminator && userData.discriminator !== '0') {
+                    displayName = `${userData.username}#${userData.discriminator}`;
+                }
+            } else if (userData.global_name) {
+                displayName = userData.global_name;
+            } else {
+                // Если нет нормального имени, показываем HWID
+                displayName = fallbackName;
+            }
+            
+            discordUsernames.set(discordId, displayName);
+            localStorage.setItem(`discord_name_${discordId}`, displayName);
+            return displayName;
+        }
+        
+        return fallbackName;
+    }
+    
+    function getUserRole(discordId, adminList) {
+        if (discordId === '470573716711931905') return 'creator';
+        if (discordId === '1393856315067203635') return 'bot';
+        return adminList.includes(discordId) ? 'admin' : 'player';
+    }
+    
+    async function fetchJsonData(url) {
+        try {
+            return await fetchWithRetry(url);
+        } catch (error) {
+            console.error(`Ошибка загрузки ${url}:`, error);
+            return null;
+        }
+    }
+    
+    class AvatarQueue {
+        constructor(maxConcurrent = 2, delayBetweenBatches = 500) {
+            this.maxConcurrent = maxConcurrent;
+            this.delayBetweenBatches = delayBetweenBatches;
+            this.current = 0;
+            this.queue = [];
+            this.lastBatchTime = 0;
+        }
+        
+        add(task) {
+            return new Promise((resolve, reject) => {
+                this.queue.push({ task, resolve, reject });
+                this.run();
+            });
+        }
+        
+        async run() {
+            const now = Date.now();
+            const timeSinceLastBatch = now - this.lastBatchTime;
+            
+            if (timeSinceLastBatch < this.delayBetweenBatches) {
+                setTimeout(() => this.run(), this.delayBetweenBatches - timeSinceLastBatch);
                 return;
             }
             
-            e.preventDefault();
+            if (this.current >= this.maxConcurrent || this.queue.length === 0) return;
             
-            // Накопление дельты для более плавного скролла
-            modalWheelDelta += e.deltaY;
+            this.lastBatchTime = Date.now();
+            const batchSize = Math.min(this.maxConcurrent - this.current, this.queue.length);
+            const batch = this.queue.splice(0, batchSize);
             
-            if (modalWheelTimeout) clearTimeout(modalWheelTimeout);
+            this.current += batch.length;
             
-            // Порог срабатывания (чувствительность)
-            const threshold = 50;
-            
-            if (modalWheelDelta >= threshold) {
-                modalWheelDelta = 0;
-                if (!isModalWheelScrolling) {
-                    isModalWheelScrolling = true;
-                    modalNext();
-                    setTimeout(() => {
-                        isModalWheelScrolling = false;
-                    }, 50);
+            batch.forEach(async ({ task, resolve, reject }) => {
+                try {
+                    resolve(await task());
+                } catch (error) {
+                    reject(error);
+                } finally {
+                    this.current--;
+                    this.run();
                 }
-            } else if (modalWheelDelta <= -threshold) {
-                modalWheelDelta = 0;
-                if (!isModalWheelScrolling) {
-                    isModalWheelScrolling = true;
-                    modalPrev();
-                    setTimeout(() => {
-                        isModalWheelScrolling = false;
-                    }, 50);
-                }
-            }
-            
-            // Сброс накопленной дельты через некоторое время бездействия
-            modalWheelTimeout = setTimeout(() => {
-                modalWheelDelta = 0;
-            }, 200);
+            });
         }
-        
-        function closeModal() {
-            modal.classList.remove('active');
-            document.body.classList.remove('modal-open');
-            
-            // Удаляем обработчик колесика
-            if (modal) {
-                modal.removeEventListener('wheel', handleModalWheel);
-            }
-            
-            setTimeout(() => {
-                modal.style.display = 'none';
-                if (youtubePlayer) youtubePlayer.src = '';
-                modalWheelDelta = 0;
-                isModalWheelScrolling = false;
-            }, 300);
-        }
-        
-        modalCurrentIndex = index;
-        updateModalContent();
-        
-        modal.style.display = 'flex';
-        setTimeout(() => {
-            modal.classList.add('active');
-            document.body.classList.add('modal-open');
-            
-            // Добавляем обработчик колесика мыши
-            modal.addEventListener('wheel', handleModalWheel, { passive: false });
-        }, 10);
-        
-        const closeModalBtn = document.getElementById('closeModal');
-        const modalPrevBtn = document.getElementById('modalPrev');
-        const modalNextBtn = document.getElementById('modalNext');
-        
-        const closeHandler = () => closeModal();
-        const prevHandler = () => modalPrev();
-        const nextHandler = () => modalNext();
-        
-        closeModalBtn.removeEventListener('click', closeHandler);
-        modalPrevBtn.removeEventListener('click', prevHandler);
-        modalNextBtn.removeEventListener('click', nextHandler);
-        
-        closeModalBtn.addEventListener('click', closeHandler);
-        modalPrevBtn.addEventListener('click', prevHandler);
-        modalNextBtn.addEventListener('click', nextHandler);
-        
-        modal.onclick = (e) => {
-            if (e.target === modal) closeModal();
-        };
-        
-        function keyHandler(e) {
-            if (!modal.classList.contains('active')) return;
-            if (e.key === 'Escape') closeModal();
-            if (e.key === 'ArrowRight') modalNext();
-            if (e.key === 'ArrowLeft') modalPrev();
-        }
-        
-        document.removeEventListener('keydown', keyHandler);
-        document.addEventListener('keydown', keyHandler);
     }
     
-    // Инициализация
-    function init() {
-        buildSlides();
+    const avatarQueue = new AvatarQueue(2, 500);
+    
+    async function loadDiscordAvatar(discordId, elementId) {
+        if (!discordId) return;
         
-        // Устанавливаем начальную позицию (первый реальный слайд, индекс 1)
-        setTimeout(() => {
-            const slideWidth = track.parentElement.clientWidth;
-            const offset = -currentIndex * slideWidth;
-            track.style.transform = `translateX(${offset}px)`;
-            updateCounter();
-        }, 50);
-        
-        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
-        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
-        
-        window.addEventListener('resize', handleResize);
-        
-        const carouselContainer = document.querySelector('.carousel-container');
-        if (carouselContainer) {
-            carouselContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
-            carouselContainer.addEventListener('touchend', handleTouchEnd);
+        return avatarQueue.add(async () => {
+            try {
+                const avatarElement = document.getElementById(elementId);
+                if (!avatarElement) return;
+                
+                // Получаем URL аватарки
+                let avatarUrl = getDiscordAvatar(discordId);
+                
+                if (avatarUrl) {
+                    // Пробуем загрузить изображение
+                    try {
+                        await tryLoadImage(avatarUrl, 3000);
+                        avatarElement.src = avatarUrl;
+                        avatarElement.style.opacity = '1';
+                    } catch (imgError) {
+                        // Если не удалось загрузить, пробуем fallback аватарку
+                        const fallbackAvatar = `https://cdn.discordapp.com/embed/avatars/${parseInt(discordId) % 5}.png`;
+                        try {
+                            await tryLoadImage(fallbackAvatar, 3000);
+                            avatarElement.src = fallbackAvatar;
+                            avatarElement.style.opacity = '1';
+                        } catch (fallbackError) {
+                            console.warn(`Не удалось загрузить аватар для ${discordId}`);
+                            avatarElement.style.opacity = '1';
+                        }
+                    }
+                } else {
+                    // Используем fallback аватарку
+                    const fallbackAvatar = `https://cdn.discordapp.com/embed/avatars/${parseInt(discordId) % 5}.png`;
+                    avatarElement.src = fallbackAvatar;
+                    avatarElement.style.opacity = '1';
+                }
+            } catch (error) {
+                console.warn(`Ошибка загрузки аватара для ${discordId}:`, error.message);
+            }
+        });
+    }
+    
+    function tryLoadImage(url, timeoutMs) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const timeout = setTimeout(() => {
+                cleanup();
+                reject(new Error(`Таймаут ${timeoutMs}ms`));
+            }, timeoutMs);
+            
+            function cleanup() {
+                clearTimeout(timeout);
+                img.onload = null;
+                img.onerror = null;
+            }
+            
+            img.onload = () => { cleanup(); resolve(url); };
+            img.onerror = () => { cleanup(); reject(new Error('Ошибка загрузки')); };
+            img.src = url.includes('?') ? `${url}&_=${Date.now()}` : `${url}?_=${Date.now()}`;
+        });
+    }
+    
+    function parseDateToTimestamp(dateString) {
+        try {
+            if (typeof dateString === 'number') return dateString;
+            return Math.floor(new Date(dateString).getTime() / 1000);
+        } catch (e) {
+            return 0;
         }
+    }
+    
+    function getBanStatus(userHwid, bansData) {
+        if (!bansData || typeof bansData !== 'object') return null;
+        
+        const banInfo = bansData[userHwid];
+        if (!banInfo) return null;
+        
+        const now = new Date();
+        const banTime = new Date(banInfo.ban_time);
+        const banTemp = banInfo.ban_temp;
+        
+        if (banTemp === "-1") {
+            return { isBanned: true, isPermanent: true, reason: banInfo.ban_reason || 'Не указана', banTime, banInfo };
+        }
+        
+        const banEnd = new Date(banTemp);
+        if (banEnd > now) {
+            return {
+                isBanned: true,
+                isPermanent: false,
+                reason: banInfo.ban_reason || 'Не указана',
+                banTime,
+                banEnd,
+                remainingTime: Math.ceil((banEnd - now) / (1000 * 60 * 60 * 24)),
+                banInfo
+            };
+        }
+        
+        return { isBanned: false, wasBanned: true, reason: banInfo.ban_reason, banTime, banEnd, banInfo };
+    }
+    
+    async function loadUsersData() {
+        try {
+            const [adminsData, hwidData, tempData, discordData, telegramData, bansData] = await Promise.allSettled([
+                fetchJsonData(config.adminsJsonUrl),
+                fetchJsonData(config.hwidJsonUrl),
+                fetchJsonData(config.tempJsonUrl),
+                fetchJsonData(config.discordJsonUrl),
+                fetchJsonData(config.telegramJsonUrl),
+                fetchJsonData(config.bansJsonUrl)
+            ]);
+            
+            const admins = adminsData.status === 'fulfilled' ? adminsData.value : { "Admins": [] };
+            const hwid = hwidData.status === 'fulfilled' ? hwidData.value : { "users:": [] };
+            const temp = tempData.status === 'fulfilled' ? tempData.value : {};
+            const discord = discordData.status === 'fulfilled' ? discordData.value : { "hwids": [] };
+            const telegram = telegramData.status === 'fulfilled' ? telegramData.value : { "bindings": [] };
+            const bans = bansData.status === 'fulfilled' ? bansData.value : {};
+            
+            const adminDiscordIds = admins.Admins || [];
+            
+            function getDiscordIdByHwid(hwid, discordData) {
+                if (discordData.hwids && Array.isArray(discordData.hwids)) {
+                    const entry = discordData.hwids.find(e => e.HWID === hwid);
+                    return entry ? `${entry.DISCORD}` : null;
+                }
+                return null;
+            }
+            
+            function getTelegramIdByHwid(hwid, telegramData) {
+                if (telegramData.bindings && Array.isArray(telegramData.bindings)) {
+                    const entry = telegramData.bindings.find(e => e.HWID === hwid);
+                    return entry ? `${entry.TELEGRAM}` : null;
+                }
+                return null;
+            }
+            
+            const usersList = [];
+            const bannedUsersList = [];
+            const activeUsers = hwid["users:"] || hwid.users || [];
+            
+            // Собираем все Discord ID для batch-запроса
+            const discordIdsToFetch = [];
+            
+            activeUsers.forEach((username) => {
+                const discordId = getDiscordIdByHwid(username, discord);
+                if (discordId && discordId !== 'null') discordIdsToFetch.push(discordId);
+            });
+            
+            // Дополнительно проверяем забаненных пользователей
+            if (bans && typeof bans === 'object') {
+                Object.keys(bans).forEach(bannedHwid => {
+                    const discordId = getDiscordIdByHwid(bannedHwid, discord);
+                    if (discordId && discordId !== 'null' && !discordIdsToFetch.includes(discordId)) {
+                        discordIdsToFetch.push(discordId);
+                    }
+                });
+            }
+            
+            // Загружаем данные Discord
+            if (discordIdsToFetch.length > 0) {
+                batchUserData = await fetchBatchDiscordUsers(discordIdsToFetch);
+            } else {
+                batchUserData = {};
+            }
+            
+            // Формируем список пользователей
+            activeUsers.forEach((username) => {
+                const discordId = getDiscordIdByHwid(username, discord);
+                const telegramId = getTelegramIdByHwid(username, telegram);
+                const endTime = temp[username] || 0;
+                const banStatus = getBanStatus(username, bans);
+                
+                const userData = {
+                    id: usersList.length + bannedUsersList.length + 1,
+                    sid: discordId && discordId !== 'null' ? discordId : null,
+                    telegramId: telegramId,
+                    hwid: username,
+                    name: username,
+                    flags: '999',
+                    immunity: 0,
+                    group_id: 'HWID',
+                    end: parseDateToTimestamp(endTime),
+                    server_id: 0,
+                    is_active: true,
+                    banStatus
+                };
+                
+                if (banStatus && banStatus.isBanned) {
+                    bannedUsersList.push(userData);
+                } else {
+                    usersList.push(userData);
+                }
+            });
+            
+            if (bans && typeof bans === 'object') {
+                Object.keys(bans).forEach(bannedHwid => {
+                    const alreadyExists = [...usersList, ...bannedUsersList].some(user => user.hwid === bannedHwid);
+                    
+                    if (!alreadyExists) {
+                        const banStatus = getBanStatus(bannedHwid, bans);
+                        
+                        if (banStatus && banStatus.isBanned) {
+                            const discordId = getDiscordIdByHwid(bannedHwid, discord);
+                            const telegramId = getTelegramIdByHwid(bannedHwid, telegram);
+                            
+                            bannedUsersList.push({
+                                id: usersList.length + bannedUsersList.length + 1,
+                                sid: discordId && discordId !== 'null' ? discordId : null,
+                                telegramId: telegramId,
+                                hwid: bannedHwid,
+                                name: bannedHwid,
+                                flags: '0',
+                                immunity: 0,
+                                group_id: 'Блокировка',
+                                end: 0,
+                                server_id: 0,
+                                is_active: false,
+                                banStatus
+                            });
+                        }
+                    }
+                });
+            }
+            
+            const allUsers = [...usersList, ...bannedUsersList];
+            
+            allUsers.sort((a, b) => {
+                const aRole = getUserRole(a.sid, adminDiscordIds);
+                const bRole = getUserRole(b.sid, adminDiscordIds);
+                
+                if (aRole === 'creator') return -1;
+                if (bRole === 'creator') return 1;
+                if (aRole === 'bot') return -1;
+                if (bRole === 'bot') return 1;
+                if (aRole === 'admin' && bRole !== 'admin') return -1;
+                if (bRole === 'admin' && aRole !== 'admin') return 1;
+                if (a.banStatus?.isBanned && !b.banStatus?.isBanned) return 1;
+                if (!a.banStatus?.isBanned && b.banStatus?.isBanned) return -1;
+                if (a.is_active && !b.is_active) return -1;
+                if (!a.is_active && b.is_active) return 1;
+                return 0;
+            });
+            
+            displayUsers(allUsers, adminDiscordIds);
+        } catch (error) {
+            console.error('Ошибка загрузки:', error);
+            document.getElementById('adminListTitle').textContent = 'Ошибка загрузки данных';
+        }
+    }
+    
+    function displayUsers(users, adminDiscordIds) {
+        const adminListTitle = document.getElementById('adminListTitle');
+        const adminListBlocks = document.getElementById('adminListBlocks');
+        
+        const activeUsers = users.filter(user => user.is_active && (!user.banStatus || !user.banStatus.isBanned));
+        const bannedUsers = users.filter(user => user.banStatus && user.banStatus.isBanned);
+        
+        adminListTitle.textContent = `Подписки: ${activeUsers.length} - Баны: ${bannedUsers.length}`;
+        adminListBlocks.innerHTML = '';
+        
+        const avatarPromisesList = [];
+        
+        users.forEach(user => {
+            const userRole = getUserRole(user.sid, adminDiscordIds);
+            const banStatus = user.banStatus;
+            
+            const userCard = document.createElement('div');
+            userCard.className = 'admin_card';
+            userCard.id = `block-${userRole}`;
+            if (banStatus?.isBanned) userCard.classList.add('banned-user');
+            
+            let endText = 'Не указано';
+            if (user.end === 0) {
+                endText = user.is_active ? 'Навсегда' : 'Навсегда';
+            } else if (user.end > 0 && user.end * 1000 > Date.now()) {
+                endText = `До ${new Date(user.end * 1000).toLocaleDateString('ru-RU')}`;
+            } else if (user.end > 0 && user.end * 1000 <= Date.now()) {
+                endText = 'Истек';
+            }
+            
+            let banText = '', banEnd = '', banReason = '';
+            if (banStatus) {
+                if (banStatus.isBanned) {
+                    banText = 'Блок';
+                    banEnd = banStatus.isPermanent ? 'Навсегда' : `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
+                    banReason = `Причина: ${banStatus.reason}`;
+                } else if (banStatus.wasBanned) {
+                    banText = 'Блок истек';
+                    banEnd = `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
+                    banReason = `Причина: ${banStatus.reason}`;
+                }
+            }
+            
+            const usernameSpanId = `username-${user.sid || user.hwid}`.replace(/[^a-zA-Z0-9-]/g, '_');
+            const displayName = user.sid ? getDiscordUsername(user.sid, user.name) : user.name;
+            
+            userCard.innerHTML = `
+            <div id="admins_card">
+                <div class="adminlist_info">
+                    <div class="avatar_block">
+                        <div class="avatar_letter">${user.name.charAt(0).toUpperCase()}</div>
+                        <div style="display: flex; gap: 3px; flex-direction: column;">
+                            <a href="./profile?hwid=${user.name}" target="_blank">
+                                <img class="admins_avatar" id="user-${user.sid || user.hwid}-avatar" src="./images/none.png" alt="">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="adminlist_buttons">
+                        <div id="admins_info">
+                        <div class="admin_term">
+                        <div class="adminlist_button steam_button" id="tag-${banStatus && !banStatus.wasBanned ? 'banned' : userRole}">
+                        <span>${userRole === 'creator' ? 'Создатель' : (userRole === 'admin' ? 'Партнёр' : (userRole === 'bot' ? 'Менеджер' : (banStatus && !banStatus.wasBanned ? 'Забанен' : 'Игрок')))}</span>
+                        </div>
+                        ${!(banStatus && !banStatus.wasBanned) ? `
+                            <div class="admin_group">
+                                <span class="admin_group_text">${user.group_id}</span>
+                            </div>`:``
+                        }
+                        <span class="admin_term_text">${banText ? banEnd : endText}</span>
+                        </div>
+                        <span class="admin_nickname">${user.name}</span>
+                            ${!(banStatus && !banStatus.wasBanned) && (user.sid || user.telegramId) ? 
+                            `${user.sid ? `<div id="link_block">
+                                <a 
+                                href="https://discord.com/users/${user.sid}" 
+                                target="_blank" 
+                                id="link_prof" 
+                                class="discord-link DS" 
+                                data-discord-id="${user.sid}" 
+                                data-original-name="${user.name}">
+                                    <svg viewBox="0 0 24 24"><path d="M14.82 4.26a10.14 10.14 0 0 0-.53 1.1 14.66 14.66 0 0 0-4.58 0 10.14 10.14 0 0 0-.53-1.1 16 16 0 0 0-4.13 1.3 17.33 17.33 0 0 0-3 11.59 16.6 16.6 0 0 0 5.07 2.59A12.89 12.89 0 0 0 8.23 18a9.65 9.65 0 0 1-1.71-.83 3.39 3.39 0 0 0 .42-.33 11.66 11.66 0 0 0 10.12 0c.14.09.28.19.42.33a10.14 10.14 0 0 1-1.71.83 12.89 12.89 0 0 0 1.08 1.78 16.44 16.44 0 0 0 5.06-2.59 17.22 17.22 0 0 0-3-11.59 16.09 16.09 0 0 0-4.09-1.35zM8.68 14.81a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.93 1.93 0 0 1 1.8 2 1.93 1.93 0 0 1-1.8 2zm6.64 0a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.92 1.92 0 0 1 1.8 2 1.92 1.92 0 0 1-1.8 2z"/></svg>
+                                    <span class="discord-username" id="${usernameSpanId}">${displayName}</span>
+                                </a>` : ''}
+                                ${user.telegramId ? `<a 
+                                target="_blank"
+                                id="link_prof"
+                                class="discord-link telegram-link TG"
+                                data-discord-id="${user.sid}"
+                                data-original-name="${user.name}">
+                                    <svg viewBox="0 0 100 100"><path d="M89.442 11.418c-12.533 5.19-66.27 27.449-81.118 33.516-9.958 3.886-4.129 7.529-4.129 7.529s8.5 2.914 15.786 5.1 11.172-.243 11.172-.243l34.244-23.073c12.143-8.257 9.229-1.457 6.315 1.457-6.315 6.315-16.758 16.272-25.501 24.287-3.886 3.4-1.943 6.315-.243 7.772 6.315 5.343 23.558 16.272 24.53 17.001 5.131 3.632 15.223 8.861 16.758-2.186l6.072-38.13c1.943-12.872 3.886-24.773 4.129-28.173.728-8.257-8.015-4.857-8.015-4.857z"/></svg>
+                                    <span class="discord-username">ID: ${user.telegramId}</span>
+                                </a>` : ''}` : 
+                                `${!(banStatus && !banStatus.wasBanned) ? `<a 
+                                target="_blank" 
+                                id="link_prof" 
+                                style="max-width: 100%;" 
+                                class="discord-link">
+                                    <p id="no-link">Без привязки</p>
+                                </a>` : ''}
+                                ${banStatus && !banStatus.wasBanned ? `<div 
+                                class="admin_term_reason">
+                                    ${banStatus.reason}
+                                </div>` : ''}
+                            </div>`}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            
+            adminListBlocks.appendChild(userCard);
+            
+            // Загружаем аватар
+            if (user.sid) {
+                avatarPromisesList.push(loadDiscordAvatar(user.sid, `user-${user.sid || user.hwid}-avatar`));
+            }
+        });
+        
+        Promise.allSettled(avatarPromisesList).then(() => console.log('Загрузка аватаров завершена'));
+    }
+    
+    function init() {
+        loadUsersData();
     }
     
     init();
-})();
-
-// ========== АДМИН ЛИСТ И СКРОЛЛ ==========
-const adminList = document.getElementById('adminListBlocks');
-const scrollUp = document.getElementById('scrollUp');
-const scrollDown = document.getElementById('scrollDown');
-const gradientTop = document.getElementById('gradientTop');
-const gradientBottom = document.getElementById('gradientBottom');
-let scrollInterval;
-
-function startScrolling(direction) {
-    scrollInterval = setInterval(() => {
-        adminList.scrollBy({ top: direction * 520, behavior: 'smooth' });
-        checkScrollEffects();
-    }, 30);
-}
-
-function stopScrolling() {
-    clearInterval(scrollInterval);
-}
-
-function checkScrollEffects() {
-    if (!adminList) return;
-    const scrollTop = adminList.scrollTop;
-    const scrollHeight = adminList.scrollHeight;
-    const clientHeight = adminList.clientHeight;
-    
-    if (scrollTop <= 0) {
-        if (scrollUp) scrollUp.classList.add('hidden');
-        if (gradientTop) gradientTop.classList.add('hidden');
-    } else {
-        if (scrollUp) scrollUp.classList.remove('hidden');
-        if (gradientTop) gradientTop.classList.remove('hidden');
-    }
-    
-    if (scrollTop + clientHeight >= scrollHeight - 1) {
-        if (scrollDown) scrollDown.classList.add('hidden');
-        if (gradientBottom) gradientBottom.classList.add('hidden');
-    } else {
-        if (scrollDown) scrollDown.classList.remove('hidden');
-        if (gradientBottom) gradientBottom.classList.remove('hidden');
-    }
-}
-
-if (scrollUp) {
-    scrollUp.addEventListener('mousedown', () => startScrolling(-1));
-    scrollUp.addEventListener('mouseup', stopScrolling);
-    scrollUp.addEventListener('mouseleave', stopScrolling);
-}
-if (scrollDown) {
-    scrollDown.addEventListener('mousedown', () => startScrolling(1));
-    scrollDown.addEventListener('mouseup', stopScrolling);
-    scrollDown.addEventListener('mouseleave', stopScrolling);
-}
-if (adminList) {
-    adminList.addEventListener('scroll', checkScrollEffects);
-}
-
-window.addEventListener('load', () => {
-    setTimeout(checkScrollEffects, 500);
 });
