@@ -1324,7 +1324,7 @@ const paymentMethods = [
     {
         id: 'cloudtips',
         name: 'CloudTips',
-        icon: '/cloudtips.png',
+        icon: '/cloudtips.svg',
         available: true,
         getLink: (selectedTariff) => {
             if (!selectedTariff) return '#';
@@ -1336,7 +1336,7 @@ const paymentMethods = [
     {
         id: 'ozonbank',
         name: 'Ozon Банк',
-        icon: '/ozonbank.png',
+        icon: '/ozonbank.svg',
         available: !OZON_UNAVAILABLE,   // false = недоступно
         getLink: () => OZON_COMMON_LINK,
         warningText: '💰 Сумму нужно указать вручную<br>После оплаты обязательно оповестите продавца!',
@@ -1345,7 +1345,7 @@ const paymentMethods = [
     {
         id: 'yoomoney',
         name: 'YooMoney',
-        icon: '/yoomoney.png',
+        icon: '/yoomoney.svg',
         available: !YOOMONEY_UNAVAILABLE,
         getLink: () => YOOMONEY_COMMON_LINK,
         warningText: '💰 Укажите точную сумму к оплате вручную<br>После оплаты обязательно оповестите продавца!',
