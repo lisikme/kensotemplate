@@ -1,4 +1,4 @@
-// main.js - галерея с бесконечной прокруткой, без кружков снизу
+// main.js - обновленный скрипт для галереи с прокруткой колесиком в модальном окне
 
 // price.js - данные о ценах и функция отображения
 
@@ -315,7 +315,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // ========== МОДАЛЬНОЕ ОКНО ==========
+    // ========== МОДАЛЬНОЕ ОКНО С ПОДДЕРЖКОЙ КОЛЕСИКА МЫШИ ==========
+    let modalWheelTimeout = null;
+    let modalWheelDelta = 0;
+    let isModalWheelScrolling = false;
+    
     function openModalByIndex(index) {
         const slide = originalSlides[index];
         if (!slide) return;
@@ -360,6 +364,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let modalCurrentIndex = index;
         
+        // Функция для проверки, находится ли мышь над iframe YouTube
+        function isMouseOverYouTubeIframe(e) {
+            if (!youtubePlayer) return false;
+            const iframe = youtubePlayer;
+            const rect = iframe.getBoundingClientRect();
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            return mouseX >= rect.left && mouseX <= rect.right && mouseY >= rect.top && mouseY <= rect.bottom;
+        }
+        
+        // Функция для обновления контента модального окна
         function updateModalContent() {
             const currentSlide = originalSlides[modalCurrentIndex];
             if (modalImage) modalImage.style.display = 'none';
@@ -383,9 +398,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        // Функции навигации
         function modalNext() {
             if (modalCurrentIndex < originalSlides.length - 1) {
                 modalCurrentIndex++;
+                updateModalContent();
+            } else if (modalCurrentIndex === originalSlides.length - 1) {
+                // Бесконечная прокрутка: с последнего на первый
+                modalCurrentIndex = 0;
                 updateModalContent();
             }
         }
@@ -394,15 +414,71 @@ document.addEventListener('DOMContentLoaded', function() {
             if (modalCurrentIndex > 0) {
                 modalCurrentIndex--;
                 updateModalContent();
+            } else if (modalCurrentIndex === 0) {
+                // Бесконечная прокрутка: с первого на последний
+                modalCurrentIndex = originalSlides.length - 1;
+                updateModalContent();
             }
+        }
+        
+        // Обработчик колесика мыши для модального окна
+        function handleModalWheel(e) {
+            // Проверяем, находится ли мышь над iframe YouTube
+            if (isMouseOverYouTubeIframe(e)) {
+                // Если мышь над YouTube iframe - не переключаем слайды
+                return;
+            }
+            
+            e.preventDefault();
+            
+            // Накопление дельты для более плавного скролла
+            modalWheelDelta += e.deltaY;
+            
+            if (modalWheelTimeout) clearTimeout(modalWheelTimeout);
+            
+            // Порог срабатывания (чувствительность)
+            const threshold = 50;
+            
+            if (modalWheelDelta >= threshold) {
+                modalWheelDelta = 0;
+                if (!isModalWheelScrolling) {
+                    isModalWheelScrolling = true;
+                    modalNext();
+                    setTimeout(() => {
+                        isModalWheelScrolling = false;
+                    }, 50);
+                }
+            } else if (modalWheelDelta <= -threshold) {
+                modalWheelDelta = 0;
+                if (!isModalWheelScrolling) {
+                    isModalWheelScrolling = true;
+                    modalPrev();
+                    setTimeout(() => {
+                        isModalWheelScrolling = false;
+                    }, 50);
+                }
+            }
+            
+            // Сброс накопленной дельты через некоторое время бездействия
+            modalWheelTimeout = setTimeout(() => {
+                modalWheelDelta = 0;
+            }, 200);
         }
         
         function closeModal() {
             modal.classList.remove('active');
             document.body.classList.remove('modal-open');
+            
+            // Удаляем обработчик колесика
+            if (modal) {
+                modal.removeEventListener('wheel', handleModalWheel);
+            }
+            
             setTimeout(() => {
                 modal.style.display = 'none';
                 if (youtubePlayer) youtubePlayer.src = '';
+                modalWheelDelta = 0;
+                isModalWheelScrolling = false;
             }, 300);
         }
         
@@ -413,6 +489,9 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             modal.classList.add('active');
             document.body.classList.add('modal-open');
+            
+            // Добавляем обработчик колесика мыши
+            modal.addEventListener('wheel', handleModalWheel, { passive: false });
         }, 10);
         
         const closeModalBtn = document.getElementById('closeModal');
