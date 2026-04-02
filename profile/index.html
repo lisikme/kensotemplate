@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="../main.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KensoUltra+ | Профиль</title>
-    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="shortcut icon" href="../favicon.ico">
     
     <!-- Подключение стилей -->
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="../style.css">
     
     <style>
         /* Дополнительные стили для страницы профиля */
@@ -186,11 +186,18 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            color: #3278ff;
+            font-size: 14px;
+            color: #9eff91;
             text-decoration: none;
             font-weight: 500;
-            margin-bottom: 20px;
+            margin-bottom: 5px;
             transition: color 0.3s ease;
+
+
+            border: 1px solid #303030;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: #010101;
         }
         
         .back-link:hover {
@@ -203,9 +210,13 @@
             color: #d7fe7b;
         }
         
+        .error > p {
+            margin: 0;
+        }
         .error {
             text-align: center;
-            padding: 40px;
+            font-size: 14px;
+            padding: 20px 0;
             color: #ff5757;
         }
         
@@ -331,7 +342,7 @@
             <div class="header-container">
                 <a href="/">
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <img src="/logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
+                        <img src="../logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
                         <div class="logo">
                             <div class="site-name">KensoUltra+</div>
                             <span class="by-kelix">For nixware.cc - by Kelix.me</span>
@@ -520,10 +531,10 @@
     </style>
     
     <a href="https://vk.com/kensolua" class="nav-link social" target="_blank">
-        <img src="/vk.svg" width="12" height="12">
+        <img src="../vk.svg" width="12" height="12">
     </a>
     <a href="https://discord.gg/5BM4XD3qxM" class="nav-link social" target="_blank">
-        <img src="/discord.svg" width="12" height="12">
+        <img src="../discord.svg" width="12" height="12">
     </a>
 <style>
     /* Стили для контекстного меню - ОБНОВЛЕННЫЕ */
@@ -1062,7 +1073,7 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
             </svg>
-            Назад к списку пользователей
+            Вернутся назад
         </a>
         
         <div id="profileContent">
@@ -1759,4 +1770,4 @@
     </script>
 </body>
 </html>
-<link rel="stylesheet" href="/main.css">
+<link rel="stylesheet" href="../main.css">
