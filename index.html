@@ -772,12 +772,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const btn_logout = document.querySelector('.btn_logout');
                 const avatar = btn_logout.querySelector('.avatar-account').querySelector('.avatar');
                 const username = btn_logout.querySelector('.nav-bt-title');
-                const reviewbutton = btn_logout.querySelector('.add-review-btn');
-                const triggerButton = document.getElementById('x7k9m2p4_addReviewTrigger_btn');
                 if (user == 'Гость') {
-                    triggerButton.style.display = 'none'
+                    document.querySelector('.revlogout').style = 'display: inline-flex !important'
+                    document.querySelector('.revlogin').remove()
                 } else {
-                    triggerButton.style.display = 'inline-flex'
+                    document.querySelector('.revlogin').style = 'display: inline-flex !important'
+                    document.querySelector('.revlogout').remove()
                 }
 
                 if (user == 'Гость') {
@@ -1336,11 +1336,43 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="reviews-section">
     <div class="reviews-header">
         <div class="reviews-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" fill="#d7fe7b" stroke="#d7fe7b"/>
-            </svg>
-            Отзывы    
-            <button class="add-review-btn" id="x7k9m2p4_addReviewTrigger_btn">Написать</button>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" fill="#d7fe7b" stroke="#d7fe7b"/></svg>Отзывы
+            
+            <style>
+                .revlogout {
+                    background: #360000;
+                    border: #940000 solid 1px !important;
+                    color: #ff9090;
+                }
+                .revlogout:hover {
+                    background: #520000;
+                }
+                .revlogout, .revlogin {
+                    display: none !important;
+                    position: relative;
+                }
+                .revlogout::after {
+                    position: absolute;
+                    top: 25px;
+                    background: #3f0000;
+                    opacity: 0;
+                    color: #fff;
+                    width: max-content;
+                    padding: 5px 15px;
+                    z-index: 100;
+                    border: 1px solid #ff5b5b;
+                    border-radius: 3px;
+                    content: 'Требуется вход';
+                    transition: all 0.3s;
+
+                }
+                .revlogout:hover::after {
+                    opacity: 1;
+                }
+            </style>
+            
+            <button class="revlogin add-review-btn" id="x7k9m2p4_addReviewTrigger_btn">Написать</button>
+            <button class="revlogout add-review-btn" onclick="loginWithDiscord()">Написать</button>
         </div>
         <div class="reviews-header-right">
             <div class="review-stats" id="reviewStats">
