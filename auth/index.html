@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KensoUltra+ | Авторизация...</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        .loader {
+            text-align: center;
+            color: #d7fe7b;
+        }
+        .loader svg {
+            width: 48px;
+            height: 48px;
+            animation: spin 0s linear infinite;
+        }
+        .loader p {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #888;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <img src="/discord.svg" alt="" width="50px">
+        <p>Загрузка Discord OAuth2...</p>
+    </div>
+
+    <script>
+        // ==================== КОНФИГУРАЦИЯ ====================
+        const CLIENT_ID = '1488460305519476756';
+        const REDIRECT_URI = window.location.origin + '/auth';
+        
+        // Cookie Manager
+        const CookieManager = {
+            set: (name, value, days = 7) => {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                document.cookie = `${name}=${JSON.stringify(value)};expires=${date.toUTCString()};path=/;SameSite=Lax`;
+            },
+            get: (name) => {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return JSON.parse(parts.pop().split(';').shift());
+                return null;
+            },
+            delete: (name) => {
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            }
+        };
+        
+        // Функция получения URL для возврата
+        function getReturnUrl() {
+            // Сначала проверяем сохраненный referrer
+            let returnUrl = CookieManager.get('redirect_before_login');
+            
+            // Если нет сохраненного, пробуем получить из document.referrer
+            if (!returnUrl && document.referrer) {
+                const referrerUrl = new URL(document.referrer);
+                // Проверяем, что referrer с того же домена
+                if (referrerUrl.origin === window.location.origin) {
+                    returnUrl = referrerUrl.pathname + referrerUrl.search;
+                }
+            }
+            
+            // Если все еще нет, возвращаем главную
+            if (!returnUrl || returnUrl === '/auth' || returnUrl === '/auth?' || returnUrl === '') {
+                return '/';
+            }
+            
+            return returnUrl;
+        }
+        
+        // Сохраняем referrer перед перенаправлением на Discord
+        function saveCurrentUrlBeforeAuth() {
+            let returnUrl = null;
+            
+            // Получаем referrer
+            if (document.referrer) {
+                const referrerUrl = new URL(document.referrer);
+                if (referrerUrl.origin === window.location.origin) {
+                    returnUrl = referrerUrl.pathname + referrerUrl.search;
+                }
+            }
+            
+            // Сохраняем только если есть валидный URL и это не страница авторизации
+            if (returnUrl && returnUrl !== '/auth' && returnUrl !== '/auth?') {
+                CookieManager.set('redirect_before_login', returnUrl, 1);
+            }
+        }
+        
+        // Проверяем, есть ли уже авторизация
+        function isAlreadyAuthenticated() {
+            const userData = CookieManager.get('discord_user');
+            return userData && userData.id;
+        }
+        
+        // Получаем пользователя по токену из URL
+        async function getUserFromToken(token) {
+            try {
+                const response = await fetch('https://discord.com/api/users/@me', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error();
+                return await response.json();
+            } catch (err) {
+                console.error('Ошибка получения данных Discord:', err);
+                return null;
+            }
+        }
+        
+        // Основная логика страницы авторизации
+        async function handleAuth() {
+            // Шаг 1: Проверяем hash на наличие access_token (возврат от Discord)
+            const hash = window.location.hash;
+            
+            if (hash && hash.includes('access_token')) {
+                // Мы вернулись от Discord с токеном
+                const params = new URLSearchParams(hash.substring(1));
+                const token = params.get('access_token');
+                
+                if (token) {
+                    const userData = await getUserFromToken(token);
+                    if (userData && userData.id) {
+                        // Сохраняем пользователя в cookies
+                        CookieManager.set('discord_user', userData, 7);
+                        
+                        // Очищаем hash из URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        
+                        // Перенаправляем на сохраненную страницу
+                        const returnUrl = getReturnUrl();
+                        window.location.href = returnUrl;
+                        return;
+                    }
+                }
+            }
+            
+            // Шаг 2: Проверяем, есть ли уже активная сессия
+            if (isAlreadyAuthenticated()) {
+                // Уже авторизован - перенаправляем обратно
+                const returnUrl = getReturnUrl();
+                window.location.href = returnUrl;
+                return;
+            }
+            
+            // Шаг 3: Нет авторизации - перенаправляем на Discord OAuth
+            saveCurrentUrlBeforeAuth();
+            const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
+            window.location.href = discordAuthUrl;
+        }
+        
+        // Запускаем процесс авторизации
+        handleAuth();
+    </script>
+</body>
+</html>

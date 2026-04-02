@@ -16,7 +16,7 @@
         <meta property="og:image" content="https://kenso.ketame.ru/logo.png">
         <meta property="og:site_name" content="KensoLUA">
         <meta property="og:locale" content="ru_RU">
-        <link rel="shortcut icon" href="./favicon.ico">
+        <link rel="shortcut icon" href="/favicon.ico">
         <!-- Twitter Card -->
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="KensoUltra - Мощный LUA скрипт для CS2">
@@ -31,9 +31,9 @@
         <!-- Шапка сайта -->
         <header class="site-header">
             <div class="header-container">
-                <a href="https://kenso.ketame.ru">
+                <a href="/">
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <img src="./logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
+                        <img src="/logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
                         <div class="logo">
                             <div class="site-name">KensoUltra+</div>
                             <span class="by-kelix">For nixware.cc - by Kelix.me</span>
@@ -740,7 +740,7 @@ async function updateHwidInfoInContextMenu() {
 function openFullProfile(e) {
     if (e) e.stopPropagation();
     if (cachedUserHwidInfo) {
-        window.location.href = `./profile?hwid=${encodeURIComponent(cachedUserHwidInfo.hwid)}`;
+        window.location.href = `/profile?hwid=${encodeURIComponent(cachedUserHwidInfo.hwid)}`;
     }
 }
 
@@ -889,8 +889,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function loginWithDiscord() {
-        const url = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
-        window.location.href = url;
+        const url = `/auth`;
+        window.location.href = window.location.origin + url;
     }
     
     function logout() {
@@ -915,13 +915,19 @@ document.addEventListener('DOMContentLoaded', () => {
         margin-top: 3px;
     }
 </style>
-
-
-
-
-
-
         </header>
+
+
+
+
+
+
+
+
+
+
+
+        
     </head>
     <body>
         <!-- Новый блок с галереей и кнопками -->
@@ -938,81 +944,81 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="gallery-wrapper">
                             <div class="gallery-container" id="galleryContainer">
                                 <div class="gallery-item video-item" data-type="video" data-youtube-id="Lch7Ve9ntsA">
-                                    <img src="./images/1.png">
+                                    <img src="/images/1.png">
                                     <div class="video-label">ВИДЕО</div>
                                     <div class="gallery-overlay"><span>Смотреть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/promo.png">
+                                    <img src="/images/promo.png">
                                     <div class="video-label">АКЦИЯ</div>
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/2.png">
+                                    <img src="/images/2.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/3.png">
+                                    <img src="/images/3.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/4.png">
+                                    <img src="/images/4.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/5.png">
+                                    <img src="/images/5.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/6.png">
+                                    <img src="/images/6.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/7.png">
+                                    <img src="/images/7.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/8.png">
+                                    <img src="/images/8.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/9.png">
+                                    <img src="/images/9.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/10.png">
+                                    <img src="/images/10.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/11.png">
+                                    <img src="/images/11.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/12.png">
+                                    <img src="/images/12.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/13.png">
+                                    <img src="/images/13.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/14.png">
+                                    <img src="/images/14.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/15.png">
+                                    <img src="/images/15.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/16.png">
+                                    <img src="/images/16.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/17.png">
+                                    <img src="/images/17.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                                 <div class="gallery-item">
-                                    <img src="./images/18.png">
+                                    <img src="/images/18.png">
                                     <div class="gallery-overlay"><span>Открыть</span></div>
                                 </div>
                             </div>
@@ -1066,11 +1072,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <div class="dropdown-title">Выберите метод связи для покупки</div>
                                         <div class="dropdown-box">
                                             <a href="https://t.me/kelixme" target="_blank" class="dropdown-item">
-                                                <img src="./telegram.ico" width="16" height="16" alt="">
+                                                <img src="/telegram.ico" width="16" height="16" alt="">
                                                 Чат создателя
                                             </a>
                                             <a href="https://vk.me/kensolua" target="_blank" class="dropdown-item">
-                                                <img src="./vk.ico" width="16" height="16" alt="">
+                                                <img src="/vk.ico" width="16" height="16" alt="">
                                                 Чат сообщества
                                             </a>
                                         </div>
@@ -1165,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 <li>Натройка громкости звуков/музыки/радио.</li>
                                                 <li>Режим: <span class="sub-tag2">[Game]</span> - Встроенные звуки в игру.</li>
                                                 <li>Режим: <span class="sub-tag2">[Auto]</span> - Автоматически находит звуки
-                                                    <br>в папке игры <span class="sub-tag">./sounds/hitsounds/</span>
+                                                    <br>в папке игры <span class="sub-tag">/sounds/hitsounds/</span>
                                                 </li>
                                                 <li>Режим: <span class="sub-tag2">[Custom]</span> - Ипользует звуки 
                                                     <br>указаные в <span class="sub-tag">hitsounds.json</span>
@@ -2170,12 +2176,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 </script>
-
-
-
-
-
-
                             <div class="scroll-container">
                                 <div class="adminlist_title" id="adminListTitle"></div>
                                 <div class="scroll-gradient top" id="gradientTop" style="display: none;"></div>
@@ -2233,4 +2233,4 @@ document.addEventListener('DOMContentLoaded', function() {
         left: 0;
     }
 </style>
-<a href="https://kenso.ketame.ru/market" target="_blank" id="dev-shop">Донат</a>
+<a href="/market" target="_blank" id="dev-shop">Донат</a>
