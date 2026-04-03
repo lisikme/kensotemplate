@@ -1807,7 +1807,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (user.end === 0) {
                 endText = user.is_active ? 'Навсегда' : 'Навсегда';
             } else if (user.end > 0 && user.end * 1000 > Date.now()) {
-                endText = `До ${new Date(user.end * 1000).toLocaleDateString('ru-RU')}`;
+                // endText = `До ${new Date(user.end * 1000).toLocaleDateString('ru-RU')}`;
+                endText = `До ${new Date(user.end * 1000).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}`;
             } else if (user.end > 0 && user.end * 1000 <= Date.now()) {
                 endText = 'Истек';
             }
@@ -1816,7 +1817,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (banStatus) {
                 if (banStatus.isBanned) {
                     banText = 'Блок';
-                    banEnd = banStatus.isPermanent ? 'Навсегда' : `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
+                    // banEnd = banStatus.isPermanent ? 'Навсегда' : `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}`;
+                    banEnd = banStatus.isPermanent ? 'Навсегда' : `До ${banStatus.banEnd.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}`;
                     banReason = `Причина: ${banStatus.reason}`;
                 } else if (banStatus.wasBanned) {
                     banText = 'Блок истек';
