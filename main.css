@@ -2452,6 +2452,36 @@ a:link, a:visited, a:hover, a:active {
         border-top-width: 0px;
         border-radius: 0px 0px 3px 3px;
     }
+
+
+
+
+
+
+
+
+
+/* Дизайн скрол-бара */
+.reviews-container::-webkit-scrollbar{
+    background-color: var(--Background);
+    width: 0;
+}
+.reviews-container::-webkit-scrollbar{
+    width: var(--Width);
+    height: 7px;
+    background-color: var(--Background);
+}
+.reviews-container::-webkit-scrollbar-thumb{
+    background-color: var(--ColorNone);
+    border-radius: var(--Radius);
+    min-height: 30px;
+    width: var(--Width);
+    border: 1px solid var(--Background);
+}
+.reviews-container::-webkit-scrollbar-thumb:hover{
+    background-color: var(--ColorCursor);
+}
+
     .reviews-container::-webkit-scrollbar {
         width: 4px;
     }
@@ -2459,6 +2489,15 @@ a:link, a:visited, a:hover, a:active {
         background: #d7fe7b;
         border-radius: 2px;
     }
+
+
+
+
+
+
+
+
+
     .empty-reviews {
         display: flex;
         flex-direction: column;
@@ -2693,6 +2732,7 @@ a:link, a:visited, a:hover, a:active {
 }
 
 .carousel-track {
+    transform: translateX(-398px);
     display: flex;
     transition: all 0.2s;
     will-change: transform;

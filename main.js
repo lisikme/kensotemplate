@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setPositionWithoutAnimation(currentIndex);
                 updateCounter();
             }
-        }, 400);
+        }, 100);
     }
     
     // Следующий слайд
