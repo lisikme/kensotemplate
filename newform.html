@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма отзыва с рейтингом</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Unbounded", sans-serif;
+        }
+        
+        html, body, .form-container{
+            background: #0E0E0E !important;
+        }
+        .container {
+            margin: 0 auto;
+            background: white;
+            overflow: hidden;
+        }
+
+        .header {
+            border-bottom: 1px solid #303030 !important;
+            background: #000000;
+            color: white;
+            padding: 10px;
+            display: flex;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .header div {
+            font-size: 20px;
+            line-height: 20px;
+            font-weight: 600;
+            color: #d7fe7b;
+            
+        }
+
+        .header p {
+            color: #7cb9ff;
+            line-height: 14px;
+            font-size: 14px;
+        }
+
+        .form-container {
+            padding: 10px;
+        }
+
+        .form-group {
+            border: 1px solid #303030 !important;
+            border-radius: 5px;
+            padding: 5px;
+            overflow: hidden;
+            flex-direction: column;
+            display: flex;
+            gap: 5px;
+        }
+
+        .subtitle-form{            
+            color: rgb(126, 126, 126) !important;
+            font-size: 10px;
+            line-height: 10px;
+            font-style: italic;
+        }
+        .title-form{    
+            font-size: 14px;    
+            line-height: 14px;
+            background: linear-gradient(135deg, #d7fe7b 0%, #b8e35e 100%) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            color: transparent !important;
+            font-style: italic;
+        }
+
+        label {
+            padding: 0px 2px;
+            font-size: 14px;
+            font-weight: bolder;
+            display: block;
+            color: #333;
+        }
+
+        .required-star {
+            color: #e74c3c;
+            margin-left: 4px;
+        }
+
+        input, select, textarea {
+            background: #0E0E0E;
+            background: rgb(8, 8, 8);
+            border-color: #303030;
+            color: #ffffff;
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid rgb(48, 48, 48);
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Стили для рейтинга звездами */
+        .rating {
+            flex: 1;
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+
+        .rating input {
+            display: none;
+        }
+        
+        .rating label {
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+            margin: 0;
+        }
+
+        .rating label:hover,
+        .rating label:hover ~ label,
+        .rating input:checked ~ label {
+            color: #ffc107;
+        }
+
+        /* Стили для скрытого поля */
+        .hidden-field {
+            display: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #0E0E0E;
+            border: 1px solid #6d6dff;
+            background: linear-gradient(135deg, rgba(50, 120, 255, 0.2), rgba(106, 17, 203, 0.2));
+            color: white;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            border: 1px solid #d7fe7b;
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 5px !important;
+            padding: 10px;
+            border: 1px solid rgb(48, 48, 48);
+            border-radius: 5px;
+            background: #000000;
+            max-width: 500px;
+            margin: auto;
+            gap: 10px;
+            justify-content: center
+        }
+
+        .loading.show {
+            display: flex;
+        }
+        .star-icon{
+            width: 30px;
+            padding: 1px 0px;
+            display: block;
+        }
+
+        .loading > p {
+            display: flex;
+            /* flex: 1; */
+            margin: 0 !important;
+            color: #929292;
+            align-items: center;
+        }
+
+        .spinner {
+            border: 2px solid #1f1f1f;
+            border-top: 2px solid #7d7fff;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            animation: spin 0.5s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            color: #666;
+            border-left: 4px solid #667eea;
+        }
+
+        .star-icon {
+            fill: #505050;
+            stroke: #505050;
+            transition: all 0.2s;
+        }
+        .star-icon.empty {
+            fill: #505050;
+            stroke: #505050;
+        }
+        .star-icon.filled{
+            fill: #ffb347;
+            stroke: #ffb347;
+        }
+        #dataForm{
+            padding: 10px;
+            border-radius: 5px;
+            gap: 5px;
+            display: flex;
+            max-width: 500px;
+            margin: 0 auto;
+            background: #010101;
+            flex-direction: column;
+            border: 1px solid rgb(48, 48, 48);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>KensoUltra+</div>
+            <p>Оставить отзыв</p>
+        </div>
+        
+        <div class="form-container">
+            <form id="dataForm">
+                <div class="form-group">
+                    <label>
+                        <span class="title-form">Оценить проект</span>
+                        <span class="required-star">*</span>
+                        <div class="subtitle-form">Ваша оценка очень важна для нас!</div>
+                    </label>
+                    <div class="rating" id="ratingGroup">
+                        <input type="radio" name="rating" value="5" id="star5">
+                            <label for="star5">
+                                <svg class="star-icon empty" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                            </label>
+                        <input type="radio" name="rating" value="4" id="star4">
+                            <label for="star4">
+                                <svg class="star-icon empty" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                            </label>
+                        <input type="radio" name="rating" value="3" id="star3">
+                            <label for="star3">
+                                <svg class="star-icon empty" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                            </label>
+                        <input type="radio" name="rating" value="2" id="star2">
+                            <label for="star2">
+                                <svg class="star-icon empty" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                            </label>
+                        <input type="radio" name="rating" value="1" id="star1">
+                        <label for="star1">
+                            <svg class="star-icon empty" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 2. ОДНОСТРОЧНОЕ ПОЛЕ (Имя) -->
+                <div class="form-group">
+                    <label for="name">
+                        <span class="title-form">Ваше имя или никнейм</span>
+                        <span class="required-star">*</span>
+                        <div class="subtitle-form">Ваша оценка очень важна для нас!</div>
+                    </label>
+                    <input type="text" id="name" name="name" placeholder="Напишите имя...">
+                </div>
+
+                <!-- 3. МНОГОСТРОЧНОЕ ПОЛЕ (Отзыв) -->
+                <div class="form-group">
+                    <label for="review">
+                        <span class="title-form">Ваш комментарий</span>
+                        <span class="required-star">*</span>
+                        <div class="subtitle-form">Ваша оценка очень важна для нас!</div>
+                    </label>
+                    <textarea id="review" name="review" placeholder="Напишите коментарий..." required></textarea>
+                </div>
+
+                <!-- 4. МЕНЮ ВЫБОРА КАТЕГОРИИ -->
+                <!-- <div class="form-group">
+                    <label for="category">Категория отзыва <span class="required-star">*</span></label>
+                    <select id="category" name="category" required>
+                        <option value="">Выберите категорию</option>
+                        <option value="product">Товар</option>
+                        <option value="service">Обслуживание</option>
+                        <option value="delivery">Доставка</option>
+                        <option value="price">Цена</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div> -->
+
+                <button type="submit" id="submitBtn">Отправить отзыв</button>
+            </form>
+            
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Отправка данных...</p>
+            </div>
+            
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+
+    <script>
+        // НАСТРОЙКИ - ЗАМЕНИТЕ НА ВАШИ ДАННЫЕ
+        const CONFIG = {
+            // ID вашей Google Таблицы
+            SHEET_ID: '1R0YGWtAvT6t_fuyu5wpe9H6oVagBZgVkdQel8CLzhOM', // ЗАМЕНИТЕ НА ВАШ ID
+            
+            // URL вашего веб-приложения Apps Script
+            APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwtqN33z1dYGwY5cCi-CtUTR3gzUuWKKfWQI_fNleHh-kbThTwJzW1WMNM8t1F_urN2/exec' // ЗАМЕНИТЕ НА ВАШ URL
+        };
+
+        // МАППИНГ ПОЛЕЙ: как поля в HTML соответствуют столбцам в Google Таблице
+        // Ключ = имя поля в HTML (name атрибут)
+        // Значение = имя столбца в Google Таблице (должно совпадать с заголовком)
+        const FIELD_MAPPING = {
+            'rating': 'Оценить проект',      // HTML поле rating → столбец "Рейтинг" в таблице
+            'name': 'Ваше имя или никнейм',            // HTML поле name → столбец "Имя"
+            'review': 'Ваш комментарий',        // HTML поле review → столбец "Отзыв"
+            // 'category': 'Категория',  // HTML поле category → столбец "Категория"
+        };
+
+        // Функция для сбора данных с маппингом полей
+        function collectFormData() {
+            const formData = {};
+            const form = document.getElementById('dataForm');
+            const formDataRaw = new FormData(form);
+            
+            // Применяем маппинг полей
+            for (let [htmlField, sheetColumn] of Object.entries(FIELD_MAPPING)) {
+                let value = formDataRaw.get(htmlField);
+                
+                // Обработка рейтинга (звезды)
+                if (htmlField === 'rating') {
+                    value = value ? `${value}` : '1';
+                }
+                
+                formData[sheetColumn] = value || '';
+            }
+            
+            return formData;
+        }
+
+        // Валидация формы
+        function validateForm() {
+            const rating = document.querySelector('input[name="rating"]:checked');
+            const name = document.getElementById('name').value.trim();
+            const review = document.getElementById('review').value.trim();
+            // const category = document.getElementById('category').value;
+            
+            if (!rating) {
+                alert('Пожалуйста, поставьте оценку');
+                return false;
+            }
+            
+            if (!name) {
+                alert('Пожалуйста, введите ваше имя');
+                return false;
+            }
+            
+            if (!review) {
+                alert('Пожалуйста, напишите отзыв');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Функция отправки данных
+        async function submitForm(data) {
+            const payload = {
+                sheetId: CONFIG.SHEET_ID,
+                data: data
+            };
+            
+            try {
+                const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                // При no-cors мы не можем прочитать ответ, но запрос отправлен
+                return { success: true, message: 'Спасибо за ваш отзыв!' };
+            } catch (error) {
+                console.error('Ошибка:', error);
+                return { success: false, message: 'Ошибка отправки. Попробуйте позже.' };
+            }
+        }
+
+        // Обработчик отправки формы
+        document.getElementById('dataForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const messageDiv = document.getElementById('message');
+            
+            
+            // Собираем данные с маппингом
+            const formData = collectFormData();
+            
+            console.log('Отправляемые данные:', formData); // Для отладки
+            
+            // Показываем загрузку
+            submitBtn.disabled = true;
+            loading.classList.add('show');
+            messageDiv.className = 'message';
+            messageDiv.style.display = 'none';
+            
+            try {
+                const result = await submitForm(formData);
+                
+                if (result.success) {
+                    messageDiv.textContent = '✅ ' + result.message;
+                    messageDiv.className = 'message success';
+                    e.target.reset();
+                    
+                    // Сбрасываем рейтинг визуально
+                    document.querySelectorAll('.rating input').forEach(input => {
+                        input.checked = false;
+                    });
+                    
+                    // Автоматически скрываем сообщение через 5 секунд
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                    }, 5000);
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                messageDiv.textContent = '❌ Ошибка: ' + error.message;
+                messageDiv.className = 'message error';
+                console.error('Ошибка:', error);
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        });
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {            
+            // Добавляем эффект для звезд рейтинга
+            const ratingLabels = document.querySelectorAll('.rating label');
+            ratingLabels.forEach(label => {
+                label.addEventListener('mouseenter', function() {
+                    const stars = this.parentElement.querySelectorAll('label');
+                    let found = false;
+                    stars.forEach(star => {
+                        if (star === this) found = true;
+                        if (found) {
+                            star.querySelector(".star-icon").classList.replace('empty', 'filled');
+                        } else {
+                            star.querySelector(".star-icon").classList.replace('filled', 'empty');
+                        }
+                    });
+                });
+                
+                label.addEventListener('mouseleave', function() {
+                    const checked = this.parentElement.querySelector('input:checked');
+                    const stars = this.parentElement.querySelectorAll('label');
+                    if (checked) {
+                        stars.forEach(star => {
+                            star.querySelector(".star-icon").classList.replace('filled', 'empty');
+                        });
+                        const checkedId = checked.id;
+                        let found = false;
+                        stars.forEach(star => {
+                            if (star.htmlFor === checkedId) found = true;
+                            if (found) star.querySelector(".star-icon").classList.replace('empty', 'filled');
+                        });
+                    } else {
+                        stars.forEach(star => {
+                            star.querySelector(".star-icon").classList.replace('filled', 'empty');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

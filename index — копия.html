@@ -1307,6 +1307,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
+
                             <!-- НОВЫЙ БЛОК ОТЗЫВОВ С GOOGLE TABLES И ФИЛЬТРАМИ -->
 <div class="reviews-section">
     <div class="reviews-header">
@@ -1448,314 +1450,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 </div>
 
-<!-- Модальное окно с уникальными идентификаторами - ВСТРОЕННАЯ ФОРМА вместо iframe -->
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
-        
-        html, body, .form-container{
-            background: #0E0E0E !important;
-        }
-        .container {
-            margin: 0 auto;
-            background: white;
-            overflow: hidden;
-        }
-
-        .header {
-            border-bottom: 1px solid #303030 !important;
-            background: #000000;
-            color: white;
-            padding: 10px;
-            display: flex;
-            text-align: center;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-
-        .header div {
-            font-size: 20px;
-            line-height: 20px;
-            font-weight: 600;
-            color: #d7fe7b;
-            
-        }
-
-        .header p {
-            color: #7cb9ff;
-            line-height: 14px;
-            font-size: 14px;
-        }
-
-        .form-container {
-            padding: 10px;
-        }
-
-        .form-group {
-            background: #0A0A0A;
-            border: 1px solid #303030 !important;
-            border-radius: 5px;
-            padding: 5px;
-            overflow: hidden;
-            flex-direction: column;
-            display: flex;
-            gap: 5px;
-        }
-
-        .subtitle-form{            
-            color: rgb(126, 126, 126) !important;
-            font-size: 10px;
-            line-height: 10px;
-            font-style: italic;
-        }
-        .title-form{    
-            font-size: 14px;    
-            line-height: 14px;
-            background: linear-gradient(135deg, #d7fe7b 0%, #b8e35e 100%) !important;
-            -webkit-background-clip: text !important;
-            background-clip: text !important;
-            color: transparent !important;
-            font-style: italic;
-        }
-
-        label {
-            padding: 0px 2px;
-            font-size: 14px;
-            font-weight: bolder;
-            display: block;
-            color: #333;
-        }
-
-        .required-star {
-            color: #e74c3c;
-            margin-left: 4px;
-        }
-
-        * {
-            font-family: "Unbounded", sans-serif;
-        }
-
-        input, select, textarea {
-            background: #080808;
-            /* background: #0E0E0E; */
-            background: rgb(8, 8, 8);
-            border-color: #303030;
-            color: #ffffff;
-            padding: 6px 10px;
-            border: 1px solid rgb(48, 48, 48);
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border 0.3s;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        /* Стили для рейтинга звездами */
-        .rating {
-            flex: 1;
-            display: flex;
-            flex-direction: row-reverse;
-            justify-content: flex-end;
-        }
-
-        .rating input {
-            display: none;
-        }
-        
-        .rating label {
-            color: #ddd;
-            cursor: pointer;
-            transition: color 0.2s;
-            margin: 0;
-        }
-
-        .rating label:hover,
-        .rating label:hover ~ label,
-        .rating input:checked ~ label {
-            color: #ffc107;
-        }
-
-        /* Стили для скрытого поля */
-        .hidden-field {
-            display: none;
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            background: #0E0E0E;
-            border: 1px solid #6d6dff;
-            background: linear-gradient(135deg, rgba(50, 120, 255, 0.2), rgba(106, 17, 203, 0.2));
-            color: white;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        button:hover {
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-            border: 1px solid #d7fe7b;
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .message {
-            /* margin-top: 20px; */
-            padding: 5px 5px;
-            border-radius: 5px;
-            display: none;
-        }
-
-        .message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            display: block;
-        }
-
-        .message.error {
-            background: #0e0001;
-            color: #ff4759;
-            /* border: 1px solid #f5c6cb; */
-            border: 1px solid #ff4759 !important;
-            display: block;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 5px !important;
-            padding: 10px;
-            border: 1px solid rgb(48, 48, 48);
-            border-radius: 5px;
-            background: #000000;
-            max-width: 500px;
-            margin: auto;
-            gap: 10px;
-            justify-content: center
-        }
-
-        .loading.show {
-            display: flex;
-        }
-        .star-icon2{
-            width: 30px;
-            padding: 1px 0px;
-            display: block;
-        }
-
-        .loading > p {
-            display: flex;
-            /* flex: 1; */
-            margin: 0 !important;
-            color: #929292;
-            align-items: center;
-        }
-
-        .spinner {
-            border: 2px solid #1f1f1f;
-            border-top: 2px solid #7d7fff;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            animation: spin 0.5s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .info {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            font-size: 13px;
-            color: #666;
-            border-left: 4px solid #667eea;
-        }
-
-        .star-icon2 {
-            fill: #505050;
-            stroke: #505050;
-            transition: all 0.2s;
-        }
-        .star-icon2.empty {
-            fill: #505050;
-            stroke: #505050;
-        }
-        .star-icon2.filled{
-            fill: #ffb347;
-            stroke: #ffb347;
-        }
-        #dataForm{
-            padding: 10px;
-            border-radius: 5px;
-            gap: 5px;
-            display: flex;
-            max-width: 500px;
-            margin: 0 auto;
-            background: #010101;
-            flex-direction: column;
-            border: 1px solid rgb(48, 48, 48);
-        }
-    </style>
-<style>
-    .x7k9m2p4_modal_title {
-        font-size: 14px;
-    }
-    .form-group> label{
-        text-align: left;
-    }
-    .x7k9m2p4_modal_close_btn {
-        position: absolute;
-        border-radius: 2px;
-        right: 3px;
-        top: 3px;
-        height: 18px;
-        width: 30px;
-    }
-    .x7k9m2p4_modal_header{
-        justify-content: center;
-        display: flex;
-        background: #000000;
-        padding-left: 6px;
-        height: 24px;
-        padding: 0px 0px;
-        border-bottom: 1px solid #303030;
-    }
-    .x7k9m2p4_modal_container{
-        text-align: center;
-        height: auto;
-        width: 500px;
-        /* padding: 5px; */
-    }
-    .x7k9m2p4_modal_content_wrapper {
-        padding: 10px;
-    }
-</style>
+<!-- Модальное окно с уникальными идентификаторами - 90% ширины -->
 <div class="x7k9m2p4_modal_overlay" id="x7k9m2p4_reviewModal_system">
     <div class="x7k9m2p4_modal_container">
         <div class="x7k9m2p4_modal_header">
@@ -1766,10 +1461,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </svg>
             </button>
         </div>
-        <div class="x7k9m2p4_modal_content_wrapper" style="background: #0E0E0E;">
-            <div id="x7k9m2p4_form_container" style="max-width: 500px; margin: 0 auto; background: #010101; border-radius: 5px;">
-                <!-- Сюда будет вставлена форма -->
-            </div>
+        <div class="x7k9m2p4_modal_content_wrapper">
+            <iframe id="x7k9m2p4_googleForm_iframe_element" src="" frameborder="0" allowfullscreen></iframe>
         </div>
     </div>
 </div>
@@ -1780,8 +1473,8 @@ const SPREADSHEET_ID = '1R0YGWtAvT6t_fuyu5wpe9H6oVagBZgVkdQel8CLzhOM';
 const SHEET_GID = '547215109';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
 
-// === НАСТРОЙКИ GOOGLE APPS SCRIPT (для отправки формы) ===
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwtqN33z1dYGwY5cCi-CtUTR3gzUuWKKfWQI_fNleHh-kbThTwJzW1WMNM8t1F_urN2/exec';
+// === НАСТРОЙКИ GOOGLE FORMS ===
+const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfVzcMNwmo6Rj7kXwqssMp7MOmgEUbGH7lav6FF8pW4TQME2w/viewform';
 
 // Текущий режим сортировки
 let currentSortMode = 'newest';
@@ -1836,12 +1529,14 @@ function formatDate(dateValue) {
                 const hours = date.getHours();
                 const minutes = String(date.getMinutes()).padStart(2, '0');
                 
+                // Если время не 00:00, добавляем его
                 if (hours !== 0 || minutes !== '00') {
                     return `${day}.${month}.${year} ${hours}:${minutes}`;
                 }
                 return `${day}.${month}.${year}`;
             }
             
+            // Если ничего не подошло, возвращаем очищенную строку
             return cleanedDate;
         }
         
@@ -1870,12 +1565,13 @@ function parseDateToTimestamp(dateStr) {
     if (!dateStr || dateStr === '—') return 0;
     
     try {
+        // Очищаем от лишних символов
         let cleaned = String(dateStr).replace(/\/(\d+)/g, '');
         cleaned = cleaned.replace(/(\d+\.\d+\.\d+)\/(\d+)\s+(\d+\.\d+)/, '$1 $3');
         
-        // ОБНОВЛЕНО: паттерн с поддержкой секунд (формат "DD.MM.YY HH:MM:SS" или "DD.MM.YYYY HH:MM:SS")
-        let patternWithSeconds = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{1,2}):(\d{1,2})/;
-        let match = cleaned.match(patternWithSeconds);
+        // Пробуем парсить с временем (формат "DD.MM.YY HH:MM" или "DD.MM.YYYY HH:MM")
+        let patternWithTime = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{1,2})/;
+        let match = cleaned.match(patternWithTime);
         
         if (match) {
             let day = parseInt(match[1]);
@@ -1883,31 +1579,13 @@ function parseDateToTimestamp(dateStr) {
             let year = parseInt(match[3]);
             let hour = parseInt(match[4]);
             let minute = parseInt(match[5]);
-            let second = parseInt(match[6]);
             
             if (year < 100) year += 2000;
             
-            return new Date(year, month, day, hour, minute, second).getTime();
+            return new Date(year, month, day, hour, minute).getTime();
         }
         
-        // Паттерн без секунд (формат "DD.MM.YY HH:MM" или "DD.MM.YYYY HH:MM")
-        let patternWithTime = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/;
-        match = cleaned.match(patternWithTime);
-        
-        if (match) {
-            let day = parseInt(match[1]);
-            let month = parseInt(match[2]) - 1;
-            let year = parseInt(match[3]);
-            let hour = parseInt(match[4]);
-            let minute = parseInt(match[5]);
-            let second = match[6] ? parseInt(match[6]) : 0;
-            
-            if (year < 100) year += 2000;
-            
-            return new Date(year, month, day, hour, minute, second).getTime();
-        }
-        
-        // Только дата (формат "DD.MM.YY" или "DD.MM.YYYY")
+        // Пробуем парсить только дату (формат "DD.MM.YY" или "DD.MM.YYYY")
         let patternOnlyDate = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})/;
         match = cleaned.match(patternOnlyDate);
         
@@ -1918,6 +1596,7 @@ function parseDateToTimestamp(dateStr) {
             
             if (year < 100) year += 2000;
             
+            // Для дат без времени устанавливаем время на 12:00, чтобы сортировка была корректной
             return new Date(year, month, day, 12, 0, 0).getTime();
         }
         
@@ -2011,6 +1690,7 @@ function parseCSV(text) {
     return rows;
 }
 
+// Функция сортировки отзывов
 function sortReviews(reviews, sortMode) {
     const sorted = [...reviews];
     
@@ -2028,6 +1708,7 @@ function sortReviews(reviews, sortMode) {
     }
 }
 
+// Обновление UI отзывов с текущей сортировкой
 function renderReviewsWithCurrentSort(container, statsContainer) {
     if (!allReviewsData.length) {
         renderEmptyState(
@@ -2238,234 +1919,29 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-// === ФУНКЦИИ ДЛЯ РАБОТЫ С ВСТРОЕННОЙ ФОРМОЙ ===
-let reviewFormHtml = null;
-let currentDiscordName = '';
-
-
-// Загрузка HTML формы из newform.html (встроенная)
-async function loadReviewForm() {
-    try {
-        // Форма встроена прямо в JS для надежности
-        reviewFormHtml = `
-            <div class="review-form-container" style="padding: 10px; border-radius: 5px; gap: 5px; display: flex; max-width: 500px; margin: 0 auto; background: #010101; flex-direction: column; border: 1px solid rgb(48, 48, 48);">
-                <div class="form-group">
-                    <label>
-                        <span class="title-form">Оценить проект</span>
-                        <span class="required-star">*</span>
-                        <div class="subtitle-form">Ваша оценка очень важна для нас!</div>
-                    </label>
-                    <div class="rating" id="formRatingGroup">
-                        <input type="radio" name="rating" value="5" id="formStar5">
-                        <label for="formStar5"><svg class="star-icon2 empty" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg></label>
-                        <input type="radio" name="rating" value="4" id="formStar4">
-                        <label for="formStar4"><svg class="star-icon2 empty" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg></label>
-                        <input type="radio" name="rating" value="3" id="formStar3">
-                        <label for="formStar3"><svg class="star-icon2 empty" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg></label>
-                        <input type="radio" name="rating" value="2" id="formStar2">
-                        <label for="formStar2"><svg class="star-icon2 empty" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg></label>
-                        <input type="radio" name="rating" value="1" id="formStar1">
-                        <label for="formStar1"><svg class="star-icon2 empty" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"></path></svg></label>
-                    </div>
-                </div>
-                <div class="form-group" style="display: none;">
-                    <label for="formName">
-                        <span class="title-form">Ваше имя или никнейм</span>
-                        <span class="required-star">*</span>
-                        <div class="subtitle-form">Ваше имя будет отображаться в отзыве</div>
-                    </label>
-                    <input type="text" id="formName" name="name" placeholder="Напишите имя..." value="${escapeHtml(currentDiscordName)}">
-                </div>
-                <div class="form-group">
-                    <label for="formReview">
-                        <span class="title-form">Ваш комментарий</span>
-                        <span class="required-star">*</span>
-                        <div class="subtitle-form">Поделитесь впечатлениями</div>
-                    </label>
-                    <textarea id="formReview" name="review" placeholder="Напишите комментарий..." required></textarea>
-                </div>
-                <button type="submit" id="formSubmitBtn">Отправить отзыв</button>
-                <div id="formLoading" class="loading">
-                    <div class="spinner"></div>
-                    <p>Отправка данных...</p>
-                </div>
-                <div id="formMessage" class="message"></div>
-            </div>
-        `;
-        return true;
-    } catch (error) {
-        console.error('Ошибка загрузки формы:', error);
-        return false;
+// === УПРАВЛЕНИЕ МОДАЛЬНЫМ ОКНОМ С УНИКАЛЬНЫМИ ИДЕНТИФИКАТОРАМИ ===
+function x7k9m2p4_openModalSystem() {
+    const modalElement = document.getElementById('x7k9m2p4_reviewModal_system');
+    const iframeElement = document.getElementById('x7k9m2p4_googleForm_iframe_element');
+    
+    if (!modalElement || !iframeElement) {
+        console.error('Modal elements not found');
+        return;
     }
+    const discord_name = document.querySelector(".btn_logout").querySelector(".nav-bt-title");
+    if (discord_name && discord_name.innerHTML !== 'Гость') {
+        iframeElement.src = GOOGLE_FORM_URL + `?usp=pp_url&entry.1516320113=${encodeURIComponent(discord_name.innerHTML)}&embedded=true`;
+    } else {
+        iframeElement.src = GOOGLE_FORM_URL + `?usp=pp_url&embedded=true`;
+    }
+    modalElement.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Опционально: можно обновить отзывы перед открытием, если нужно
+    // forceReloadReviews();
 }
 
-// Отправка формы в Google Sheets через Apps Script
-async function submitReviewToGoogleSheets(formData) {
-    const payload = {
-        sheetId: SPREADSHEET_ID,
-        data: formData
-    };
-    
-    try {
-        const response = await fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        });
-        
-        return { success: true, message: 'Спасибо за ваш отзыв!' };
-    } catch (error) {
-        console.error('Ошибка:', error);
-        return { success: false, message: 'Ошибка отправки. Попробуйте позже.' };
-    }
-}
-
-// Инициализация формы в модальном окне
-async function initReviewFormInModal() {
-    const formContainer = document.getElementById('x7k9m2p4_form_container');
-    if (!formContainer) return;
-    
-    await loadReviewForm();
-    formContainer.innerHTML = reviewFormHtml;
-    
-    // Получаем имя пользователя из Discord
-    const userData = CookieManager.get('discord_user');
-    if (userData && userData.username) {
-        currentDiscordName = userData.username;
-        const nameInput = document.getElementById('formName');
-        if (nameInput) nameInput.value = currentDiscordName;
-    }
-    
-    // Настройка звезд рейтинга
-    const ratingLabels = document.querySelectorAll('#formRatingGroup label');
-    ratingLabels.forEach(label => {
-        label.addEventListener('mouseenter', function() {
-            const stars = this.parentElement.querySelectorAll('label');
-            let found = false;
-            stars.forEach(star => {
-                if (star === this) found = true;
-                if (found) {
-                    star.querySelector(".star-icon2").classList.replace('empty', 'filled');
-                } else {
-                    star.querySelector(".star-icon2").classList.replace('filled', 'empty');
-                }
-            });
-        });
-        
-        label.addEventListener('mouseleave', function() {
-            const checked = this.parentElement.querySelector('input:checked');
-            const stars = this.parentElement.querySelectorAll('label');
-            if (checked) {
-                stars.forEach(star => {
-                    star.querySelector(".star-icon2").classList.replace('filled', 'empty');
-                });
-                const checkedId = checked.id;
-                let found = false;
-                stars.forEach(star => {
-                    if (star.htmlFor === checkedId) found = true;
-                    if (found) star.querySelector(".star-icon2").classList.replace('empty', 'filled');
-                });
-            } else {
-                stars.forEach(star => {
-                    star.querySelector(".star-icon2").classList.replace('filled', 'empty');
-                });
-            }
-        });
-    });
-    
-    // Обработчик отправки формы
-    const submitBtn = document.getElementById('formSubmitBtn');
-    const loadingDiv = document.getElementById('formLoading');
-    const messageDiv = document.getElementById('formMessage');
-    const nameInput = document.getElementById('formName');
-    const reviewTextarea = document.getElementById('formReview');
-    const ratingInputs = document.querySelectorAll('#formRatingGroup input[name="rating"]');
-    
-    if (submitBtn) {
-        submitBtn.onclick = async (e) => {
-            e.preventDefault();
-            
-            // Валидация
-            let selectedRating = null;
-            for (let input of ratingInputs) {
-                if (input.checked) {
-                    selectedRating = input.value;
-                    break;
-                }
-            }
-            
-            const name = nameInput ? nameInput.value.trim() : '';
-            const reviewText = reviewTextarea ? reviewTextarea.value.trim() : '';
-            
-            if (!selectedRating) {
-                messageDiv.textContent = '❌ Пожалуйста, поставьте оценку';
-                messageDiv.className = 'message error';
-                return;
-            }
-            
-            if (!name) {
-                messageDiv.textContent = '❌ Пожалуйста, введите ваше имя';
-                messageDiv.className = 'message error';
-                return;
-            }
-            
-            if (!reviewText) {
-                messageDiv.textContent = '❌ Пожалуйста, напишите отзыв';
-                messageDiv.className = 'message error';
-                return;
-            }
-            
-            // Сбор данных
-            const formData = {
-                'Оценить проект': selectedRating,
-                'Ваше имя или никнейм': name,
-                'Ваш комментарий': reviewText
-            };
-            
-            // Отправка
-            if (submitBtn) submitBtn.disabled = true;
-            if (loadingDiv) loadingDiv.classList.add('show');
-            messageDiv.style.display = 'none';
-            
-            try {
-                const result = await submitReviewToGoogleSheets(formData);
-                
-                if (result.success) {
-                    messageDiv.textContent = '✅ ' + result.message;
-                    messageDiv.className = 'message success';
-                    
-                    // Сброс формы
-                    if (nameInput) nameInput.value = currentDiscordName;
-                    if (reviewTextarea) reviewTextarea.value = '';
-                    for (let input of ratingInputs) {
-                        input.checked = false;
-                    }
-                    // Сброс звезд
-                    const stars = document.querySelectorAll('#formRatingGroup .star-icon');
-                    stars.forEach(star => star.classList.replace('filled', 'empty'));
-                    
-                    // Автоматическое закрытие модального окна через 1 секунду
-                    setTimeout(() => {
-                        x7k9m2p4_closeModalSystem();
-                    }, 0);
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (error) {
-                messageDiv.textContent = '❌ Ошибка: ' + error.message;
-                messageDiv.className = 'message error';
-                console.error('Ошибка:', error);
-            } finally {
-                if (submitBtn) submitBtn.disabled = false;
-                if (loadingDiv) loadingDiv.classList.remove('show');
-            }
-        };
-    }
-}
-
+// --- ДОБАВЬТЕ ЭТУ НОВУЮ ФУНКЦИЮ ---
 // Функция для принудительной перезагрузки отзывов с обходом кеша
 async function forceReloadReviews() {
     const container = document.getElementById('reviewsContainer');
@@ -2473,14 +1949,16 @@ async function forceReloadReviews() {
     
     if (!container) return;
     
+    // Показываем индикатор загрузки
     container.innerHTML = '<div class="empty-reviews"><p>Обновление отзывов...</p></div>';
     
     try {
+        // Добавляем уникальный параметр для обхода кеша браузера и CDN
         const cacheBuster = `&_nocache=${Date.now()}`;
         const freshUrl = CSV_URL + (CSV_URL.includes('?') ? cacheBuster : `?t=${Date.now()}`);
         
         const response = await fetch(freshUrl, {
-            cache: 'no-store',
+            cache: 'no-store', // Запрещаем использование кеша браузера
             headers: {
                 'Pragma': 'no-cache',
                 'Cache-Control': 'no-cache'
@@ -2490,6 +1968,8 @@ async function forceReloadReviews() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const csvText = await response.text();
+        
+        // Переиспользуем существующую логику парсинга
         const rows = parseCSV(csvText);
         
         if (rows.length < 2) {
@@ -2506,6 +1986,7 @@ async function forceReloadReviews() {
             return;
         }
         
+        // Определяем индексы колонок (копируем логику из loadReviewsFromGoogleSheets)
         const headers = rows[0].map(h => String(h || '').toLowerCase().trim());
         
         let nameIndex = -1;
@@ -2585,6 +2066,7 @@ async function forceReloadReviews() {
             return;
         }
         
+        // Отрисовываем обновленный список с текущей сортировкой
         renderReviewsWithCurrentSort(container, statsContainer);
         
         console.log('Отзывы успешно обновлены');
@@ -2603,34 +2085,26 @@ async function forceReloadReviews() {
     }
 }
 
-// Открытие модального окна с формой
-async function x7k9m2p4_openModalSystem() {
-    const modalElement = document.getElementById('x7k9m2p4_reviewModal_system');
-    
-    if (!modalElement) {
-        console.error('Modal element not found');
-        return;
-    }
-    
-    // Загружаем форму перед открытием
-    await initReviewFormInModal();
-    
-    modalElement.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
 function x7k9m2p4_closeModalSystem() {
     const modalElement = document.getElementById('x7k9m2p4_reviewModal_system');
+    const iframeElement = document.getElementById('x7k9m2p4_googleForm_iframe_element');
     
     if (!modalElement) return;
     
     modalElement.classList.remove('active');
     document.body.style.overflow = '';
     
-    // Обновляем отзывы после закрытия формы
+    // if (iframeElement) {
+    //     setTimeout(() => {
+    //         iframeElement.src = '';
+    //     }, 350);
+    // }
+    
+    // --- ДОБАВЛЕНА АВТОМАТИЧЕСКАЯ ПЕРЕЗАГРУЗКА ОТЗЫВОВ ---
+    // Небольшая задержка перед обновлением, чтобы форма успела отправить данные на сервер Google
     setTimeout(() => {
         forceReloadReviews();
-    }, 500);
+    }, 0);
 }
 
 // === УПРАВЛЕНИЕ ФИЛЬТРОМ ===
@@ -2711,6 +2185,12 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 </script>
+
+
+
+
+
+
 
 
 
