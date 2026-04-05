@@ -41,6 +41,79 @@
                     </div>
                 </a>
 
+<!-- <style>
+.nav-bar {
+    display: flex;
+    gap: 3px;
+}
+
+.nav-bar > a {
+    --color: #c2c2c2;
+    & {
+        display: flex;
+        font-size: 12px;
+        padding-right: 5px;
+        color: var(--color);
+        background: #252525;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 1px solid #00000000;
+        border-bottom: 1px solid var(--color);
+        align-items: center;
+        flex-direction: row;
+        gap: 5px;
+    }
+    & > svg {
+        fill: #a3a3a3;
+        width: 18px;
+        height: 18px;
+        background: #474747;
+        padding: 3px;
+    }
+}
+.nav-bar > a.active {
+    --color: #ff8f8f;
+    & {
+        border: 1px solid #00000000;
+        border-bottom: 1px solid var(--color);
+        color: var(--color);
+    }
+    & > svg {
+        fill: var(--color);
+    }
+}
+</style>
+                <div class="nav-bar">
+                    <a href="/">
+                        <svg viewBox="0 0 640 512"><path d="M58.9 42.1c3-6.1 9.6-9.6 16.3-8.7L320 64 564.8 33.4c6.7-.8 13.3 2.7 16.3 8.7l41.7 83.4c9 17.9-.6 39.6-19.8 45.1L439.6 217.3c-13.9 4-28.8-1.9-36.2-14.3L320 64 236.6 203c-7.4 12.4-22.3 18.3-36.2 14.3L37.1 170.6c-19.3-5.5-28.8-27.2-19.8-45.1L58.9 42.1zM321.1 128l54.9 91.4c14.9 24.8 44.6 36.6 72.5 28.6L576 211.6v167c0 22-15 41.2-36.4 46.6l-204.1 51c-10.2 2.6-20.9 2.6-31 0l-204.1-51C79 419.7 64 400.5 64 378.5v-167L191.6 248c27.8 8 57.6-3.8 72.5-28.6L318.9 128h2.2z"></path></svg>
+                        Главная
+                    </a>
+                    <a href="/market">
+                        <svg viewBox="0 0 576 512"><path d="M253.3 35.1c6.1-11.8 1.5-26.3-10.2-32.4s-26.3-1.5-32.4 10.2L117.6 192 32 192c-17.7 0-32 14.3-32 32s14.3 32 32 32L83.9 463.5C91 492 116.6 512 146 512L430 512c29.4 0 55-20 62.1-48.5L544 256c17.7 0 32-14.3 32-32s-14.3-32-32-32l-85.6 0L365.3 12.9C359.2 1.2 344.7-3.4 332.9 2.7s-16.3 20.6-10.2 32.4L404.3 192l-232.6 0L253.3 35.1zM192 304l0 96c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-96c0-8.8 7.2-16 16-16s16 7.2 16 16zm96-16c8.8 0 16 7.2 16 16l0 96c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-96c0-8.8 7.2-16 16-16zm128 16l0 96c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-96c0-8.8 7.2-16 16-16s16 7.2 16 16"></path></svg>
+                        Магазин
+                    </a>
+                    <a href="/rules">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576zM320 240C302.3 240 288 254.3 288 272C288 285.3 277.3 296 264 296C250.7 296 240 285.3 240 272C240 227.8 275.8 192 320 192C364.2 192 400 227.8 400 272C400 319.2 364 339.2 344 346.5L344 350.3C344 363.6 333.3 374.3 320 374.3C306.7 374.3 296 363.6 296 350.3L296 342.2C296 321.7 310.8 307 326.1 302C332.5 299.9 339.3 296.5 344.3 291.7C348.6 287.5 352 281.7 352 272.1C352 254.4 337.7 240.1 320 240.1zM288 432C288 414.3 302.3 400 320 400C337.7 400 352 414.3 352 432C352 449.7 337.7 464 320 464C302.3 464 288 449.7 288 432z"></path></svg>
+                        Правила
+                    </a>
+                </div>
+
+                <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-bar a');
+    
+    navLinks.forEach(link => {
+        const linkPath = link.getAttribute('href');
+        
+        if (currentPath === linkPath || 
+            (currentPath === '/' && linkPath === '/') ||
+            (linkPath !== '/' && currentPath.startsWith(linkPath) && linkPath !== '/')) {
+            link.classList.add('active');
+        }
+    });
+});
+                </script> -->
 
 
 
@@ -2193,7 +2266,7 @@ async function loadReviewsFromGoogleSheets() {
             }
             
             reviewsData.push({
-                name: name,
+                name: `${name}`,
                 rating: rating,
                 rawDate: rawDate,
                 displayDate: `${importtext}${formattedDate}`,
