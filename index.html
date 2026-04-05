@@ -2259,7 +2259,7 @@ async function loadReviewsFromGoogleSheets() {
             let importtext = importIndex < row.length ? (row[importIndex] || '') : '';
             if (importtext === '') {
                 importtext = '';
-            } else if (importtext === 'Нет') {
+            } else if (importtext === '-') {
                 importtext = '';
             } else {
                 importtext = `${importtext} - `
