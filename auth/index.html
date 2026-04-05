@@ -22,7 +22,7 @@
         .loader svg {
             width: 48px;
             height: 48px;
-            animation: spin 0s linear infinite;
+            animation: spin 1s linear infinite;
         }
         .loader p {
             margin-top: 16px;
@@ -64,21 +64,19 @@
             }
         };
         
-        // Функция получения URL для возврата
+        // Получение URL для возврата
         function getReturnUrl() {
-            // Сначала проверяем сохраненный referrer
             let returnUrl = CookieManager.get('redirect_before_login');
             
-            // Если нет сохраненного, пробуем получить из document.referrer
             if (!returnUrl && document.referrer) {
-                const referrerUrl = new URL(document.referrer);
-                // Проверяем, что referrer с того же домена
-                if (referrerUrl.origin === window.location.origin) {
-                    returnUrl = referrerUrl.pathname + referrerUrl.search;
-                }
+                try {
+                    const referrerUrl = new URL(document.referrer);
+                    if (referrerUrl.origin === window.location.origin) {
+                        returnUrl = referrerUrl.pathname + referrerUrl.search;
+                    }
+                } catch(e) {}
             }
             
-            // Если все еще нет, возвращаем главную
             if (!returnUrl || returnUrl === '/auth' || returnUrl === '/auth?' || returnUrl === '') {
                 return '/';
             }
@@ -86,31 +84,31 @@
             return returnUrl;
         }
         
-        // Сохраняем referrer перед перенаправлением на Discord
+        // Сохранение текущего URL перед переходом
         function saveCurrentUrlBeforeAuth() {
             let returnUrl = null;
             
-            // Получаем referrer
             if (document.referrer) {
-                const referrerUrl = new URL(document.referrer);
-                if (referrerUrl.origin === window.location.origin) {
-                    returnUrl = referrerUrl.pathname + referrerUrl.search;
-                }
+                try {
+                    const referrerUrl = new URL(document.referrer);
+                    if (referrerUrl.origin === window.location.origin) {
+                        returnUrl = referrerUrl.pathname + referrerUrl.search;
+                    }
+                } catch(e) {}
             }
             
-            // Сохраняем только если есть валидный URL и это не страница авторизации
             if (returnUrl && returnUrl !== '/auth' && returnUrl !== '/auth?') {
                 CookieManager.set('redirect_before_login', returnUrl, 1);
             }
         }
         
-        // Проверяем, есть ли уже авторизация
+        // Проверка существующей авторизации
         function isAlreadyAuthenticated() {
             const userData = CookieManager.get('discord_user');
             return userData && userData.id;
         }
         
-        // Получаем пользователя по токену из URL
+        // Получение пользователя по токену
         async function getUserFromToken(token) {
             try {
                 const response = await fetch('https://discord.com/api/users/@me', {
@@ -124,48 +122,43 @@
             }
         }
         
-        // Основная логика страницы авторизации
+        // Основная логика
         async function handleAuth() {
-            // Шаг 1: Проверяем hash на наличие access_token (возврат от Discord)
+            // Проверяем hash на наличие access_token (возврат от Discord)
             const hash = window.location.hash;
             
             if (hash && hash.includes('access_token')) {
-                // Мы вернулись от Discord с токеном
                 const params = new URLSearchParams(hash.substring(1));
                 const token = params.get('access_token');
                 
                 if (token) {
                     const userData = await getUserFromToken(token);
                     if (userData && userData.id) {
-                        // Сохраняем пользователя в cookies
                         CookieManager.set('discord_user', userData, 7);
-                        
-                        // Очищаем hash из URL
                         window.history.replaceState({}, document.title, window.location.pathname);
                         
-                        // Перенаправляем на сохраненную страницу
                         const returnUrl = getReturnUrl();
-                        window.location.href = returnUrl;
+                        // Добавляем параметр успешной авторизации для обновления UI
+                        const separator = returnUrl.includes('?') ? '&' : '?';
+                        window.location.href = returnUrl + separator + 'auth_success=1';
                         return;
                     }
                 }
             }
             
-            // Шаг 2: Проверяем, есть ли уже активная сессия
+            // Проверяем существующую сессию
             if (isAlreadyAuthenticated()) {
-                // Уже авторизован - перенаправляем обратно
                 const returnUrl = getReturnUrl();
                 window.location.href = returnUrl;
                 return;
             }
             
-            // Шаг 3: Нет авторизации - перенаправляем на Discord OAuth
+            // Перенаправляем на Discord OAuth
             saveCurrentUrlBeforeAuth();
             const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
             window.location.href = discordAuthUrl;
         }
         
-        // Запускаем процесс авторизации
         handleAuth();
     </script>
 </body>
