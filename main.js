@@ -102,6 +102,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Данные слайдов (оригинальные)
     const originalSlides = [
         { type: 'video', youtubeId: 'Lch7Ve9ntsA', img: './images/1.png', label: 'ОБЗОР' },
+        { type: 'video', youtubeId: 'fMhPrsYnKEQ', img: './images/vid1.png', label: 'ГЕЙМПЛЕЙ' },
+        { type: 'video', youtubeId: 'D_tamov8g7k', img: './images/vid2.png', label: 'ГЕЙМПЛЕЙ' },
         { type: 'image', img: './images/promo.png', label: 'АКЦИЯ' },
         { type: 'image', img: './images/2.png', label: null },
         { type: 'image', img: './images/3.png', label: null },
