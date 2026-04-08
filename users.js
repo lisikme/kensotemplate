@@ -844,6 +844,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             userCard.innerHTML = `
             <div id="admins_card">
+                                        <div class="admin_term">
+                                <div class="adminlist_button steam_button" id="tag-${banStatus && !banStatus.wasBanned ? 'banned' : userRole}">
+                                    <span>${userRole === 'creator' ? 'Создатель' : (userRole === 'admin' ? 'Партнёр' : (userRole === 'bot' ? 'Менеджер' : (banStatus && !banStatus.wasBanned ? 'Забанен' : 'Игрок')))}</span>
+                                </div>
+                                ${!(banStatus && !banStatus.wasBanned) ? `
+                                <div class="admin_group">
+                                <span class="admin_group_text">${user.group_id}</span>
+                            </div>`:``
+                            }
+                            <span class="admin_term_text">${banText ? banEnd : endText}</span>
+                        </div>
                 <div class="adminlist_info">
                     <div class="avatar_block">
                         <div class="avatar_letter">${user.name.charAt(0).toUpperCase()}</div>
@@ -855,17 +866,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="adminlist_buttons">
                         <div id="admins_info">
-                        <div class="admin_term">
-                        <div class="adminlist_button steam_button" id="tag-${banStatus && !banStatus.wasBanned ? 'banned' : userRole}">
-                        <span>${userRole === 'creator' ? 'Создатель' : (userRole === 'admin' ? 'Партнёр' : (userRole === 'bot' ? 'Менеджер' : (banStatus && !banStatus.wasBanned ? 'Забанен' : 'Игрок')))}</span>
-                        </div>
-                        ${!(banStatus && !banStatus.wasBanned) ? `
-                            <div class="admin_group">
-                                <span class="admin_group_text">${user.group_id}</span>
-                            </div>`:``
-                        }
-                        <span class="admin_term_text">${banText ? banEnd : endText}</span>
-                        </div>
                         <span class="admin_nickname">${user.name}</span>
                             ${!(banStatus && !banStatus.wasBanned) && (user.sid || user.telegramId) ? 
                             `${user.sid ? `<div id="link_block">
