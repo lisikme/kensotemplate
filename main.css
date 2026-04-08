@@ -1230,6 +1230,8 @@ a:link, a:visited, a:hover, a:active {
     /* padding: 5px 8px 5px 8px; */
     display: flex;
     align-items: center;
+    background: rgba(255, 87, 87, 0.1);
+    border-left: 3px solid #ff5757;
 }
 .avatar_letter{
     top: 0px !important;
