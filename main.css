@@ -1223,7 +1223,7 @@ a:link, a:visited, a:hover, a:active {
     gap: 2px;
 }
 .admin_term_reason{
-    font-size: 8px;
+    font-size: 10px;
     background: #242424;
     color: #c5c5c5;
     min-height: 13px;
