@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>KensoChat | Общий чат</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0c;
+            font-family: 'Inter', 'Segoe UI', system-ui, 'Unbounded', sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-app {
+            max-width: 1000px;
+            width: 100%;
+            background: #0e0e12;
+            border-radius: 24px;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6);
+            border: 1px solid #2a2a2f;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #060608;
+            padding: 16px 24px;
+            border-bottom: 1px solid #25252c;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background: #d7fe7b;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            color: #0a0a0c;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, #e0ff8c, #b2ff3a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .user-panel {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .discord-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #121217;
+            padding: 5px 12px 5px 8px;
+            border-radius: 40px;
+            border: 1px solid #2d2d35;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #2a2a35;
+            object-fit: cover;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #e2e2e8;
+        }
+
+        .login-btn {
+            background: #5865f2;
+            border: none;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .login-btn:hover { background: #4752c4; }
+
+        .logout-btn {
+            background: #2c2c34;
+            border: none;
+            color: #ffb4b4;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .messages-area {
+            height: 460px;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: #0b0b0f;
+        }
+
+        .message-card {
+            background: #111116;
+            border-radius: 18px;
+            padding: 12px 16px;
+            border-left: 3px solid #d7fe7b;
+        }
+
+        .msg-header {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .msg-author {
+            font-weight: 700;
+            font-size: 14px;
+            color: #d7fe7b;
+            background: #1e1e28;
+            padding: 2px 10px;
+            border-radius: 40px;
+        }
+
+        .msg-time {
+            font-size: 10px;
+            color: #6c6c7a;
+        }
+
+        .msg-text {
+            font-size: 14px;
+            line-height: 1.45;
+            color: #e1e1ec;
+            word-break: break-word;
+        }
+
+        .input-area {
+            background: #060608;
+            border-top: 1px solid #25252c;
+            padding: 16px 24px 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .message-input {
+            flex: 1;
+            background: #121217;
+            border: 1px solid #2a2a32;
+            border-radius: 28px;
+            padding: 12px 18px;
+            font-size: 14px;
+            color: white;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #d7fe7b;
+        }
+
+        .send-btn {
+            background: #d7fe7b;
+            border: none;
+            border-radius: 40px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .send-btn:hover { background: #c2ea62; }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .status-info {
+            font-size: 11px;
+            color: #6b6b7c;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .refresh-btn {
+            background: transparent;
+            border: none;
+            color: #b9b9d2;
+            cursor: pointer;
+            font-size: 11px;
+            text-decoration: underline;
+            margin-left: 10px;
+        }
+
+        .empty-chat {
+            text-align: center;
+            color: #5c5c6e;
+            padding: 50px 20px;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #18181f; }
+        ::-webkit-scrollbar-thumb { background: #3a3a44; border-radius: 6px; }
+
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .chat-header { flex-direction: column; align-items: flex-start; }
+            .input-group { flex-direction: column; }
+            .send-btn { width: 100%; height: 44px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-app">
+    <div class="chat-header">
+        <div class="logo-area">
+            <div class="logo-icon">K+</div>
+            <div class="logo-text">KensoChat • Live</div>
+        </div>
+        <div class="user-panel" id="userPanel">
+            <div class="discord-user" id="discordUserInfo" style="display: none;">
+                <img class="user-avatar" id="userAvatar" src="">
+                <span class="user-name" id="userNameSpan"></span>
+                <button class="logout-btn" id="logoutBtn">Выйти</button>
+            </div>
+            <button class="login-btn" id="loginBtn">Войти через Discord</button>
+        </div>
+    </div>
+
+    <div class="messages-area" id="messagesContainer">
+        <div class="empty-chat">💬 Загрузка сообщений...</div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-group">
+            <textarea class="message-input" id="messageInput" rows="1" placeholder="Напишите сообщение..." maxlength="500"></textarea>
+            <button class="send-btn" id="sendMessageBtn">➤</button>
+        </div>
+        <div class="status-info">
+            <span id="syncStatus">🟢 Чат синхронизирован</span>
+            <button class="refresh-btn" id="manualRefreshBtn">⟳ обновить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== ТОЧНО ТАКИЕ ЖЕ НАСТРОЙКИ КАК В ОТЗЫВАХ ====================
+const SPREADSHEET_ID = '1R0YGWtAvT6t_fuyu5wpe9H6oVagBZgVkdQel8CLzhOM';
+const SHEET_GID = '547215109';
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
+
+// ТОТ ЖЕ САМЫЙ APPS SCRIPT URL ЧТО И В ОТЗЫВАХ
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwtqN33z1dYGwY5cCi-CtUTR3gzUuWKKfWQI_fNleHh-kbThTwJzW1WMNM8t1F_urN2/exec';
+
+// Discord OAuth - ТЕ ЖЕ САМЫЕ НАСТРОЙКИ ЧТО В INDEX.HTML
+const CLIENT_ID = '1488460305519476756';
+const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+// Cookie manager (ТОЧНО ТАКОЙ ЖЕ КАК В INDEX.HTML)
+const CookieManager = {
+    set: (name, value, days = 7) => {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = `${name}=${JSON.stringify(value)};expires=${date.toUTCString()};path=/;SameSite=Lax`;
+    },
+    get: (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return JSON.parse(parts.pop().split(';').shift());
+        return null;
+    },
+    delete: (name) => {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    }
+};
+
+let currentUser = null;
+let allMessages = [];
+let refreshInterval = null;
+
+// DOM элементы
+const messagesContainer = document.getElementById('messagesContainer');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendMessageBtn');
+const loginBtn = document.getElementById('loginBtn');
+const discordUserInfo = document.getElementById('discordUserInfo');
+const userAvatar = document.getElementById('userAvatar');
+const userNameSpan = document.getElementById('userNameSpan');
+const logoutBtn = document.getElementById('logoutBtn');
+const syncStatusSpan = document.getElementById('syncStatus');
+const manualRefreshBtn = document.getElementById('manualRefreshBtn');
+
+// ==================== ТОЧНО ТАКИЕ ЖЕ ФУНКЦИИ КАК В ОТЗЫВАХ ====================
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+function formatDate(dateValue) {
+    if (!dateValue || dateValue === '—') return '—';
+    try {
+        if (typeof dateValue === 'string') {
+            let cleanedDate = dateValue.replace(/\/(\d+)/g, '');
+            cleanedDate = cleanedDate.replace(/(\d+\.\d+\.\d+)\/(\d+)\s+(\d+\.\d+)/, '$1 $3');
+            
+            const patternWithTime = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/;
+            const matchWithTime = cleanedDate.match(patternWithTime);
+            
+            if (matchWithTime) {
+                let day = matchWithTime[1].padStart(2, '0');
+                let month = matchWithTime[2].padStart(2, '0');
+                let year = matchWithTime[3];
+                let hour = matchWithTime[4];
+                let minute = matchWithTime[5].padStart(2, '0');
+                if (year.length === 2) year = '20' + year;
+                return `${day}.${month}.${year.slice(-2)} ${hour}:${minute}`;
+            }
+            
+            const patternOnlyDate = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})/;
+            const matchOnlyDate = cleanedDate.match(patternOnlyDate);
+            if (matchOnlyDate) {
+                let day = matchOnlyDate[1].padStart(2, '0');
+                let month = matchOnlyDate[2].padStart(2, '0');
+                let year = matchOnlyDate[3];
+                if (year.length === 2) year = '20' + year;
+                return `${day}.${month}.${year.slice(-2)}`;
+            }
+            
+            const date = new Date(dateValue);
+            if (!isNaN(date.getTime())) {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = String(date.getFullYear()).slice(-2);
+                return `${day}.${month}.${year}`;
+            }
+            return cleanedDate;
+        }
+        const date = new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = String(date.getFullYear()).slice(-2);
+            return `${day}.${month}.${year}`;
+        }
+        return dateValue;
+    } catch (e) {
+        return dateValue;
+    }
+}
+
+function parseDateToTimestamp(dateStr) {
+    if (!dateStr || dateStr === '—') return 0;
+    try {
+        let cleaned = String(dateStr).replace(/\/(\d+)/g, '');
+        cleaned = cleaned.replace(/(\d+\.\d+\.\d+)\/(\d+)\s+(\d+\.\d+)/, '$1 $3');
+        
+        let patternWithSeconds = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{1,2}):(\d{1,2})/;
+        let match = cleaned.match(patternWithSeconds);
+        
+        if (match) {
+            let day = parseInt(match[1]);
+            let month = parseInt(match[2]) - 1;
+            let year = parseInt(match[3]);
+            let hour = parseInt(match[4]);
+            let minute = parseInt(match[5]);
+            let second = parseInt(match[6]);
+            if (year < 100) year += 2000;
+            return new Date(year, month, day, hour, minute, second).getTime();
+        }
+        
+        let patternWithTime = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/;
+        match = cleaned.match(patternWithTime);
+        
+        if (match) {
+            let day = parseInt(match[1]);
+            let month = parseInt(match[2]) - 1;
+            let year = parseInt(match[3]);
+            let hour = parseInt(match[4]);
+            let minute = parseInt(match[5]);
+            if (year < 100) year += 2000;
+            return new Date(year, month, day, hour, minute, 0).getTime();
+        }
+        
+        let patternOnlyDate = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})/;
+        match = cleaned.match(patternOnlyDate);
+        
+        if (match) {
+            let day = parseInt(match[1]);
+            let month = parseInt(match[2]) - 1;
+            let year = parseInt(match[3]);
+            if (year < 100) year += 2000;
+            return new Date(year, month, day, 12, 0, 0).getTime();
+        }
+        
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) return date.getTime();
+        return 0;
+    } catch (e) {
+        return 0;
+    }
+}
+
+function parseCSV(text) {
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i+1];
+        
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                currentField += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            currentRow.push(currentField);
+            currentField = '';
+        } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+            currentRow.push(currentField);
+            rows.push(currentRow);
+            currentRow = [];
+            currentField = '';
+            if (char === '\r') i++;
+        } else if (char === '\r' && !inQuotes) {
+            currentRow.push(currentField);
+            rows.push(currentRow);
+            currentRow = [];
+            currentField = '';
+        } else {
+            currentField += char;
+        }
+    }
+    if (currentField !== '' || currentRow.length > 0) {
+        currentRow.push(currentField);
+        rows.push(currentRow);
+    }
+    
+    while (rows.length > 0 && rows[rows.length-1].length === 1 && rows[rows.length-1][0] === '') {
+        rows.pop();
+    }
+    return rows;
+}
+
+// ЗАГРУЗКА СООБЩЕНИЙ
+async function loadMessagesFromSheet() {
+    try {
+        syncStatusSpan.innerHTML = '🔄 Загрузка сообщений...';
+        
+        const response = await fetch(CSV_URL + '&_nocache=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const csvText = await response.text();
+        const rows = parseCSV(csvText);
+        
+        if (rows.length < 2) {
+            allMessages = [];
+            renderMessages();
+            syncStatusSpan.innerHTML = '💬 Чат пуст. Напишите первое сообщение!';
+            return;
+        }
+        
+        const headers = rows[0].map(h => String(h || '').toLowerCase().trim());
+        
+        let authorIndex = -1;
+        let messageIndex = -1;
+        let dateIndex = -1;
+        
+        for (let i = 0; i < headers.length; i++) {
+            const header = headers[i];
+            if (header.includes('автор') || header.includes('author') || header.includes('name')) {
+                authorIndex = i;
+            } else if (header.includes('сообщение') || header.includes('message') || header.includes('text')) {
+                messageIndex = i;
+            } else if (header.includes('дата') || header.includes('date') || header.includes('timestamp')) {
+                dateIndex = i;
+            }
+        }
+        
+        if (authorIndex === -1) authorIndex = 0;
+        if (messageIndex === -1) messageIndex = 1;
+        if (dateIndex === -1) dateIndex = 2;
+        
+        const messages = [];
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length === 0) continue;
+            
+            let author = (authorIndex < row.length && row[authorIndex]) ? row[authorIndex].toString().trim() : 'Аноним';
+            let message = (messageIndex < row.length && row[messageIndex]) ? row[messageIndex].toString().trim() : '';
+            let rawDate = (dateIndex < row.length && row[dateIndex]) ? row[dateIndex].toString() : '';
+            
+            if (!author) author = 'Аноним';
+            if (!message) continue;
+            
+            const formattedDate = formatDate(rawDate);
+            const timestamp = parseDateToTimestamp(rawDate);
+            
+            messages.push({
+                author: author,
+                text: message,
+                displayDate: formattedDate,
+                timestamp: timestamp,
+                rawDate: rawDate
+            });
+        }
+        
+        messages.sort((a, b) => a.timestamp - b.timestamp);
+        allMessages = messages;
+        renderMessages();
+        syncStatusSpan.innerHTML = `✅ ${allMessages.length} сообщений · обновлено`;
+        
+    } catch (error) {
+        console.error('Ошибка загрузки:', error);
+        syncStatusSpan.innerHTML = '❌ Ошибка загрузки чата';
+        messagesContainer.innerHTML = '<div class="empty-chat">⚠️ Не удалось загрузить чат</div>';
+    }
+}
+
+function renderMessages() {
+    if (!messagesContainer) return;
+    
+    if (allMessages.length === 0) {
+        messagesContainer.innerHTML = '<div class="empty-chat">✨ Сообщений пока нет. Напишите первым!</div>';
+        return;
+    }
+    
+    const html = allMessages.map(msg => `
+        <div class="message-card">
+            <div class="msg-header">
+                <span class="msg-author">${escapeHtml(msg.author)}</span>
+                <span class="msg-time">${escapeHtml(msg.displayDate || 'недавно')}</span>
+            </div>
+            <div class="msg-text">${escapeHtml(msg.text)}</div>
+        </div>
+    `).join('');
+    
+    messagesContainer.innerHTML = html;
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// ОТПРАВКА СООБЩЕНИЯ
+async function sendMessageToSheet(author, message, discordId) {
+    if (!author || !message.trim()) return false;
+    
+    const now = new Date();
+    const formattedDate = `${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    
+    const payload = {
+        sheetId: SPREADSHEET_ID,
+        data: {
+            'Автор': author,
+            'Сообщение': message.trim(),
+            'DiscordID': discordId || ''
+        }
+    };
+    
+    try {
+        await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        return true;
+    } catch (error) {
+        console.error('Ошибка отправки:', error);
+        return false;
+    }
+}
+
+async function postMessage() {
+    const text = messageInput.value.trim();
+    
+    if (text === '') {
+        syncStatusSpan.innerHTML = '⚠️ Введите сообщение';
+        return;
+    }
+    
+    if (!currentUser) {
+        syncStatusSpan.innerHTML = '⚠️ Авторизуйтесь через Discord!';
+        setTimeout(() => {
+            syncStatusSpan.innerHTML = '💬 Войдите для отправки';
+        }, 2000);
+        return;
+    }
+    
+    if (text.length > 500) {
+        syncStatusSpan.innerHTML = '❌ Максимум 500 символов';
+        return;
+    }
+    
+    sendBtn.disabled = true;
+    syncStatusSpan.innerHTML = '📤 Отправка...';
+    
+    const success = await sendMessageToSheet(currentUser.username, text, currentUser.id);
+    
+    if (success) {
+        messageInput.value = '';
+        syncStatusSpan.innerHTML = '✅ Сообщение отправлено!';
+        setTimeout(() => {
+            loadMessagesFromSheet();
+        }, 500);
+    } else {
+        syncStatusSpan.innerHTML = '❌ Ошибка при отправке';
+    }
+    
+    sendBtn.disabled = false;
+    messageInput.focus();
+}
+
+// ==================== АВТОРИЗАЦИЯ DISCORD (ПОЛНОСТЬЮ КАК В INDEX.HTML) ====================
+// Функция для обновления UI (ТАКАЯ ЖЕ КАК В INDEX.HTML)
+function updateUI(user = null) {
+    const btn_login = document.querySelector('.btn_login');
+    const btn_logout = document.querySelector('.discord-user');
+    const avatar = document.querySelector('.user-avatar');
+    const username = document.querySelector('.user-name');
+    
+    if (!user) {
+        if (btn_login) btn_login.style.display = 'flex';
+        if (btn_logout) btn_logout.style.display = 'none';
+    } else {
+        if (btn_login) btn_login.style.display = 'none';
+        if (btn_logout) btn_logout.style.display = 'flex';
+        if (avatar) avatar.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+        if (username) username.innerHTML = user.username;
+        currentUser = user;
+    }
+}
+
+// Инициализация авторизации (ТОЧНО КАК В INDEX.HTML)
+async function initDiscordAuth() {
+    const hash = window.location.hash;
+    let userData = CookieManager.get('discord_user');
+
+    if (hash.includes('access_token')) {
+        const params = new URLSearchParams(hash.substring(1));
+        const token = params.get('access_token');
+        
+        try {
+            const response = await fetch('https://discord.com/api/users/@me', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            userData = await response.json();
+            CookieManager.set('discord_user', userData);
+            window.history.replaceState({}, document.title, REDIRECT_URI);
+        } catch (err) {
+            console.error('Ошибка получения данных Discord:', err);
+        }
+    }
+
+    if (userData && userData.id) {
+        updateUI({
+            id: userData.id,
+            username: userData.username,
+            avatar: userData.avatar
+        });
+    } else {
+        updateUI(null);
+        currentUser = null;
+    }
+}
+
+function loginWithDiscord() {
+    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
+    window.location.href = authUrl;
+}
+
+function logout() {
+    CookieManager.delete('discord_user');
+    window.location.reload();
+}
+
+// Обработчики событий
+function bindEvents() {
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const sendBtn = document.getElementById('sendMessageBtn');
+    const messageInput = document.getElementById('messageInput');
+    const manualRefreshBtn = document.getElementById('manualRefreshBtn');
+    
+    if (loginBtn) loginBtn.addEventListener('click', loginWithDiscord);
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    if (sendBtn) sendBtn.addEventListener('click', postMessage);
+    if (messageInput) {
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                postMessage();
+            }
+        });
+    }
+    if (manualRefreshBtn) manualRefreshBtn.addEventListener('click', () => {
+        loadMessagesFromSheet();
+        syncStatusSpan.innerHTML = '🔄 Обновление...';
+    });
+}
+
+function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => {
+        loadMessagesFromSheet();
+    }, 5000);
+}
+
+// СТАРТ
+document.addEventListener('DOMContentLoaded', async () => {
+    bindEvents();
+    await initDiscordAuth();
+    await loadMessagesFromSheet();
+    startAutoRefresh();
+});
+</script>
+</body>
+</html>

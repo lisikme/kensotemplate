@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KensoUltra+ | Главная</title>
+    <meta name="description" content="KensoUltra - профессиональный LUA скрипт для CS2 с расширенными возможностями: ESP, аимбот, визуальные эффекты, статистика и многое другое. Совместимость с Nixware.cc">
+    <meta name="keywords" content="kensolua, lua скрипт, cs2, nixware, чит, аимбот, esp, кенсо луа, counter-strike 2, кенсо">
+    <meta name="author" content="Kelix.me">
+    <meta property="og:title" content="KensoUltra - Мощный LUA скрипт для CS2">
+    <meta property="og:description" content="Профессиональный LUA скрипт для CS2 с расширенными возможностями. ESP, аимбот, визуальные эффекты, статистика и многое другое.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kenso.ketame.ru/">
+    <meta property="og:image" content="https://kenso.ketame.ru/logo.png">
+    <meta property="og:site_name" content="KensoLUA">
+    <meta property="og:locale" content="ru_RU">
+    <link rel="shortcut icon" href="./favicon.ico">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="KensoUltra - Мощный LUA скрипт для CS2">
+    <meta name="twitter:description" content="Профессиональный LUA скрипт для CS2 с расширенными возможностями.">
+    <meta name="twitter:image" content="https://kenso.ketame.ru/logo.png">
+    <meta name="twitter:site" content="@kensolua">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="theme-color" content="#d7fe7b">
+    <link rel="canonical" href="https://kenso.ketame.ru/">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --Background: #0f0f0f;
+            --Fon: #0d1218;
+            --ColorNone: #d7fe7b;
+            --ColorCursor: #95b940;
+            --Width: 7px;
+            --Border: 2px;
+            --Radius: 0px;
+        }
+
+        ::-webkit-scrollbar {
+            width: var(--Width);
+            height: 7px;
+            background-color: var(--Background);
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--ColorNone);
+            border-radius: var(--Radius);
+            min-height: 30px;
+            width: var(--Width);
+            border: var(--Border) solid var(--Background);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--ColorCursor);
+        }
+
+        body {
+            background-color: #0e0e0e;
+            color: #e0e0e0;
+            font-family: "Unbounded", sans-serif;
+            margin: 0;
+            padding-top: 70px !important;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .site-header {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.349);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #303030;
+            left: 0px;
+            right: 0px;
+            top: 0px;
+            z-index: 1000;
+            padding: 5px 20px;
+        }
+
+        .header-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        a {
+            text-decoration: none !important;
+        }
+
+        .site-name {
+            color: #d7fe7b;
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 25px;
+            text-shadow: 0 0 10px rgba(215, 254, 123, 0.3);
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .by-kelix {
+            color: #ff7777;
+            position: relative;
+            font-size: 10px;
+            top: -3px;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .nav-link {
+            display: flex;
+            color: #efefef;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            padding: 5px 10px;
+            background: #00000075;
+            border: 1px solid #ffffff30;
+            border-radius: 5px;
+        }
+
+        .nav-link:hover {
+            color: #d7fe7b;
+            background: rgba(215, 254, 123, 0.1);
+        }
+
+        /* Navigation Bar Styles */
+        .nav-bar {
+            display: flex;
+            gap: 3px;
+        }
+        .nav-bar > a {
+            --color: #c2c2c2;
+            display: flex;
+            font-size: 12px;
+            padding: 5px 10px;
+            color: var(--color);
+            background: #252525;
+            transition: all 0.3s ease;
+            border: 1px solid #00000000;
+            border-bottom: 1px solid var(--color);
+            align-items: center;
+            gap: 5px;
+            border-radius: 3px 3px 0 0;
+        }
+        .nav-bar > a.active {
+            --color: #d7fe7b;
+            border-bottom: 1px solid var(--color);
+            color: var(--color);
+            background: #1a1a1a;
+        }
+        .nav-bar > a svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        /* User Profile Styles */
+        .user-profile {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            height: 26px;
+            background: #00000090;
+            border: 1px solid #ffffff30;
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+        .user-profile.btn_login.active {
+            display: flex;
+            background: #D7FE7B;
+        }
+        .user-profile.btn_login.active .nav-bt-title {
+            color: #000;
+            font-size: 16px;
+        }
+        .user-profile.btn_logout.active {
+            display: flex;
+        }
+        .avatar-account {
+            overflow: hidden;
+            border-radius: 2px;
+            height: 22px;
+            aspect-ratio: 1/1;
+            background: #181818;
+        }
+        .avatar {
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+        }
+        .nav-bt-title {
+            color: #ffffff;
+            font-size: 10px;
+            line-height: 10px;
+        }
+        .nav-bt-title-hwid {
+            line-height: 10px;
+            color: #a0a0a0;
+            font-size: 10px;
+            display: flex;
+            gap: 3px;
+        }
+        .nav-bt-title-hwid.creator {
+            background: linear-gradient(45deg, rgb(255, 90, 173), rgb(255, 182, 225));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 600;
+        }
+        .nav-bt-title-hwid.bot {
+            background: linear-gradient(45deg, rgb(97, 237, 255), rgb(220, 250, 255));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 600;
+        }
+        .nav-bt-title-hwid.player {
+            background: linear-gradient(45deg, rgb(46, 197, 41), rgb(167, 255, 84));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 600;
+        }
+        .nav-bt-title-hwid.banned {
+            background: linear-gradient(45deg, rgb(255, 84, 84), rgb(255, 139, 139));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 600;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: absolute;
+            top: 100%;
+            right: -1px;
+            margin-top: 5px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            backdrop-filter: blur(10px);
+            border-radius: 3px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            min-width: 220px;
+        }
+        .context-menu.active {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .context-menu-hwid {
+            background: #0e0e0e;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .hwid-header {
+            display: flex;
+            justify-content: center;
+            font-size: 10px;
+            padding: 4px 0;
+            background: #000;
+            color: #d7fe7b;
+            border-bottom: 1px solid #303030;
+        }
+        .hwid-code {
+            background: #000000;
+            border: 1px solid #6d6dff;
+            color: #a6deff;
+            padding: 4px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 10px;
+            text-align: center;
+            word-break: break-all;
+        }
+        .hwid-status {
+            display: flex;
+            flex-direction: column;
+            font-size: 10px;
+            background: linear-gradient(135deg, rgba(50, 120, 255, 0.2), rgba(106, 17, 203, 0.2));
+            border: 1px solid #6d6dff;
+            padding: 4px;
+            border-radius: 3px;
+            text-align: center;
+        }
+        .hwid-role {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 2px;
+            font-size: 8px;
+            font-weight: 500;
+            background: #05060C;
+        }
+        .hwid-role.creator { color: #FFB6E1; }
+        .hwid-role.admin { color: #FFB347; }
+        .hwid-role.bot { color: #61EDFF; }
+        .hwid-role.player { color: #A7FF54; }
+        .hwid-role.banned { color: #FF5454; }
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .context-menu-item:hover {
+            background: #2a2a2a;
+        }
+        .context-menu-item.logout-item {
+            color: #ff7c7c;
+        }
+        .context-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 999;
+            display: none;
+        }
+        .context-menu-overlay.active {
+            display: block;
+        }
+        .hwid-info {
+            padding: 8px;
+        }
+        .hwid-info > #infr {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        /* Main Content Container */
+        .page-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        /* Hide pages by default */
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+
+        /* ========= HOME PAGE STYLES ========= */
+        .product-header {
+            background: #010101;
+            border: 1px solid #303030;
+            border-radius: 5px;
+            padding: 20px;
+        }
+        .table-container-box {
+            display: flex;
+            gap: 20px;
+        }
+        .table-container {
+            flex: 2;
+        }
+        .table-container1 {
+            flex: 1;
+            min-width: 250px;
+        }
+        .product-gallery {
+            margin-bottom: 20px;
+        }
+        .gallery-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .gallery-viewport {
+            flex: 1;
+            overflow: hidden;
+        }
+        .gallery-track {
+            display: flex;
+            transition: transform 0.3s ease;
+            gap: 10px;
+        }
+        .gallery-track img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .gallery-nav {
+            background: #222;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .dropdown-title {
+            font-size: 20px;
+            color: #d7fe7b;
+            margin-bottom: 10px;
+        }
+        .payment-methods-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .payment-method {
+            background: #141414;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .payment-method.active-method {
+            border-color: #d7fe7b;
+        }
+        .payment-method.disabled-method {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .payment-method img {
+            height: 30px;
+        }
+        .pricing-table table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .pricing-table th, .pricing-table td {
+            border: 1px solid #303030;
+            padding: 10px;
+            text-align: center;
+        }
+        .product-actions {
+            margin: 20px 0;
+            position: relative;
+        }
+        .action-btn {
+            background: #353535;
+            color: #d3f979;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: "Unbounded", sans-serif;
+        }
+        .dropdown-wrapper {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            display: none;
+            z-index: 10;
+        }
+        .dropdown-wrapper.active {
+            display: block;
+        }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            color: white;
+        }
+        .toggle-features-container {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .forum-tag {
+            background: #2a2a2a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .feature-category h4 {
+            color: #d7fe7b;
+            margin-bottom: 10px;
+        }
+        .feature-category ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .feature-category li {
+            font-size: 12px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .sub-tag {
+            background: #1a1a1a;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        .info-box, .info-box2, .info-box3 {
+            background: #0a0a0a;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 11px;
+            border-left: 3px solid #d7fe7b;
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            margin-top: 30px;
+            border-top: 1px solid #303030;
+            padding-top: 20px;
+        }
+        .reviews-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .reviews-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .add-review-btn {
+            background: #2a2a2a;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 3px;
+            color: #d7fe7b;
+            cursor: pointer;
+        }
+        .review-stats {
+            display: flex;
+            gap: 15px;
+        }
+        .review-card {
+            background: #0a0a0a;
+            border: 1px solid #303030;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .review-author {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .review-rating {
+            display: flex;
+            gap: 2px;
+        }
+        .star-icon {
+            width: 16px;
+            height: 16px;
+        }
+        .star-icon.filled {
+            fill: #ffc107;
+            stroke: #ffc107;
+        }
+        .star-icon.empty {
+            fill: #444;
+            stroke: #444;
+        }
+        .empty-reviews {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        /* Modal for review */
+        .x7k9m2p4_modal_overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .x7k9m2p4_modal_overlay.active {
+            display: flex;
+        }
+        .x7k9m2p4_modal_container {
+            background: #0e0e0e;
+            border: 1px solid #303030;
+            border-radius: 5px;
+            width: 500px;
+            max-width: 90%;
+        }
+        .x7k9m2p4_modal_header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #303030;
+        }
+        .x7k9m2p4_modal_close_btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: white;
+        }
+
+        /* ========= MARKET PAGE STYLES ========= */
+        .payment-container {
+            background: #0e0e0e;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #575757;
+        }
+        .payment-title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .payment-title h1 {
+            color: #d7fe7b;
+            font-size: 28px;
+        }
+        .price-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 5px;
+            margin-bottom: 30px;
+        }
+        .price-card {
+            background: #010101;
+            border: 1px solid #303030;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+        }
+        .price-card.active {
+            border-color: #d7fe7b;
+            background: rgba(215, 254, 123, 0.1);
+        }
+        .price-card.active::before {
+            content: '✓';
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            background: #d7fe7b;
+            color: #0e0e0e;
+            font-size: 12px;
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .price-amount {
+            font-size: 18px;
+            font-weight: bold;
+            color: #d7fe7b;
+        }
+        .price-term {
+            font-size: 12px;
+            color: #90ffff;
+        }
+        .discount-badge-card {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            background: #AA1010;
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .methods-grid {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .method-card {
+            background: #141414;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .method-card.active-method {
+            border-color: #d7fe7b;
+        }
+        .method-card.disabled-method {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .method-icon {
+            height: 30px;
+        }
+        .iframe-section {
+            margin-top: 20px;
+        }
+        .iframe-wrapper {
+            background: #0e0e0e;
+            border: 1px solid #303030;
+            border-radius: 5px;
+            min-height: 550px;
+        }
+        .payment-iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+        .card-warn {
+            background: #660000;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            margin-top: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        /* ========= PROFILE PAGE STYLES ========= */
+        .profile-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: #0B0B0B;
+            border: 1px solid #303030;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 5px;
+            overflow: hidden;
+            background: linear-gradient(45deg, #000, #050031);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-name {
+            font-size: 24px;
+            color: #d7fe7b;
+        }
+        .profile-role {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .profile-role.creator { background: linear-gradient(45deg, #b05a24, #d24fbc); }
+        .profile-role.admin { background: linear-gradient(45deg, #006310, #009220); }
+        .profile-role.player { background: linear-gradient(45deg, #04253d, #0a5177); }
+        .profile-role.banned { background: #ff5757; }
+        .profile-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .profile-card {
+            background: #0a0a0a;
+            border: 1px solid #303030;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .profile-card h3 {
+            color: #d7fe7b;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #303030;
+            padding-bottom: 8px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #9eff91;
+            border: 1px solid #303030;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #d7fe7b;
+        }
+    </style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="header-container">
+        <a href="/">
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <img src="./logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="logo">
+                <div class="logo">
+                    <div class="site-name">KensoUltra+</div>
+                    <span class="by-kelix">For nixware.cc - by Kelix.me</span>
+                </div>
+            </div>
+        </a>
+        
+        <div class="nav-bar">
+            <a href="/?page=home" data-page="home">
+                <svg viewBox="0 0 640 512"><path d="M58.9 42.1c3-6.1 9.6-9.6 16.3-8.7L320 64 564.8 33.4c6.7-.8 13.3 2.7 16.3 8.7l41.7 83.4c9 17.9-.6 39.6-19.8 45.1L439.6 217.3c-13.9 4-28.8-1.9-36.2-14.3L320 64 236.6 203c-7.4 12.4-22.3 18.3-36.2 14.3L37.1 170.6c-19.3-5.5-28.8-27.2-19.8-45.1L58.9 42.1zM321.1 128l54.9 91.4c14.9 24.8 44.6 36.6 72.5 28.6L576 211.6v167c0 22-15 41.2-36.4 46.6l-204.1 51c-10.2 2.6-20.9 2.6-31 0l-204.1-51C79 419.7 64 400.5 64 378.5v-167L191.6 248c27.8 8 57.6-3.8 72.5-28.6L318.9 128h2.2z"></path></svg>
+                Главная
+            </a>
+            <a href="/?page=market" data-page="market">
+                <svg viewBox="0 0 576 512"><path d="M253.3 35.1c6.1-11.8 1.5-26.3-10.2-32.4s-26.3-1.5-32.4 10.2L117.6 192 32 192c-17.7 0-32 14.3-32 32s14.3 32 32 32L83.9 463.5C91 492 116.6 512 146 512L430 512c29.4 0 55-20 62.1-48.5L544 256c17.7 0 32-14.3 32-32s-14.3-32-32-32l-85.6 0L365.3 12.9C359.2 1.2 344.7-3.4 332.9 2.7s-16.3 20.6-10.2 32.4L404.3 192l-232.6 0L253.3 35.1zM192 304l0 96c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-96c0-8.8 7.2-16 16-16s16 7.2 16 16zm96-16c8.8 0 16 7.2 16 16l0 96c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-96c0-8.8 7.2-16 16-16zm128 16l0 96c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-96c0-8.8 7.2-16 16-16s16 7.2 16 16"></path></svg>
+                Магазин
+            </a>
+        </div>
+
+        <div class="header-nav">
+            <a href="https://vk.com/kensolua" class="nav-link social" target="_blank">VK</a>
+            <a href="https://discord.gg/5BM4XD3qxM" class="nav-link social" target="_blank">Discord</a>
+            <nav class="nav-account">
+                <div class="user-profile btn_login" onclick="loginWithDiscord()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="currentColor"/></svg>
+                    <div class="nav-bt-title">ВХОД</div>
+                </div>
+                <div class="user-profile btn_logout" onclick="toggleContextMenu(event)">
+                    <div class="avatar-account"><img class="avatar"></div>
+                    <div>
+                        <div class="nav-bt-title">Гость</div>
+                        <div class="nav-bt-title-hwid"></div>
+                    </div>
+                    <div class="context-menu">
+                        <div id="contextHwidInfo" class="context-menu-hwid"><div class="hwid-loading">Загрузка...</div></div>
+                        <div class="context-menu-item profile-item" onclick="openFullProfile(event)">
+                            <span>Профиль</span>
+                        </div>
+                        <div class="context-menu-item logout-item" onclick="logoutFromMenu(event)">
+                            <span>Выйти</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="context-menu-overlay" onclick="closeContextMenu()"></div>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<div class="page-content">
+    <!-- HOME PAGE -->
+    <div id="home-page" class="page">
+        <div class="product-header">
+            <div class="table-container-box">
+                <div class="table-container">
+                    <div class="product-gallery">
+                        <div class="gallery-wrapper">
+                            <button class="gallery-nav prev">❮</button>
+                            <div class="gallery-viewport"><div id="galleryTrack" class="gallery-track"></div></div>
+                            <button class="gallery-nav next">❯</button>
+                        </div>
+                    </div>
+                    <div class="product-description">
+                        <div class="dropdown-title">Универсальный скрипт для CS2</div>
+                        <p>Это не просто скрипт, это комплексное решение, которое раскроет весь потенциал игры.</p>
+                    </div>
+                    <div class="subscription-header">
+                        <div class="dropdown-title">Гибкая система оплаты</div>
+                        <div class="payment-methods-section">
+                            <div class="payment-method active-method"><img src="./cloudtips.svg" alt="CloudTips"></div>
+                            <div class="payment-method disabled-method"><img src="./ozonbank.svg" alt="Ozon"></div>
+                        </div>
+                    </div>
+                    <div class="pricing-table">
+                        <div class="dropdown-title">Список товаров</div>
+                        <table id="pricing-table-body"><thead><tr><th>Стоимость</th><th>Срок действия</th></tr></thead><tbody></tbody></table>
+                    </div>
+                    <div class="product-actions">
+                        <button class="action-btn btn-buy" id="buyBtn">Купить подписку</button>
+                        <div class="dropdown-wrapper" id="buyMenu"><div class="dropdown-content"><a href="https://t.me/kelixme" class="dropdown-item">Telegram</a><a href="https://vk.me/kelixme" class="dropdown-item">VK</a></div></div>
+                    </div>
+                    <button id="toggleFeaturesBtn" class="toggle-features-btn">Функции KensoUltra</button>
+                    <div id="featuresMenu" style="display:none;"><div class="features-list"><div class="feature-category"><h4>Утилиты</h4><ul><li>Мониторинг HVH серверов</li><li>Discord Rich Presence</li></ul></div></div></div>
+                    <div class="reviews-section">
+                        <div class="reviews-header"><div class="reviews-title">Отзывы <button id="addReviewBtn" class="add-review-btn">Написать</button></div><div id="reviewStats"></div></div>
+                        <div id="reviewsContainer"></div>
+                    </div>
+                </div>
+                <div class="table-container1"><div id="adminListBlocks" class="adminlist_blocks"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MARKET PAGE -->
+    <div id="market-page" class="page">
+        <div class="payment-container">
+            <div class="payment-title"><h1>Выберите товар из списка</h1><p>Кликните по карточке для выбора услуги</p></div>
+            <div class="price-buttons-grid" id="priceButtonsGrid"><div>Загрузка...</div></div>
+            <div class="payment-methods-section"><div class="methods-title">Способ оплаты</div><div class="methods-grid" id="paymentMethodsGrid"></div><div id="dynamicPaymentWarning" class="card-warn"></div></div>
+            <div class="iframe-section"><div class="iframe-wrapper"><div id="iframePlaceholder" class="iframe-placeholder">Выберите тариф</div><iframe id="paymentIframe" style="display:none;"></iframe></div></div>
+        </div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div id="profile-page" class="page">
+        <div class="profile-container">
+            <a href="/?page=home" class="back-link">← Вернуться назад</a>
+            <div id="profileContent"><div class="loading">Загрузка профиля...</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div id="reviewModal" class="x7k9m2p4_modal_overlay"><div class="x7k9m2p4_modal_container"><div class="x7k9m2p4_modal_header"><h3>Оставить отзыв</h3><button class="x7k9m2p4_modal_close_btn">✕</button></div><div id="reviewFormContainer"></div></div></div>
+
+<script>
+// ==================== ROUTER ====================
+function getPageFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get('page');
+    if (page === 'market') return 'market';
+    if (page === 'profile') return 'profile';
+    return 'home';
+}
+
+function showPage(pageName) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const activePage = document.getElementById(`${pageName}-page`);
+    if (activePage) activePage.classList.add('active');
+    
+    document.querySelectorAll('.nav-bar a').forEach(link => {
+        const linkPage = link.getAttribute('data-page');
+        if (linkPage === pageName) link.classList.add('active');
+        else link.classList.remove('active');
+    });
+    
+    if (pageName === 'profile') loadProfileFromUrl();
+    if (pageName === 'market') initMarketPage();
+    if (pageName === 'home') initHomePage();
+}
+
+// ==================== AUTH & COOKIE ====================
+const CookieManager = { get: n => { try { return JSON.parse(document.cookie.split(`; ${n}=`).pop().split(';')[0]); } catch { return null; } }, delete: n => document.cookie = `${n}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/` };
+let currentUser = null;
+function updateUI() {
+    const user = CookieManager.get('discord_user');
+    currentUser = user;
+    const isAuth = user && user !== 'Гость';
+    document.querySelector('.btn_login').classList.toggle('active', !isAuth);
+    document.querySelector('.btn_logout').classList.toggle('active', isAuth);
+    if (isAuth) {
+        document.querySelector('.avatar').src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+        document.querySelector('.btn_logout .nav-bt-title').textContent = user.username;
+    } else {
+        document.querySelector('.btn_logout .nav-bt-title').textContent = 'Гость';
+    }
+}
+window.loginWithDiscord = () => window.location.href = window.location.origin + '/auth';
+window.logout = () => { CookieManager.delete('discord_user'); localStorage.removeItem('current_hwid'); location.reload(); };
+window.toggleContextMenu = (e) => { e.stopPropagation(); if(currentUser) document.querySelector('.context-menu').classList.toggle('active'); };
+window.closeContextMenu = () => document.querySelector('.context-menu').classList.remove('active');
+window.openFullProfile = () => window.location.href = '/?page=profile';
+window.logoutFromMenu = () => { logout(); };
+
+// ==================== HOME PAGE LOGIC ====================
+let pricelist = [];
+async function loadPriceList() {
+    try { const res = await fetch('./price.js'); const text = await res.text(); eval(text); } catch(e) { console.error(e); }
+    if(window.pricelist) pricelist = window.pricelist;
+    const tbody = document.querySelector('#pricing-table-body tbody');
+    if(tbody && pricelist.length) {
+        tbody.innerHTML = pricelist.map(p => `<tr><td>${p.item_price}</td><td>${p.item_term}</td></tr>`).join('');
+    }
+}
+function initHomePage() {
+    loadPriceList();
+    document.getElementById('buyBtn').onclick = () => document.getElementById('buyMenu').classList.toggle('active');
+    document.getElementById('toggleFeaturesBtn').onclick = () => {
+        const menu = document.getElementById('featuresMenu');
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    };
+    document.getElementById('addReviewBtn').onclick = () => document.getElementById('reviewModal').classList.add('active');
+    document.querySelector('.x7k9m2p4_modal_close_btn').onclick = () => document.getElementById('reviewModal').classList.remove('active');
+}
+
+// ==================== MARKET PAGE LOGIC ====================
+let currentSelectedIndex = null;
+let currentPaymentMethod = 'cloudtips';
+function initMarketPage() {
+    if(!window.pricelist) { setTimeout(initMarketPage, 100); return; }
+    renderPriceCards();
+    renderPaymentMethods();
+    if(window.pricelist.length) { currentSelectedIndex = 0; renderPriceCards(); updateIframe(); }
+}
+function renderPriceCards() {
+    const container = document.getElementById('priceButtonsGrid');
+    if(!container) return;
+    container.innerHTML = window.pricelist.map((item, idx) => `
+        <div class="price-card ${currentSelectedIndex===idx?'active':''}" data-idx="${idx}">
+            <div class="price-amount">${item.item_price}</div>
+            <div class="price-term">${item.item_term}</div>
+        </div>
+    `).join('');
+    document.querySelectorAll('.price-card').forEach(card => {
+        card.onclick = () => { currentSelectedIndex = parseInt(card.dataset.idx); renderPriceCards(); updateIframe(); };
+    });
+}
+function renderPaymentMethods() {
+    const methods = [{id:'cloudtips',name:'CloudTips',icon:'/cloudtips.svg',available:true},{id:'ozonbank',name:'Ozon',icon:'/ozonbank.svg',available:false}];
+    document.getElementById('paymentMethodsGrid').innerHTML = methods.map(m => `<div class="method-card ${currentPaymentMethod===m.id?'active-method':''} ${!m.available?'disabled-method':''}" data-method="${m.id}"><img src="${m.icon}" class="method-icon"></div>`).join('');
+    document.querySelectorAll('.method-card').forEach(card => {
+        card.onclick = () => { if(!card.classList.contains('disabled-method')) { currentPaymentMethod = card.dataset.method; renderPaymentMethods(); updateIframe(); } };
+    });
+}
+function updateIframe() {
+    const iframe = document.getElementById('paymentIframe');
+    const placeholder = document.getElementById('iframePlaceholder');
+    if(currentSelectedIndex===null || !window.pricelist[currentSelectedIndex]) {
+        iframe.style.display='none'; placeholder.style.display='block';
+        return;
+    }
+    if(currentPaymentMethod === 'cloudtips') {
+        iframe.src = window.pricelist[currentSelectedIndex].pay_link;
+        iframe.style.display='block'; placeholder.style.display='none';
+    } else {
+        iframe.style.display='none'; placeholder.style.display='block';
+        placeholder.innerHTML = 'Способ оплаты временно недоступен';
+    }
+}
+
+// ==================== PROFILE PAGE LOGIC ====================
+async function loadProfileFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const hwid = params.get('hwid');
+    if(!hwid) { document.getElementById('profileContent').innerHTML = '<div class="error">HWID не указан</div>'; return; }
+    document.getElementById('profileContent').innerHTML = '<div class="loading">Загрузка профиля...</div>';
+    try {
+        const [hwidRes, tempRes, discordRes] = await Promise.all([
+            fetch('https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwid4.json'),
+            fetch('https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/temps.json'),
+            fetch('https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json')
+        ]);
+        const hwidData = await hwidRes.json();
+        const tempData = await tempRes.json();
+        const discordData = await discordRes.json();
+        const users = hwidData["users:"] || [];
+        const isActive = users.includes(hwid);
+        const endDate = tempData[hwid] || 0;
+        let discordId = null;
+        if(discordData.hwids) {
+            const entry = discordData.hwids.find(e => e.HWID === hwid);
+            if(entry) discordId = entry.DISCORD;
+        }
+        const endTimestamp = endDate ? Math.floor(new Date(endDate).getTime()/1000) : 0;
+        const now = Math.floor(Date.now()/1000);
+        let statusText = 'Неактивна';
+        if(endTimestamp === 0) statusText = 'Навсегда';
+        else if(endTimestamp > now) statusText = `Активна (${Math.ceil((endTimestamp-now)/86400)} дн.)`;
+        else statusText = 'Истекла';
+        
+        document.getElementById('profileContent').innerHTML = `
+            <div class="profile-header"><div class="profile-avatar"><div class="avatar-letter">${hwid.charAt(0)}</div></div>
+            <div class="profile-info"><h1 class="profile-name">${hwid}</h1><div class="profile-role player">Игрок</div></div></div>
+            <div class="profile-details"><div class="profile-card"><h3>Информация</h3><div class="info-row"><span>HWID:</span><span>${hwid}</span></div>
+            <div class="info-row"><span>Статус:</span><span>${isActive ? 'Активен' : 'Неактивен'}</span></div>
+            <div class="info-row"><span>Подписка:</span><span>${statusText}</span></div></div>
+            <div class="profile-card"><h3>Привязки</h3><div class="info-row"><span>Discord:</span><span>${discordId || 'Не привязан'}</span></div></div></div>
+        `;
+    } catch(e) { document.getElementById('profileContent').innerHTML = '<div class="error">Ошибка загрузки</div>'; }
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    updateUI();
+    const page = getPageFromUrl();
+    showPage(page);
+    document.querySelectorAll('.nav-bar a').forEach(link => {
+        link.addEventListener('click', (e) => { e.preventDefault(); const pg = link.getAttribute('data-page'); window.history.pushState({}, '', `/?page=${pg}`); showPage(pg); });
+    });
+    window.addEventListener('popstate', () => showPage(getPageFromUrl()));
+});
+</script>
+</body>
+</html>
