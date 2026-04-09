@@ -1,0 +1,13 @@
+#logo-text::after {
+    content: "|"; 
+    color: rgb(255, 255, 255); 
+    animation: blink .8s infinite;
+}
+@keyframes blink {
+    0%, 
+    100% {opacity: .8;} 
+    50% {opacity: 0;}
+}
+.colored {
+    color: var(--color);
+}
