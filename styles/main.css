@@ -897,7 +897,7 @@ h2 {
 .avatar_block > .avatar_letter::before {
     opacity: 0;
     backdrop-filter: blur(0px);
-    position: absolute;
+    position: absolute; 
     left: 2px;
     right: 2px;
     top: 2px;
