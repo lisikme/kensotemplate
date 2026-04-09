@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const results = [];
         
         // Разбиваем на маленькие пачки по 10 ID для более быстрой обработки
-        const chunkSize = 20;
+        const chunkSize = 3;
         for (let i = 0; i < uniqueIds.length; i += chunkSize) {
             const chunk = uniqueIds.slice(i, i + chunkSize);
             
