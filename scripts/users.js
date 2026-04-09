@@ -390,13 +390,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (e) {
                         console.warn(`Individual fetch failed for ${id}`);
                     }
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    await new Promise(resolve => setTimeout(resolve, 5000));
                 }
             }
             
             // Уменьшаем задержку между пачками до 200мс
             if (i + chunkSize < uniqueIds.length) {
-                await new Promise(resolve => setTimeout(resolve, 200));
+                await new Promise(resolve => setTimeout(resolve, 5000));
             }
         }
         
