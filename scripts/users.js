@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             const url = `${config.discordApiBase}${discordId}`;
-            const response = await fetchWithTimeout(url, 10000);
+            const response = await fetchWithTimeout(url, 1000);
             
             if (response.status === 429) {
                 const retryAfter = response.headers.get('Retry-After') || 5;
@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const results = [];
         
         // Разбиваем на маленькие пачки по 10 ID для более быстрой обработки
-        const chunkSize = 12;
+        const chunkSize = 100;
         for (let i = 0; i < uniqueIds.length; i += chunkSize) {
             const chunk = uniqueIds.slice(i, i + chunkSize);
             
