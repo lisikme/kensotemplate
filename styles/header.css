@@ -1,14 +1,14 @@
 .header-block {
     display: flex; 
     align-items: center;
-    gap: 8px; 
+    gap: 5px; 
 }
 .header-logo {
     overflow: hidden;
     border: 1px solid #222; 
-    border-radius: 5px;
-    width: 28px; 
-    height: 28px; 
+    border-radius: 3px;
+    width: 26px; 
+    height: 26px; 
 }
 .header-logo > img {
     height: 100%;
@@ -67,7 +67,7 @@
     margin: 0;
     font-size: 18px;
     font-weight: 500;
-    line-height: 25px;
+    /* line-height: 25px; */
     left: -1px;
     position: relative;
     text-shadow: 0 0 10px rgba(215, 254, 123, 0.3);
@@ -115,7 +115,7 @@
 .user-profile {
     display: none; 
     align-items: center; 
-    gap: 8px;
+    gap: 4px;
     height: 26px;
     background: #00000090;
     border: 1px solid #ffffff30;

@@ -7,8 +7,8 @@
     <meta name="description" content="KensoUltra - профессиональный LUA скрипт для CS2">
     <meta name="author" content="Kelix.me">
     <meta name="theme-color" content="#d7fe7b">
-    <link rel="shortcut icon" href="../favicon.ico">
-    <script src="../price.js"></script>
+    <link rel="shortcut icon" href="./favicon.ico">
+    <script src="./scripts/price.js"></script>
     
     <style>
 
@@ -525,7 +525,7 @@ a {
             <div class="header-container">
                 <a href="/">
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <img src="../logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
+                        <img src="./content/icon/logo.png" style="border: 1px solid #222; width: 35px; height: 35px; border-radius: 5px;" alt="">
                         <div class="logo">
                             <div class="site-name">KensoUltra+</div>
                             <span class="by-kelix">For nixware.cc - by Kelix.me</span>
@@ -714,10 +714,10 @@ a {
     </style>
     
     <a href="https://vk.com/kensolua" class="nav-link social" target="_blank">
-        <img src="../vk.svg" width="12" height="12">
+        <img src="./content/svg/link-vk.svg" width="12" height="12">
     </a>
     <a href="https://discord.gg/5BM4XD3qxM" class="nav-link social" target="_blank">
-        <img src="../discord.svg" width="12" height="12">
+        <img src="./content/svg/link-discord.svg" width="12" height="12">
     </a>
 <style>
     /* Стили для контекстного меню - ОБНОВЛЕННЫЕ */
@@ -994,310 +994,6 @@ a {
     }
 </style>
 
-<nav class="nav-account">
-    <div class="user-profile btn_login" onclick="loginWithDiscord()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="currentColor"/>
-        </svg>
-        <div class="nav-bt-title">ВХОД</div>
-    </div>
-    <div class="user-profile btn_logout" onclick="toggleContextMenu(event)">
-        <div class="avatar-account"><img class="avatar" onerror="this.style.visibility = 'hidden'"></div>
-        <div>
-            <div class="nav-bt-title">Гость</div>
-            <div class="nav-bt-title-hwid"></div>
-        </div>
-        
-        <!-- КОНТЕКСТНОЕ МЕНЮ С HWID ИНФОРМАЦИЕЙ -->
-        <div class="context-menu">
-            <!-- Секция с HWID информацией будет заполняться динамически -->
-            <div id="contextHwidInfo" class="context-menu-hwid">
-                <div class="hwid-loading">Загрузка информации...</div>
-            </div>
-            <style>
-                .button-ctn > div {
-                    width: 100%;
-                    
-                }
-                .button-ctn {
-                    display: flex;
-                    flex-direction: row-reverse;
-                }
-            </style>
-            <div class="button-ctn">
-                <div class="context-menu-item profile-item" onclick="openFullProfile(event)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
-                    </svg>
-                    <span>Профиль</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" fill="none"/>
-                    </svg>
-                </div>
-                <div class="context-menu-item logout-item" onclick="logoutFromMenu(event)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="currentColor"/>
-                    </svg>
-                    <span>Выйти</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Оверлей для закрытия меню -->
-    <div class="context-menu-overlay" onclick="closeContextMenu()"></div>
-</nav>
-        <script>
-// ========== КОМПАКТНЫЙ JS БЕЗ OAuth2 ==========
-(() => {
-    // Конфигурация
-    const CONFIG = {
-        jsonUrls: {
-            admins: 'https://lisikme.github.io/Nixware-allowed/admins.json',
-            hwid: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/hwid4.json',
-            temp: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/temps.json',
-            discord: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
-            bans: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/bans.json'
-        }
-    };
-
-    // DOM элементы
-    const $ = s => document.querySelector(s);
-    const btnLogin = $('.btn_login');
-    const btnLogout = $('.btn_logout');
-    const avatar = $('.avatar');
-    const usernameSpan = $('.btn_logout .nav-bt-title');
-    const contextMenu = $('.context-menu');
-    const overlay = $('.context-menu-overlay');
-    const hwidContainer = $('#contextHwidInfo');
-
-    // CookieManager
-    const Cookie = {
-        get: n => { 
-            try { 
-                return JSON.parse(document.cookie.split(`; ${n}=`).pop().split(';')[0]); 
-            } catch { 
-                return null; 
-            } 
-        },
-        delete: n => document.cookie = `${n}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`
-    };
-
-    // Утилиты
-    const fetchJson = async (url, retries = 3) => {
-        for (let i = 0; i < retries; i++) {
-            try {
-                const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}_=${Date.now()}`);
-                if (!res.ok) throw new Error();
-                return await res.json();
-            } catch { 
-                if (i === retries - 1) return null; 
-                await new Promise(r => setTimeout(r, 1000 * (i + 1))); 
-            }
-        }
-    };
-
-    const parseDate = d => d ? Math.floor(new Date(d).getTime() / 1000) : 0;
-    const getSubStatus = endTs => {
-        if (endTs === 0) return { status: 'forever', text: 'Навсегда', daysLeft: null };
-        const days = Math.ceil((endTs - Date.now() / 1000) / 86400);
-        return days > 0 ? { status: 'active', text: days <= 7 ? `Осталось ${days} дн.` : 'Активна', daysLeft: days } 
-                        : { status: 'expired', text: 'Истекла', daysLeft: 0 };
-    };
-
-    const getRole = (discordId, admins, isBanned) => {
-        if (isBanned) return 'banned';
-        if (discordId === '470573716711931905') return 'creator';
-        if (discordId === '1393856315067203635') return 'bot';
-        return admins?.includes(discordId) ? 'admin' : 'player';
-    };
-
-    const roleNames = { creator: 'Создатель', admin: 'Партнёр', bot: 'Менеджер', player: 'Игрок', banned: 'Забанен' };
-
-    // Состояние
-    let currentUser = null;
-    let cachedHwidInfo = null;
-
-    // HWID логика
-    const loadHwidInfo = async () => {
-        if (cachedHwidInfo) return cachedHwidInfo;
-        
-        let hwid = localStorage.getItem('current_hwid');
-        const discordUser = Cookie.get('discord_user');
-        
-        // Автоматический поиск HWID по Discord ID из cookie
-        if (!hwid && discordUser?.id) {
-            const discordData = await fetchJson(CONFIG.jsonUrls.discord);
-            const entry = discordData?.hwids?.find(e => String(e.DISCORD) === String(discordUser.id));
-            if (entry) {
-                hwid = entry.HWID;
-                localStorage.setItem('current_hwid', hwid);
-            }
-        }
-        
-        if (!hwid) return null;
-        
-        // Загрузка всех данных параллельно
-        const [admins, hwidList, temp, bans] = await Promise.all([
-            fetchJson(CONFIG.jsonUrls.admins).then(d => d?.Admins || []),
-            fetchJson(CONFIG.jsonUrls.hwid).then(d => d?.["users:"] || d?.users || []),
-            fetchJson(CONFIG.jsonUrls.temp).then(d => d || {}),
-            fetchJson(CONFIG.jsonUrls.bans).then(d => d || {})
-        ]);
-        
-        // Поиск Discord ID для роли
-        const discordData = await fetchJson(CONFIG.jsonUrls.discord);
-        const userDiscordId = discordData?.hwids?.find(e => e.HWID === hwid)?.DISCORD || null;
-        
-        // Проверка бана
-        const banInfo = bans[hwid];
-        const isBanned = banInfo && (banInfo.ban_temp === "-1" || new Date(banInfo.ban_temp) > new Date());
-        
-        const role = getRole(userDiscordId, admins, isBanned);
-        const endTs = parseDate(temp[hwid] || 0);
-        const sub = getSubStatus(endTs);
-        
-        return cachedHwidInfo = { hwid, userDiscordId, endTs, isBanned, role, roleText: roleNames[role], sub, banReason: banInfo?.ban_reason };
-    };
-
-    const renderHwidMenu = async () => {
-        const username_hwid = document.querySelector('.nav-bt-title-hwid');
-        if (!hwidContainer) return;
-        hwidContainer.innerHTML = '<div class="hwid-loading">Загрузка...</div>';
-        
-        const info = await loadHwidInfo();
-        if (info) {
-            username_hwid.classList.add(`${info.role}`)
-            username_hwid.innerHTML = `${info.roleText}`
-        }
-        if (!info) {
-            hwidContainer.innerHTML = `
-                <div class="hwid-loading">
-                    <div style="font-size: 10px; color: #ff6666;">HWID не привязан!</div>
-                    <div style="font-size: 8px; margin-top: 4px;">Купите подписку!</div>
-                </div>`;
-            return;
-        }
-        
-        const progress = info.endTs === 0 ? 100 : info.sub.daysLeft ? Math.min(100, (info.sub.daysLeft / 30) * 100) : 0;
-        
-        hwidContainer.innerHTML = `
-            <div class="hwid-header">
-                <span>Информация HWID</span>
-                ${info.isBanned ? '<span style="color: #ff6666;">BANNED</span>' : ''}
-            </div>
-            <div class="hwid-info">
-                <div class="hwid-code">${info.hwid}</div>
-                <div id="infr">
-                    <div class="hwid-status">
-                        <span class="label">Статус:</span>
-                        <span class="value ${info.isBanned ? 'expired' : info.sub.status}">
-                            ${info.isBanned ? 'Блок' : info.sub.text}
-                        </span>
-                    </div>
-                    <div class="hwid-status">
-                        <span class="label">Роль:</span>
-                        <span class="hwid-role ${info.role}">${info.roleText}</span>
-                    </div>
-                </div>
-            </div>
-            ${!info.isBanned ? `
-                <div class="hwid-expire-bar">
-                    <div class="hwid-expire-progress" style="width: ${progress}%;"></div>
-                </div>` : `
-                <div class="hwid-status" style="margin-top: 5px;">
-                    <span class="label">Причина:</span>
-                    <span class="value" style="font-size: 9px; color: #ff8888;">
-                        ${info.banReason || 'N/A'}
-                    </span>
-                </div>
-            `}
-        `;
-    };
-
-    // UI обновление из данных cookie
-    const updateUI = () => {
-        const user = Cookie.get('discord_user');
-        currentUser = user;
-        const isAuth = user && user !== 'Гость';
-        
-        btnLogin?.classList.toggle('active', !isAuth);
-        btnLogout?.classList.toggle('active', isAuth);
-        
-        if (isAuth) {
-            avatar.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
-            avatar.onerror = () => avatar.style.visibility = 'hidden';
-            usernameSpan.textContent = user.username;
-        } else {
-            usernameSpan.textContent = 'Гость';
-            avatar.src = '';
-        }
-        
-        // Скрыть/показать кнопку отзыва
-        const reviewBtn = document.getElementById('x7k9m2p4_addReviewTrigger_btn');
-        if (reviewBtn) reviewBtn.style.display = isAuth ? 'inline-flex' : 'none';
-    };
-
-    // Выход из аккаунта
-    const logout = () => { 
-        Cookie.delete('discord_user'); 
-        localStorage.removeItem('current_hwid');
-        cachedHwidInfo = null;
-        location.reload(); 
-    };
-
-    // Глобальные функции
-    window.loginWithDiscord = () => window.location.href = window.location.origin + '/auth';
-    window.logout = logout;
-    
-    window.toggleContextMenu = (e) => {
-        e?.stopPropagation();
-        if (currentUser) {
-            contextMenu?.classList.toggle('active');
-            overlay?.classList.toggle('active');
-        }
-    };
-    
-    window.closeContextMenu = () => {
-        contextMenu?.classList.remove('active');
-        overlay?.classList.remove('active');
-    };
-    
-    window.openFullProfile = (e) => {
-        e?.stopPropagation();
-        if (cachedHwidInfo?.hwid) {
-            window.location.href = `/profile?hwid=${encodeURIComponent(cachedHwidInfo.hwid)}`;
-        }
-    };
-    
-    window.logoutFromMenu = (e) => {
-        e?.stopPropagation();
-        window.closeContextMenu();
-        logout();
-    };
-    
-    window.updateHwidInfoInContextMenu = renderHwidMenu;
-    
-    // Закрытие меню при клике вне
-    document.addEventListener('click', (e) => {
-        if (contextMenu?.classList.contains('active') && !btnLogout?.contains(e.target) && !contextMenu.contains(e.target)) {
-            window.closeContextMenu();
-        }
-    });
-    
-    // Инициализация
-    const init = () => {
-        updateUI();
-        renderHwidMenu();
-    };
-    
-    // Запуск
-    document.addEventListener('DOMContentLoaded', init);
-})();
-</script>
-
-
-
 
 
 <style>
@@ -1396,7 +1092,7 @@ const paymentMethods = [
     {
         id: 'cloudtips',
         name: 'CloudTips',
-        icon: '/cloudtips.svg',
+        icon: './content/svg/pay-cloudtips.svg',
         available: true,
         getLink: (selectedTariff) => {
             if (!selectedTariff) return '#';
@@ -1408,7 +1104,7 @@ const paymentMethods = [
     {
         id: 'ozonbank',
         name: 'Ozon Банк',
-        icon: '/ozonbank.svg',
+        icon: './content/svg/pay-ozonbank.svg',
         available: !OZON_UNAVAILABLE,   // false = недоступно
         getLink: () => OZON_COMMON_LINK,
         warningText: '💰 Сумму нужно указать вручную<br>После оплаты обязательно оповестите продавца!',
@@ -1417,7 +1113,7 @@ const paymentMethods = [
     {
         id: 'yoomoney',
         name: 'YooMoney',
-        icon: '/yoomoney.svg',
+        icon: './content/svg/pay-yoomoney.svg',
         available: !YOOMONEY_UNAVAILABLE,
         getLink: () => YOOMONEY_COMMON_LINK,
         warningText: '💰 Укажите точную сумму к оплате вручную<br>После оплаты обязательно оповестите продавца!',
