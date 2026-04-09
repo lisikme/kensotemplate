@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const results = [];
         
         // Разбиваем на маленькие пачки по 10 ID для более быстрой обработки
-        const chunkSize = 50;
+        const chunkSize = 20;
         for (let i = 0; i < uniqueIds.length; i += chunkSize) {
             const chunk = uniqueIds.slice(i, i + chunkSize);
             
@@ -390,13 +390,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (e) {
                         console.warn(`Individual fetch failed for ${id}`);
                     }
-                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
             
             // Уменьшаем задержку между пачками до 200мс
             if (i + chunkSize < uniqueIds.length) {
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
         
