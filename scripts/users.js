@@ -856,14 +856,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span class="admin_term_text">${banText ? banEnd : endText}</span>
                         </div>
                 <div class="adminlist_info">
-                    <div class="avatar_block">
-                        <div class="avatar_letter">${user.name.charAt(0).toUpperCase()}</div>
-                        <div class='avatar-img'>
-                            <a href="./profile?hwid=${user.name}">
+                    <a href="./profile?hwid=${user.name}">
+                        <div class="avatar_block">
+                            <div class="avatar_letter">${user.name.charAt(0).toUpperCase()}</div>
+                            <div class='avatar-img'>
                                 <img class="admins_avatar" id="user-${user.sid}-avatar" src="./images/none.png" alt="">
-                            </a>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                     <div class="adminlist_buttons">
                         <div id="admins_info">
                         <span class="admin_nickname">${user.name}</span>
