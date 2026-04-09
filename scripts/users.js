@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const results = [];
         
         // Разбиваем на маленькие пачки по 10 ID для более быстрой обработки
-        const chunkSize = 100;
+        const chunkSize = 50;
         for (let i = 0; i < uniqueIds.length; i += chunkSize) {
             const chunk = uniqueIds.slice(i, i + chunkSize);
             
@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // СРАЗУ ЗАГРУЖАЕМ АВАТАР ИЗ КЭША
                         setTimeout(() => {
                             loadAvatarForUser(discordId, parsed.data);
-                        }, 100);
+                        }, 1000);
                     }
                 }
             } catch (e) {}
