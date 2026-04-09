@@ -879,21 +879,7 @@ h2 {
     gap: 3px;
 }
 
-.avatar_block,
-.avatar_block::after,
-.avatar_block::before{
-    border-radius: 2px;
-    overflow: hidden;
-}
-.avatar_letter,
-.avatar_letter::after,
-.avatar_letter::before 
-{
-    border-radius: 2px;
-    overflow: hidden;
-}
 .avatar-img{
-    border-radius: 2px;
     display: flex; 
     gap: 3px; 
     left: 0px;
@@ -903,34 +889,19 @@ h2 {
     position: absolute;
     flex-direction: column;
 }
-.avatar-img > a {
+.adminlist_info > a {
     overflow: hidden;
-    border-radius: 2px;
+    /* border-radius: 39px; */
     /* position: relative; */
     position: relative;
-    width: 100%;
-    height: 100%;
     /* left: 1px;
     right: 1px;
     top: 1px;
     bottom: 1px; */
 }
-.avatar-img > a > .admins_avatar{
-    position: relative;
-    width: 100%;
-    height: 100%;
-    /* left: 1px;
-    right: 1px;
-    top: 1px;
-    bottom: 1px; */
-    overflow: hidden;
-    border-radius: 2px;
-}
-
-
-.avatar_block > .avatar_letter::before {
-    border-radius: 2px;
-    color: rgba(255, 255, 255, 0.452);
+.adminlist_info > a>.avatar_block::before {
+    /* border-radius: 2px; */
+    color: rgba(255, 255, 255, 0.863);
     opacity: 0;
     backdrop-filter: blur(0px);
     position: absolute; 
@@ -939,7 +910,7 @@ h2 {
     top: 0px;
     bottom: 0px;
     /* padding: 5px 0; */
-    background: #00000083;
+    background: #000000b9;
     font-size: 0px;
     display: flex;
     content: 'Открыть профиль';
@@ -950,19 +921,29 @@ h2 {
     transition: all 0.3s;
     word-spacing: 9999px;
     overflow: hidden;
-    border-radius: 2px;
+    /* border-radius: 2px; */
 }
-.avatar_block:hover > .avatar_letter::before {
+.adminlist_info > a> .avatar_block:hover::before {
     opacity: 1;
-    backdrop-filter: blur(3px);
+    backdrop-filter: blur(1px);
     font-size: 8px;
     content: 'Открыть профиль';
     align-items: center;
     text-align: center;
     justify-content: center;
     overflow: hidden;
-    border-radius: 2px;
+    /* border-radius: 2px; */
 }
+.adminlist_info > a > .avatar_block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  box-shadow: 0 0 0 9999px #0E0E0E;
+  z-index: 9999;
+  pointer-events: none;
+}
+
 .avatar_letter{
     overflow: hidden;
 }
@@ -1171,9 +1152,9 @@ h2 {
     text-decoration: none;
     font-size: 10px;
 }
-#link_prof:hover {
+/* #link_prof:hover {
     text-decoration: underline;
-}
+} */
 #link_prof svg {
     width: 14px !important;
     height: 14px !important;
@@ -1285,9 +1266,6 @@ a:link, a:visited, a:hover, a:active {
     /* max-width: 16px; */
     overflow: hidden;
     white-space: nowrap;
-}
-#link_prof:hover {
-    max-width: 200px;
 }
 #link_prof svg {
     flex-shrink: 0;

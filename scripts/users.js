@@ -863,6 +863,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <img class="admins_avatar" id="user-${user.sid}-avatar" src="./images/none.png" alt="">
                             </div>
                         </div>
+                        <get-avatar></get-avatar>
                     </a>
                     <div class="adminlist_buttons">
                         <div id="admins_info">
