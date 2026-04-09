@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
         discordJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/discords.json',
         telegramJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/telegrams.json',
         bansJsonUrl: 'https://raw.githubusercontent.com/lisikme/Nixware-allowed/main/bans.json',
-        discordApiBase: 'https://dis-api.sakuri.ru/api/discord/user/',
-        discordBatchApi: 'https://dis-api.sakuri.ru/api/discord/users',
+        discordApiBase: 'https://dis-api-v2.fascord.workers.dev/api/discord/user/',
+        discordBatchApi: 'https://dis-api-v2.fascord.workers.dev/api/discord/users',
         proxy: 'https://proxy.sakuri.ru/api/proxy?url='
     };
     
@@ -247,8 +247,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (!isSameAvatar) {
                 let avatarUrl = null;
-                const discordCdnGif = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.gif`;
-                const discordCdnPng = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png`;
+                const discordCdnGif = `https://divine-surf-da82.fascord.workers.dev/avatars/${discordId}/${avatarHash}.gif`;
+                const discordCdnPng = `https://divine-surf-da82.fascord.workers.dev/avatars/${discordId}/${avatarHash}.png`;
                 
                 try {
                     avatarUrl = await loadAvatarWithFallback(discordCdnGif, 5000);
