@@ -1323,7 +1323,7 @@ a:link, a:visited, a:hover, a:active {
     /* min-height: 13px; */
     /* padding: 5px 8px 5px 8px; */
     border-radius: 2px;
-    min-height: 34px;
+    min-height: 35px;
     display: flex;
     align-items: center;
     background: rgba(255, 87, 87, 0.1);
