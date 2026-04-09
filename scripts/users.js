@@ -898,8 +898,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 target="_blank" 
                                 id="link_prof" 
                                 style="max-width: 100%;" 
-                                class="discord-link">
-                                    <p id="no-link">Без привязки</p>
+                                class="no-link">
+                                    <p id="no-link">Без привязки!</p>
                                 </a>` : ''}
                                 ${banStatus && !banStatus.wasBanned ? `<div 
                                 class="admin_term_reason">

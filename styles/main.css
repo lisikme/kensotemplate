@@ -878,9 +878,55 @@ h2 {
     display: flex;
     gap: 3px;
 }
+
+.avatar_block,
+.avatar_block::after,
+.avatar_block::before{
+    border-radius: 2px;
+    overflow: hidden;
+}
+.avatar_letter,
+.avatar_letter::after,
+.avatar_letter::before 
+{
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+
+.avatar_block > .avatar_letter::before {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    top: 2px;
+    bottom: 2px;
+    background: #00000083;
+    font-size: 0px;
+    display: flex;
+    content: 'Открыть профиль';
+    z-index: 1000;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    transition: all 0.3s;
+    word-spacing: 9999px;
+}
+.avatar_block:hover > .avatar_letter::before {
+    opacity: 1;
+    backdrop-filter: blur(3px);
+    font-size: 8px;
+    content: 'Открыть профиль';
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+}
+.avatar_letter{
+    overflow: hidden;
+}
 .avatar_block {
     position: relative;
-    border-radius: 2px;
     overflow: hidden;
     aspect-ratio: 1/1;
     height: 62px;
@@ -1051,21 +1097,29 @@ h2 {
     width: 16px;
     height: 16px;
 }
-#link_prof.discord-link{
+.discord-link{
     background: rgba(86, 98, 246, 0.2);
     border-left: 3px solid rgba(86, 98, 246, 1);
 }
-#link_prof.discord-link:hover{
+.discord-link:hover{
     background: rgba(86, 98, 246, 0.1);
     border-left: 3px solid rgba(86, 98, 246, 1);
 }
-#link_prof.telegram-link{
+.telegram-link{
     background: rgba(44, 165, 224, 0.2);
     border-left: 3px solid rgba(44, 165, 224, 1);
 }
-#link_prof.telegram-link:hover{
+.telegram-link:hover{
     background: rgba(44, 165, 224, 0.1);
     border-left: 3px solid rgba(44, 165, 224, 1);
+}
+.no-link{
+    background: rgba(80, 80, 80, 0.2);
+    border-left: 3px solid rgba(80, 80, 80, 1);
+}
+.no-link:hover{
+    background: rgba(80, 80, 80, 0.1);
+    border-left: 3px solid rgba(80, 80, 80, 1);
 }
 
 #link_prof {
@@ -1084,7 +1138,7 @@ h2 {
     height: 14px !important;
 }
 #no-link {
-    color: #7a7a7a;
+    color: #ffb056;
     font-size: 12px;
     margin: 0px 0;
 }
@@ -1115,8 +1169,16 @@ h2 {
     border-radius: 3px;
     /* height: 2px !important; */
 }
+#no-link::before {
+    content: '⚠️';
+    font-size: 12px;
+    line-height: 0px;
+}
 #no-link {
-    color: #464646;
+    display: flex;
+    gap: 2px;
+    color: rgb(255, 182, 87);
+    align-items: center;
 }
 .discord-link svg{
     fill: #fff;
@@ -1238,7 +1300,7 @@ a:link, a:visited, a:hover, a:active {
 .admin_term_reason{
     font-size: 10px;
     background: #242424;
-    color: #c5c5c5;
+    color: #ffa3a3;
     /* min-height: 13px; */
     /* padding: 5px 8px 5px 8px; */
     border-radius: 2px;
