@@ -892,16 +892,53 @@ h2 {
     border-radius: 2px;
     overflow: hidden;
 }
+.avatar-img{
+    border-radius: 2px;
+    display: flex; 
+    gap: 3px; 
+    left: 0px;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    position: absolute;
+    flex-direction: column;
+}
+.avatar-img > a {
+    overflow: hidden;
+    border-radius: 2px;
+    /* position: relative; */
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* left: 1px;
+    right: 1px;
+    top: 1px;
+    bottom: 1px; */
+}
+.avatar-img > a > .admins_avatar{
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* left: 1px;
+    right: 1px;
+    top: 1px;
+    bottom: 1px; */
+    overflow: hidden;
+    border-radius: 2px;
+}
 
 
 .avatar_block > .avatar_letter::before {
+    border-radius: 2px;
+    color: rgba(255, 255, 255, 0.452);
     opacity: 0;
     backdrop-filter: blur(0px);
     position: absolute; 
-    left: 2px;
-    right: 2px;
-    top: 2px;
-    bottom: 2px;
+    left: px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+    /* padding: 5px 0; */
     background: #00000083;
     font-size: 0px;
     display: flex;
@@ -912,6 +949,8 @@ h2 {
     justify-content: center;
     transition: all 0.3s;
     word-spacing: 9999px;
+    overflow: hidden;
+    border-radius: 2px;
 }
 .avatar_block:hover > .avatar_letter::before {
     opacity: 1;
@@ -921,6 +960,8 @@ h2 {
     align-items: center;
     text-align: center;
     justify-content: center;
+    overflow: hidden;
+    border-radius: 2px;
 }
 .avatar_letter{
     overflow: hidden;
@@ -946,13 +987,13 @@ h2 {
     /* height: 58px; */
     text-transform: uppercase;
     border-radius: 0px;
-    color: white;
+    color: rgb(52, 169, 223);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
     font-size: 25px;
-    background: linear-gradient(45deg, rgb(0, 0, 0), rgb(5, 0, 49));
+    background: linear-gradient(45deg, rgb(6, 0, 41), rgb(10, 95, 165));
 }
 
 #tag-creator > span {

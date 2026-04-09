@@ -858,7 +858,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="adminlist_info">
                     <div class="avatar_block">
                         <div class="avatar_letter">${user.name.charAt(0).toUpperCase()}</div>
-                        <div style="display: flex; gap: 3px; flex-direction: column;">
+                        <div class='avatar-img'>
                             <a href="./profile?hwid=${user.name}">
                                 <img class="admins_avatar" id="user-${user.sid}-avatar" src="./images/none.png" alt="">
                             </a>
