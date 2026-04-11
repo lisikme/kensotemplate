@@ -846,24 +846,6 @@ h2 {
     flex-direction: column;
     gap: 3px;
 }
-#block-creator {
-    border: 1px solid #ff4995;
-}
-#block-bot {
-    border: 1px solid #4e86ff;
-}
-#block-admin {
-    border: 1px solid #ccffa2;
-}
-#block-player {
-    border: 1px solid #303030;
-}
-.banned-user {
-    border: 1px solid #ff4444 !important;
-}
-#block-banned {
-    border: 1px solid #ff3c3c;
-}
 #admins_card{
     display: flex;
     gap: 3px;
@@ -977,84 +959,149 @@ h2 {
     background: linear-gradient(45deg, rgb(6, 0, 41), rgb(10, 95, 165));
 }
 
+
+
+
+
+
+
+/* Создатель */
+#item-creator { border: 1px solid #ff4995; }
+#tag-creator { background: rgb(102, 0, 77); }
 #tag-creator > span {
-    background: linear-gradient(45deg, rgb(255, 90, 173), rgb(255, 182, 225));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-family: "Unbounded", sans-serif;
-    font-weight: 600;
-    font-size: 10px;
+    background: linear-gradient(45deg, #ff9bcd, #ffc4e7);
 }
-#tag-creator {
-    background: linear-gradient(45deg, rgb(59, 8, 15), rgb(156, 0, 109));
-    background: rgb(102, 0, 77);
-    color: #ffffff;
-    display: flex;
-    align-items: flex-end;
+/* Менеджер */
+#item-manager { border: 1px solid #6a99ff; }
+#tag-manager { background: #00415a; }
+#tag-manager > span {
+    background: linear-gradient(45deg, #61edff, #caf7ff);
 }
-#tag-bot > span {
-    background: linear-gradient(45deg, rgb(97, 237, 255), rgb(220, 250, 255));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-family: "Unbounded", sans-serif;
-    font-weight: 600;
-    font-size: 10px;
-}
-#tag-bot {
-    background: linear-gradient(45deg, rgb(75, 10, 161), rgb(119, 0, 129));
-    background: #00415a;
-    color: #ffffff;
-    display: flex;
-    align-items: flex-end;
-}
+/* Админ */
+#item-admin { border: 1px solid #e6d750; }
+#tag-admin { background: #554500; }
 #tag-admin > span {
-    background: linear-gradient(45deg, rgb(255, 208, 0), rgb(241, 255, 48));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-family: "Unbounded", sans-serif;
-    font-weight: 600;
-    font-size: 10px;
+    background: linear-gradient(45deg, #ffd000, #faffb0);
 }
-#tag-admin {
-    background: #000000;background: linear-gradient(45deg, rgb(255, 208, 0), rgb(241, 255, 48));
-    color: #ffffff;
-    display: flex;
-    align-items: flex-end;
+/* Партнёр */
+#item-partner { border: 1px solid #8d5cff; }
+#tag-partner { background: #460074; }
+#tag-partner > span {
+    background: linear-gradient(45deg, #be78ff, #efceff);
 }
+/* Медиа */
+#item-media { border: 1px solid #ff4444 !important; }
+#tag-media { background: #490000; }
+#tag-media > span {
+    background: linear-gradient(45deg, #ff5454, #ff9595);
+}
+/* Игрок */
+#item-player { border: 1px solid #303030; }
+#tag-player { background: #003d1f; }
 #tag-player > span {
-    background: linear-gradient(45deg, rgb(46, 197, 41), rgb(167, 255, 84));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-family: "Unbounded", sans-serif;
-    font-weight: 600;
-    font-size: 10px;
+    background: linear-gradient(45deg, #2ec529, #c7ff93);
 }
-#tag-player {
-    background: linear-gradient(45deg, rgb(11, 54, 0), rgb(13, 116, 0));
-    background: #003d1f;
-    color: #ffffff;
-    display: flex;
-    align-items: flex-end;
-}
+/* Забанен */
+#item-banned { border: 1px solid #720000 !important; }
+#tag-banned { background: #720000; }
 #tag-banned > span {
-    background: linear-gradient(45deg, rgb(255, 84, 84), rgb(255, 139, 139));
-    -webkit-background-clip: text;
+    background: linear-gradient(45deg, #ff8989, #ffd6d6);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#tag-not-hwid > span {
+    background: #ff9090 !important;
+}
+
+#term-banned {
+    background: #ff5454;
+    color: #000000;
+}
+#term-nolicense {
+    background: #ff8a54;
+    color: #000000;
+}
+#term-expired {
+    background: #ffc354;
+    color: #000000;
+}
+
+
+
+.adminlist_button.steam_button > span {
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
     -webkit-text-fill-color: transparent;
-    background-clip: text;
     font-family: "Unbounded", sans-serif;
     font-weight: 600;
     font-size: 10px;
+    background: linear-gradient(45deg, #b8b8b8, #ffffff);
 }
-#tag-banned {
-    background: linear-gradient(45deg, rgb(44, 0, 0), rgb(94, 0, 0));
-    background: #490000;
-    color: #ffffff;
+.adminlist_button.steam_button {
     display: flex;
     align-items: flex-end;
+    background: #363636;
 }
 .adminlist_buttons {
     flex: 1;
@@ -2031,9 +2078,7 @@ a:link, a:visited, a:hover, a:active {
 .pricing-table tr:last-child td {
     border-bottom: none;
 }
-.forever {
-    color: #66ff66 !important;
-}
+
 .price-note {
     text-align: center;
     color: #d1d5d8;

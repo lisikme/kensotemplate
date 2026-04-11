@@ -1,30 +1,8 @@
+// users.js - полная версия с интеграцией profile-data модуля
+// Версия 2.0
+
 document.addEventListener('DOMContentLoaded', function() {
-    const config = {
-        // Новый API для получения данных о пользователях (включая баны)
-        apiUrl: 'https://hwid-api.fascord.workers.dev/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA?gid=834339051',
-        discordApiBase: 'https://dis-api-v2.fascord.workers.dev/api/discord/user/',
-        discordBatchApi: 'https://dis-api-v2.fascord.workers.dev/api/discord/users',
-        proxy: 'https://proxy.sakuri.ru/api/proxy?url='
-    };
-    
-    // Кэш данные
-    const discordDataCache = new Map();
-    
-    // Константы кэширования
-    const CACHE_TTL = 60 * 60 * 1000; // 1 час
-    const LAST_UPDATE_KEY = 'last_discord_update';
-    const UPDATE_INTERVAL = 60 * 60 * 1000; // Обновлять кэш раз в час
-    
-    // Флаг что обновление уже запущено
-    let updateInProgress = false;
-    let draftDataLoaded = false;
-    let draftUsers = [];
-    let draftAdminDiscordIds = [];
-    
-    // Карта для отслеживания загружаемых аватаров
-    const loadingAvatars = new Map();
-    const loadedAvatars = new Set();
-    
+    // ==================== ОЧЕРЕДЬ ЗАГРУЗКИ АВАТАРОВ ====================
     class AvatarQueue {
         constructor(maxConcurrent = 3, delayBetweenBatches = 500) {
             this.maxConcurrent = maxConcurrent;
@@ -44,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
         async run() {
             const now = Date.now();
             const timeSinceLastBatch = now - this.lastBatchTime;
-            
             if (timeSinceLastBatch < this.delayBetweenBatches) {
                 setTimeout(() => this.run(), this.delayBetweenBatches - timeSinceLastBatch);
                 return;
@@ -55,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
             this.lastBatchTime = Date.now();
             const batchSize = Math.min(this.maxConcurrent - this.current, this.queue.length);
             const batch = this.queue.splice(0, batchSize);
-            
             this.current += batch.length;
             
             batch.forEach(async ({ task, resolve, reject }) => {
@@ -71,815 +47,309 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
     const avatarLoadQueue = new AvatarQueue(3, 300);
+    let draftDataLoaded = false;
+    let draftUsers = [];
+    const loadedAvatars = new Set();
+    let updateInProgress = false;
     
-    function isCacheValid(cachedItem) {
-        if (!cachedItem) return false;
-        if (!cachedItem.data) return false;
-        if (Date.now() - cachedItem.timestamp > CACHE_TTL) return false;
-        return true;
+    // Приоритеты ролей для сортировки
+    const ROLE_PRIORITY = {
+        'Создатель': 1,
+        'Менеджер': 2,
+        'Админ': 3,
+        'Партнёр': 4,
+        'Медиа': 5,
+        'Игрок': 6,
+        'Забанен': 999
+    };
+    
+    // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+    
+    /**
+     * Получить приоритет сортировки пользователя
+     */
+    function getSortPriority(user) {
+        if (user.isBanned) return 999;
+        if (user.licenseCategory === 'nolicense') return 500;
+        if (user.licenseCategory === 'expired') return 400;
+        return ROLE_PRIORITY[user.roleRaw] || 99;
     }
     
-    function isDataCorrupted(data) {
-        if (!data) return true;
-        if (!data.username && !data.global_name && !data.id) return true;
-        return false;
-    }
-    
-    function shouldUpdateCache() {
-        const lastUpdate = localStorage.getItem(LAST_UPDATE_KEY);
-        if (!lastUpdate) return true;
-        const timeSinceLastUpdate = Date.now() - parseInt(lastUpdate);
-        return timeSinceLastUpdate >= UPDATE_INTERVAL;
-    }
-    
-    function setLastUpdateTime() {
-        localStorage.setItem(LAST_UPDATE_KEY, Date.now().toString());
-    }
-    
-    async function loadImageDirect(url, timeoutMs = 8000) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            const timeout = setTimeout(() => {
-                cleanup();
-                reject(new Error(`Direct timeout ${timeoutMs}ms`));
-            }, timeoutMs);
-            
-            function cleanup() {
-                clearTimeout(timeout);
-                img.onload = null;
-                img.onerror = null;
-            }
-            
-            img.onload = () => { cleanup(); resolve(url); };
-            img.onerror = () => { cleanup(); reject(new Error('Direct load error')); };
-            img.src = url;
-        });
-    }
-    
-    async function loadImageViaProxy(url, timeoutMs = 10000) {
-        const proxyUrl = `${config.proxy}"${url}"`;
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            const timeout = setTimeout(() => {
-                cleanup();
-                reject(new Error(`Proxy timeout ${timeoutMs}ms`));
-            }, timeoutMs);
-            
-            function cleanup() {
-                clearTimeout(timeout);
-                img.onload = null;
-                img.onerror = null;
-            }
-            
-            img.onload = () => { cleanup(); resolve(proxyUrl); };
-            img.onerror = () => { cleanup(); reject(new Error('Proxy load error')); };
-            img.src = proxyUrl;
-        });
-    }
-    
-    async function loadAvatarWithFallback(discordCdnUrl, timeoutMs = 8000) {
-        try {
-            return await loadImageDirect(discordCdnUrl, timeoutMs);
-        } catch (directError) {
-            console.warn(`Direct load failed, trying proxy...`, directError.message);
-            try {
-                return await loadImageViaProxy(discordCdnUrl, timeoutMs + 2000);
-            } catch (proxyError) {
-                throw new Error(`Both failed: ${proxyError.message}`);
-            }
-        }
-    }
-    
-    async function fetchSingleDiscordUser(discordId, retryCount = 0) {
-        if (!discordId || !discordId.match(/^\d{17,19}$/)) return null;
-        
-        const maxRetries = 3;
-        const baseDelay = 1000;
-        
-        try {
-            const url = `${config.discordApiBase}${discordId}`;
-            const response = await fetchWithTimeout(url, 1000);
-            
-            if (response.status === 429) {
-                const retryAfter = response.headers.get('Retry-After') || 5;
-                console.warn(`Rate limited for ${discordId}, waiting ${retryAfter}s`);
-                await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-                return fetchSingleDiscordUser(discordId, retryCount);
-            }
-            
-            if (response.status === 500) {
-                throw new Error(`HTTP 500 Internal Server Error for ${discordId}`);
-            }
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            if (data && (data.username || data.global_name)) {
-                return data;
-            }
-            return null;
-            
-        } catch (error) {
-            console.warn(`Fetch failed for ${discordId} (attempt ${retryCount + 1}/${maxRetries + 1}):`, error.message);
-            
-            if (retryCount < maxRetries) {
-                const delay = baseDelay * Math.pow(2, retryCount);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return fetchSingleDiscordUser(discordId, retryCount + 1);
-            }
-            
-            return null;
-        }
-    }
-    
-    async function fetchWithTimeout(url, timeoutMs = 10000) {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
-        
-        try {
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeout);
-            return response;
-        } catch (error) {
-            clearTimeout(timeout);
-            if (error.name === 'AbortError') {
-                throw new Error(`Request timeout after ${timeoutMs}ms`);
-            }
-            throw error;
-        }
-    }
-    
-    // ИНДИВИДУАЛЬНАЯ ЗАГРУЗКА АВАТАРА СРАЗУ ПОСЛЕ ПОЛУЧЕНИЯ ДАННЫХ
+    /**
+     * Загрузить аватар для пользователя
+     */
     async function loadAvatarForUser(discordId, userData) {
         if (!discordId || !userData || loadedAvatars.has(discordId)) return;
         
         const avatarElement = document.getElementById(`user-${discordId}-avatar`);
         if (!avatarElement) return;
         
-        const cacheKey = `avatar_${discordId}`;
-        
-        // Проверяем, есть ли уже сохраненный аватар
-        const cachedAvatar = localStorage.getItem(cacheKey);
-        if (cachedAvatar) {
-            try {
-                await tryLoadImage(cachedAvatar, 3000);
-                avatarElement.src = cachedAvatar;
-                avatarElement.style.opacity = '1';
-                loadedAvatars.add(discordId);
-            } catch (cacheError) {
-                localStorage.removeItem(cacheKey);
-            }
-        }
-        
-        // Если есть данные об аватаре, загружаем новый
         if (userData.avatar) {
-            const avatarHash = userData.avatar;
-            const cachedAvatarCurrent = localStorage.getItem(cacheKey);
-            const isSameAvatar = cachedAvatarCurrent && cachedAvatarCurrent.includes(avatarHash);
-            
-            if (!isSameAvatar) {
-                let avatarUrl = null;
-                const discordCdnGif = `https://divine-surf-da82.fascord.workers.dev/avatars/${discordId}/${avatarHash}.gif`;
-                const discordCdnPng = `https://divine-surf-da82.fascord.workers.dev/avatars/${discordId}/${avatarHash}.png`;
-                
-                try {
-                    avatarUrl = await loadAvatarWithFallback(discordCdnGif, 5000);
-                } catch {
-                    try {
-                        avatarUrl = await loadAvatarWithFallback(discordCdnPng, 5000);
-                    } catch (pngError) {
-                        console.warn(`Failed to load avatar for ${discordId}`);
-                    }
-                }
-                
+            avatarLoadQueue.add(async () => {
+                const avatarUrl = await window.ProfileData.getDiscordAvatarUrl(discordId, userData.avatar);
                 if (avatarUrl) {
                     avatarElement.src = avatarUrl;
                     avatarElement.style.opacity = '1';
-                    localStorage.setItem(cacheKey, avatarUrl);
                     loadedAvatars.add(discordId);
+                    
+                    // Скрываем букву
+                    const avatarBlock = avatarElement.closest('.avatar_block');
+                    if (avatarBlock) {
+                        const letterDiv = avatarBlock.querySelector('.avatar_letter');
+                        if (letterDiv) letterDiv.style.opacity = '0';
+                    }
                 }
-            }
+            });
         } else {
-            // Если нет аватара, оставляем изображение по умолчанию
             if (avatarElement.src !== './images/none.png' && !avatarElement.src.includes('none.png')) {
                 avatarElement.src = './images/none.png';
             }
         }
     }
     
-    // ОБРАБОТКА ОТДЕЛЬНОГО РЕЗУЛЬТАТА СРАЗУ ПОСЛЕ ПОЛУЧЕНИЯ
-    async function processUserDataResult(result) {
-        if (!result.success || !result.data) return;
-        
-        const discordId = result.user_id;
-        const userData = result.data;
-        
-        // Сохраняем в кэш
-        discordDataCache.set(discordId, {
-            data: userData,
-            timestamp: Date.now()
-        });
-        
-        // Сохраняем в localStorage
-        try {
-            localStorage.setItem(`discord_user_${discordId}`, JSON.stringify({
-                data: userData,
-                timestamp: Date.now()
-            }));
-        } catch (e) {}
-        
-        // Обновляем имя пользователя на странице
-        updateUsernameOnPage(discordId, userData);
-        
-        // СРАЗУ ЗАГРУЖАЕМ АВАТАР
-        await loadAvatarForUser(discordId, userData);
-    }
-    
-    // Обновление имени на странице
+    /**
+     * Обновить имя пользователя на странице
+     */
     function updateUsernameOnPage(discordId, userData) {
         const usernameElements = document.querySelectorAll(`.discord-link[data-discord-id="${discordId}"] .discord-username`);
-        
-        let displayName = discordId.slice(0, 8);
-        if (userData.username) {
-            displayName = userData.username;
-            if (userData.discriminator && userData.discriminator !== '0') {
-                displayName = `${userData.username}#${userData.discriminator}`;
-            }
-        } else if (userData.global_name) {
-            displayName = userData.global_name;
-        }
+        let displayName = window.ProfileData.getDisplayName(null, userData);
         
         usernameElements.forEach(element => {
             element.textContent = displayName;
         });
     }
     
-    async function fetchMultipleDiscordUsers(discordIds) {
-        const uniqueIds = [...new Set(discordIds.filter(id => id && typeof id === 'string' && id.match(/^\d{17,19}$/)))];
-        if (uniqueIds.length === 0) return [];
-        
-        const results = [];
-        
-        // Разбиваем на маленькие пачки по 3 ID для более быстрой обработки
-        const chunkSize = 3;
-        for (let i = 0; i < uniqueIds.length; i += chunkSize) {
-            const chunk = uniqueIds.slice(i, i + chunkSize);
-            
-            try {
-                const idsParam = chunk.join(',');
-                const batchUrl = `${config.discordBatchApi}?ids=${encodeURIComponent(idsParam)}`;
-                
-                console.log(`Batch request for ${chunk.length} users`);
-                
-                const response = await fetchWithTimeout(batchUrl, 15000);
-                
-                if (response.status === 500) {
-                    console.warn(`Batch 500 error, falling back to individual requests for chunk`);
-                    // Индивидуальные запросы с немедленной обработкой
-                    for (const id of chunk) {
-                        try {
-                            const singleData = await fetchSingleDiscordUser(id);
-                            if (singleData) {
-                                const result = { user_id: id, data: singleData, success: true };
-                                results.push(result);
-                                // СРАЗУ ОБРАБАТЫВАЕМ РЕЗУЛЬТАТ
-                                await processUserDataResult(result);
-                            }
-                        } catch (e) {
-                            console.warn(`Individual fetch failed for ${id}`);
-                        }
-                        await new Promise(resolve => setTimeout(resolve, 200));
-                    }
-                    continue;
-                }
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const batchData = await response.json();
-                
-                if (batchData.results && Array.isArray(batchData.results)) {
-                    for (const result of batchData.results) {
-                        if (result.success && result.data) {
-                            results.push(result);
-                            // СРАЗУ ОБРАБАТЫВАЕМ КАЖДЫЙ РЕЗУЛЬТАТ
-                            await processUserDataResult(result);
-                        }
-                    }
-                }
-            } catch (chunkError) {
-                console.error(`Batch chunk error:`, chunkError.message);
-                // Индивидуальные запросы при ошибке
-                for (const id of chunk) {
-                    try {
-                        const singleData = await fetchSingleDiscordUser(id);
-                        if (singleData) {
-                            const result = { user_id: id, data: singleData, success: true };
-                            results.push(result);
-                            await processUserDataResult(result);
-                        }
-                    } catch (e) {
-                        console.warn(`Individual fetch failed for ${id}`);
-                    }
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-            }
-            
-            // Уменьшаем задержку между пачками до 200мс
-            if (i + chunkSize < uniqueIds.length) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-        }
-        
-        return results;
-    }
-    
-    function getDiscordUserDataFromCache(discordId) {
-        if (!discordId || !discordId.match(/^\d{17,19}$/)) return null;
-        
-        const cached = discordDataCache.get(discordId);
-        if (cached && cached.data && !isDataCorrupted(cached.data)) {
-            return cached.data;
-        }
-        
-        return null;
-    }
-    
+    /**
+     * Синхронная загрузка имени из кэша
+     */
     function loadDiscordUsernameSync(discordId, originalName) {
         if (!discordId || !discordId.match(/^\d{17,19}$/)) {
             return originalName || 'No ID';
         }
-        
-        const userData = getDiscordUserDataFromCache(discordId);
-        
-        if (userData && userData.username) {
-            let displayName = userData.username;
-            if (userData.discriminator && userData.discriminator !== '0') {
-                displayName = `${userData.username}#${userData.discriminator}`;
-            }
-            return displayName;
-        } else if (userData && userData.global_name) {
-            return userData.global_name;
-        }
-        
         return originalName || discordId.slice(0, 8);
     }
     
-    async function loadDiscordUsernameAsync(discordId, usernameElement, originalName) {
-        if (!discordId || !discordId.match(/^\d{17,19}$/)) {
-            if (usernameElement) usernameElement.textContent = originalName || 'No ID';
-            return;
-        }
-        
-        const userData = getDiscordUserDataFromCache(discordId);
-        
-        let displayName = originalName;
-        if (userData && userData.username) {
-            displayName = userData.username;
-            if (userData.discriminator && userData.discriminator !== '0') {
-                displayName = `${userData.username}#${userData.discriminator}`;
-            }
-        } else if (userData && userData.global_name) {
-            displayName = userData.global_name;
-        } else if (userData && !isDataCorrupted(userData)) {
-            displayName = userData.username || userData.global_name || originalName;
-        } else {
-            displayName = originalName || discordId.slice(0, 8);
-        }
-        
-        if (usernameElement && usernameElement.textContent === 'Loading...') {
-            usernameElement.textContent = displayName;
-        }
-        return displayName;
+    /**
+     * Обработка полученных Discord данных
+     */
+    async function processUserDataResult(discordId, userData) {
+        if (!userData) return;
+        updateUsernameOnPage(discordId, userData);
+        await loadAvatarForUser(discordId, userData);
     }
     
-    function tryLoadImage(url, timeoutMs) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            const timeout = setTimeout(() => {
-                cleanup();
-                reject(new Error(`Timeout ${timeoutMs}ms`));
-            }, timeoutMs);
-            
-            function cleanup() {
-                clearTimeout(timeout);
-                img.onload = null;
-                img.onerror = null;
-            }
-            
-            img.onload = () => { cleanup(); resolve(url); };
-            img.onerror = () => { cleanup(); reject(new Error('Load error')); };
-            img.src = url;
-        });
-    }
-    
-    async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            if (retries > 0) {
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return fetchWithRetry(url, options, retries - 1, delay * 2);
-            }
-            throw error;
-        }
-    }
-    
-    function getUserRole(discordId, adminList) {
-        if (discordId === '470573716711931905') return 'creator';
-        if (discordId === '1393856315067203635') return 'bot';
-        return adminList.includes(discordId) ? 'admin' : 'player';
-    }
-    
-    async function fetchApiData() {
-        try {
-            console.log('Загрузка данных из API...');
-            const response = await fetchWithRetry(config.apiUrl);
-            
-            if (!Array.isArray(response)) {
-                console.error('API вернул не массив данных');
-                return [];
-            }
-            
-            console.log(`Получено ${response.length} записей из API`);
-            return response;
-        } catch (error) {
-            console.error('Ошибка загрузки API данных:', error);
-            return [];
-        }
-    }
-    
-    function parseDateToTimestamp(dateString) {
-        try {
-            if (typeof dateString === 'number') return dateString;
-            // Формат даты в API: DD.MM.YYYY или текст типа "Безлимит", "Арест"
-            if (dateString && dateString.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
-                const parts = dateString.split('.');
-                // DD.MM.YYYY -> MM/DD/YYYY для конструктора Date
-                const date = new Date(`${parts[1]}/${parts[0]}/${parts[2]}`);
-                return Math.floor(date.getTime() / 1000);
-            }
-            return 0;
-        } catch (e) {
-            return 0;
-        }
-    }
-    
-    function getBanStatusFromApi(apiEntry) {
-        // Tab0 - HWID, Tab1 - статус ключа ("ЕСТЬ"/"НЕТ"), Tab2 - роль, Tab3 - лимит, Tab4 - срок действия, Tab5 - дата окончания, Tab6 - DiscordID, Tab7 - TelegramID, Tab8 - причина бана
-        const keyStatus = apiEntry.Tab1; // "ЕСТЬ" или "НЕТ"
-        const role = apiEntry.Tab2; // "Игрок", "Медиа", "Создатель", "Менеджер", "Забанен"
-        const banReason = apiEntry.Tab8 || null;
-        
-        // Если статус ключа "НЕТ" или роль "Забанен" - пользователь забанен
-        const isBanned = keyStatus === 'НЕТ' || role === 'Забанен';
-        
-        if (!isBanned) return null;
-        
-        const banTime = new Date();
-        const isPermanent = apiEntry.Tab4 === 'Арест' || apiEntry.Tab4 === 'Безлимит';
-        
-        let banEnd = null;
-        if (!isPermanent && apiEntry.Tab5 && apiEntry.Tab5.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
-            const parts = apiEntry.Tab5.split('.');
-            banEnd = new Date(`${parts[1]}/${parts[0]}/${parts[2]}`);
-        }
-        
-        return {
-            isBanned: true,
-            isPermanent: isPermanent,
-            reason: banReason || (role === 'Забанен' ? 'Забанен' : 'Ключ деактивирован'),
-            banTime: banTime,
-            banEnd: banEnd,
-            remainingTime: banEnd ? Math.ceil((banEnd - banTime) / (1000 * 60 * 60 * 24)) : null
-        };
-    }
-    
-    async function loadDraftData() {
-        try {
-            console.log('Загрузка данных из API...');
-            
-            const apiData = await fetchApiData();
-            
-            if (!apiData || apiData.length === 0) {
-                console.error('Не удалось загрузить данные из API');
-                document.getElementById('adminListTitle').textContent = 'Ошибка загрузки данных';
-                return null;
-            }
-            
-            // Собираем список админов (роли "Создатель", "Менеджер", "Медиа")
-            draftAdminDiscordIds = [];
-            apiData.forEach(entry => {
-                const role = entry.Tab2;
-                const discordId = entry.Tab6;
-                if (discordId && (role === 'Создатель' || role === 'Менеджер' || role === 'Медиа')) {
-                    draftAdminDiscordIds.push(discordId);
-                }
-            });
-            
-            const usersList = [];
-            const bannedUsersList = [];
-            
-            apiData.forEach((entry, index) => {
-                const hwid = entry.Tab0;
-                const keyStatus = entry.Tab1; // "ЕСТЬ" или "НЕТ"
-                const role = entry.Tab2;
-                const limitType = entry.Tab3; // "ВКЛ"/"ВЫКЛ" - ограничение по времени
-                const term = entry.Tab4; // "Безлимит", "Арест", "4мес. 12д. 1ч. 41мин" и т.д.
-                const endDate = entry.Tab5; // "25.04.2026" или дата
-                const discordId = entry.Tab6;
-                const telegramId = entry.Tab7;
-                const banReason = entry.Tab8;
-                
-                const banStatus = getBanStatusFromApi(entry);
-                
-                // Определяем end timestamp
-                let endTimestamp = 0;
-                if (limitType === 'ВКЛ' && endDate && endDate.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
-                    endTimestamp = parseDateToTimestamp(endDate);
-                }
-                
-                // Определяем активен ли пользователь (ключ "ЕСТЬ" и не забанен)
-                const isActive = keyStatus === 'ЕСТЬ' && role !== 'Забанен';
-                
-                const userData = {
-                    id: usersList.length + bannedUsersList.length + 1,
-                    sid: discordId,
-                    telegramId: telegramId,
-                    hwid: hwid,
-                    name: hwid,
-                    flags: '999',
-                    immunity: 0,
-                    group_id: role || 'Игрок',
-                    end: endTimestamp,
-                    server_id: 0,
-                    is_active: isActive,
-                    banStatus: banStatus,
-                    term: term,
-                    limitType: limitType
-                };
-                
-                if (banStatus && banStatus.isBanned) {
-                    bannedUsersList.push(userData);
-                } else {
-                    usersList.push(userData);
-                }
-            });
-            
-            // Объединяем и сортируем: сначала создатели, менеджеры, медиа, потом активные пользователи, потом забаненные
-            draftUsers = [...usersList, ...bannedUsersList];
-            
-            draftUsers.sort((a, b) => {
-                const aRole = getUserRole(a.sid, draftAdminDiscordIds);
-                const bRole = getUserRole(b.sid, draftAdminDiscordIds);
-                
-                if (aRole === 'creator') return -1;
-                if (bRole === 'creator') return 1;
-                if (aRole === 'bot') return -1;
-                if (bRole === 'bot') return 1;
-                if (aRole === 'admin' && bRole !== 'admin') return -1;
-                if (bRole === 'admin' && aRole !== 'admin') return 1;
-                if (a.banStatus?.isBanned && !b.banStatus?.isBanned) return 1;
-                if (!a.banStatus?.isBanned && b.banStatus?.isBanned) return -1;
-                if (a.is_active && !b.is_active) return -1;
-                if (!a.is_active && b.is_active) return 1;
-                return 0;
-            });
-            
-            // Загружаем кэш Discord из localStorage
-            const allDiscordIds = [];
-            draftUsers.forEach(user => {
-                if (user.sid && user.sid.match(/^\d{17,19}$/)) {
-                    allDiscordIds.push(user.sid);
-                }
-            });
-            loadCacheFromLocalStorage(allDiscordIds);
-            
-            // Показываем данные
-            displayUsers(draftUsers, draftAdminDiscordIds);
-            draftDataLoaded = true;
-            console.log(`Данные загружены: ${usersList.length} активных, ${bannedUsersList.length} забаненных`);
-            
-            // Проверяем нужно ли обновить кэш Discord
-            if (shouldUpdateCache()) {
-                console.log('Прошёл час, обновляем кэш Discord...');
-                setTimeout(() => {
-                    updateDiscordCache();
-                }, 1000);
-            } else {
-                console.log('Кэш актуален, обновление не требуется');
-                const lastUpdate = localStorage.getItem(LAST_UPDATE_KEY);
-                if (lastUpdate) {
-                    const timeLeft = Math.round((UPDATE_INTERVAL - (Date.now() - parseInt(lastUpdate))) / 60000);
-                    console.log(`Следующее обновление через ${timeLeft} минут`);
-                }
-            }
-            
-            return { draftUsers, draftAdminDiscordIds };
-            
-        } catch (error) {
-            console.error('Ошибка загрузки данных:', error);
-            document.getElementById('adminListTitle').textContent = 'Ошибка загрузки данных';
-            return null;
-        }
-    }
-    
+    /**
+     * Загрузка кэша из localStorage
+     */
     function loadCacheFromLocalStorage(discordIds) {
-        console.log('Загрузка кэша из localStorage...');
+        console.log('Загрузка кэша Discord из localStorage...');
         let loadedCount = 0;
+        
         for (const discordId of discordIds) {
             try {
                 const stored = localStorage.getItem(`discord_user_${discordId}`);
                 if (stored) {
                     const parsed = JSON.parse(stored);
-                    if (parsed.data && !isDataCorrupted(parsed.data) && isCacheValid(parsed)) {
-                        discordDataCache.set(discordId, {
-                            data: parsed.data,
-                            timestamp: parsed.timestamp
-                        });
-                        loadedCount++;
-                        
-                        // СРАЗУ ЗАГРУЖАЕМ АВАТАР ИЗ КЭША
+                    if (parsed.data && Date.now() - parsed.timestamp < window.ProfileData.config.discordCacheTTL) {
                         setTimeout(() => {
-                            loadAvatarForUser(discordId, parsed.data);
-                        }, 1000);
+                            processUserDataResult(discordId, parsed.data);
+                        }, 100);
+                        loadedCount++;
                     }
                 }
-            } catch (e) {}
+            } catch(e) {}
         }
         console.log(`Загружено ${loadedCount} записей из кэша`);
     }
     
-    // ОБНОВЛЕНИЕ КЭША С НЕМЕДЛЕННОЙ ЗАГРУЗКОЙ АВАТАРОВ
-    async function updateDiscordCache() {
-        if (updateInProgress) {
-            console.log('Обновление кэша уже выполняется, пропускаем');
-            return;
-        }
-        
-        updateInProgress = true;
-        console.log('Начинаем плановое обновление кэша Discord...');
-        
-        try {
-            const allDiscordIds = [];
-            draftUsers.forEach(user => {
-                if (user.sid && user.sid.match(/^\d{17,19}$/)) {
-                    allDiscordIds.push(user.sid);
-                }
-            });
-            
-            if (allDiscordIds.length === 0) {
-                console.log('Нет Discord ID для обновления');
-                return;
-            }
-            
-            console.log(`Обновляем кэш для ${allDiscordIds.length} пользователей...`);
-            
-            // Запрашиваем данные с немедленной обработкой каждого результата
-            const results = await fetchMultipleDiscordUsers(allDiscordIds);
-            
-            console.log(`Обновлено ${results.length} записей в кэше`);
-            setLastUpdateTime();
-            
-        } catch (error) {
-            console.error('Ошибка при обновлении кэша Discord:', error);
-        } finally {
-            updateInProgress = false;
-        }
-    }
-    
-    function refreshDisplayWithCache() {
-        document.querySelectorAll('.discord-username').forEach(element => {
-            if (element.textContent === 'Loading...') {
-                const link = element.closest('.discord-link');
-                if (link && link.dataset.discordId) {
-                    const discordId = link.dataset.discordId;
-                    const originalName = link.dataset.originalName;
-                    const displayName = loadDiscordUsernameSync(discordId, originalName);
-                    element.textContent = displayName;
-                }
-            }
-        });
-    }
-    
-    function displayUsers(users, adminDiscordIds) {
+    /**
+     * Отображение списка пользователей
+     */
+    function displayUsers(users) {
         const adminListTitle = document.getElementById('adminListTitle');
         const adminListBlocks = document.getElementById('adminListBlocks');
         
-        const activeUsers = users.filter(user => user.is_active && (!user.banStatus || !user.banStatus.isBanned));
-        const bannedUsers = users.filter(user => user.banStatus && user.banStatus.isBanned);
+        if (!adminListTitle || !adminListBlocks) {
+            console.error('Элементы для отображения не найдены');
+            return;
+        }
         
-        adminListTitle.textContent = `Подписки: ${activeUsers.length} ー Баны: ${bannedUsers.length}`;
+        // Подсчет пользователей по категориям
+        const activeUsers = users.filter(user => user.licenseCategory === 'active');
+        const nolicenseUsers = users.filter(user => user.licenseCategory === 'nolicense');
+        const bannedUsers = users.filter(user => user.licenseCategory === 'banned');
+        const expiredUsers = users.filter(user => user.licenseCategory === 'expired');
+        // const foreverUsers = users.filter(user => user.licenseCategory === 'forever');
+        const allUsers = users;
+        
+        // Формирование заголовка со статистикой
+        const parts = [];
+        
+        if (activeUsers.length > 0) parts.push(`
+            <div id="activeUsers" class="stat-badge stat-active" title="Активные лицензии">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <polyline points="9 15 11 17 16 12"></polyline>
+                </svg>
+                <span>${activeUsers.length}</span>
+            </div>
+        `);
+        
+        // if (foreverUsers.length > 0) parts.push(`
+        //     <div id="foreverUsers" class="stat-badge stat-forever" title="Бессрочные лицензии">
+        //         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        //             <path d="M12 2L15 9H22L16 14L19 21L12 16.5L5 21L8 14L2 9H9L12 2Z" stroke="currentColor" fill="none"/>
+        //         </svg>
+        //         <span>${foreverUsers.length}</span>
+        //     </div>
+        // `);
+        
+        if (bannedUsers.length > 0) parts.push(`
+            <div id="bannedUsers" class="stat-badge stat-banned" title="Забаненные пользователи">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                </svg>
+                <span>${bannedUsers.length}</span>
+            </div>
+        `);
+        
+        if (expiredUsers.length > 0) parts.push(`
+            <div id="expiredUsers" class="stat-badge stat-expired" title="Истекшие лицензии">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>${expiredUsers.length}</span>
+            </div>
+        `);
+        
+        if (nolicenseUsers.length > 0) parts.push(`
+            <div id="nolicenseUsers" class="stat-badge stat-nolicense" title="Без лицензии">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="8" y1="12" x2="16" y2="18"></line>
+                    <line x1="16" y1="12" x2="8" y2="18"></line>
+                </svg>
+                <span>${nolicenseUsers.length}</span>
+            </div>
+        `);
+        
+        // Обновляем заголовок
+        adminListTitle.innerHTML = `Лицензии<div class="adminlist_box">
+            <div id="allUsers" class="stat-badge stat-all" title="Все пользователи">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="8" y="8" width="12" height="12" rx="2"></rect>
+                    <rect x="4" y="4" width="12" height="12" rx="2"></rect>
+                </svg>
+                <span>${allUsers.length}</span>
+            </div>
+        ${parts.join('')}</div>`;
+        
+        // Очищаем контейнер с карточками
         adminListBlocks.innerHTML = '';
         
+        // Создаем карточки для каждого пользователя
         users.forEach(user => {
-            const userRole = getUserRole(user.sid, adminDiscordIds);
-            const banStatus = user.banStatus;
-            
             const userCard = document.createElement('div');
-            userCard.className = 'admin_card';
-            userCard.id = `block-${userRole}`;
-            if (banStatus?.isBanned) userCard.classList.add('banned-user');
             
-            let endText = 'Не указано';
-            if (user.end === 0) {
-                endText = user.is_active ? (user.term === 'Безлимит' ? 'Безлимит' : 'Навсегда') : 'Навсегда';
-            } else if (user.end > 0 && user.end * 1000 > Date.now()) {
-                endText = `До ${new Date(user.end * 1000).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}`;
-            } else if (user.end > 0 && user.end * 1000 <= Date.now()) {
-                endText = 'Истек';
+            // Определяем ID карточки в зависимости от роли
+            let cardId = 'item-player';
+            if (user.roleRaw === 'Создатель') cardId = 'item-creator';
+            else if (user.roleRaw === 'Менеджер') cardId = 'item-manager';
+            else if (user.roleRaw === 'Админ') cardId = 'item-admin';
+            else if (user.roleRaw === 'Партнёр') cardId = 'item-partner';
+            else if (user.roleRaw === 'Медиа') cardId = 'item-media';
+            else if (user.roleRaw === 'Игрок') cardId = 'item-player';
+            else if (user.isBanned) cardId = 'item-banned';
+            
+            userCard.className = 'admin_card';
+            userCard.id = cardId;
+            
+            // Определяем тег роли
+            let tagId = 'player';
+            if (user.roleRaw === 'Создатель') tagId = 'creator';
+            else if (user.roleRaw === 'Менеджер') tagId = 'manager';
+            else if (user.roleRaw === 'Админ') tagId = 'admin';
+            else if (user.roleRaw === 'Партнёр') tagId = 'partner';
+            else if (user.roleRaw === 'Медиа') tagId = 'media';
+            else if (user.roleRaw === 'Игрок') tagId = 'player';
+            else if (user.isBanned) tagId = 'banned';
+            
+            const usernameSpanId = `username-${(user.discordId || user.hwid).replace(/[^a-zA-Z0-9-]/g, '_')}`;
+            const cachedUsername = user.discordId ? loadDiscordUsernameSync(user.discordId, user.hwid) : user.hwid;
+            
+            // Статус HWID
+            let statusHtml = '';
+            if (!user.isBanned && user.displayStatus) {
+                const statusTagId = user.displayStatus === 'HWID' ? 'hwid' : 'not-hwid';
+                statusHtml = `<div class="admin_group" id="tag-${statusTagId}">
+                                <span class="admin_group_text">${user.displayStatus}</span>
+                            </div>`;
             }
             
-            // Для забаненных используем данные из banStatus
-            let banText = '', banEnd = '', banReason = '';
-            if (banStatus) {
-                if (banStatus.isBanned) {
-                    banText = 'Блок';
-                    banEnd = banStatus.isPermanent ? 'Навсегда' : (banStatus.banEnd ? `До ${banStatus.banEnd.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}` : 'Навсегда');
-                    banReason = `Причина: ${banStatus.reason}`;
-                } else if (banStatus.wasBanned) {
-                    banText = 'Блок истек';
-                    banEnd = banStatus.banEnd ? `До ${banStatus.banEnd.toLocaleDateString('ru-RU')}` : '';
-                    banReason = `Причина: ${banStatus.reason}`;
+            // Причина бана
+            let banReasonHtml = '';
+            if (user.isBanned && user.banReason) {
+                banReasonHtml = `<div class="admin_term_reason">${window.ProfileData.escapeHtml(user.banReason)}</div>`;
+            }
+            
+            // Ссылки на соцсети
+            let linksHtml = '';
+            if (!user.isBanned) {
+                if (user.discordId || user.telegramId) {
+                    if (user.discordId) {
+                        linksHtml += `<a href="https://discord.com/users/${user.discordId}" target="_blank" id="link_prof" class="discord-link DS" data-discord-id="${user.discordId}" data-original-name="${user.hwid}">
+                                        <svg viewBox="0 0 48 48" fill="none">
+                                            <use href="./content/svg/link-discord.svg"></use>
+                                        </svg>
+                                        <span class="discord-username" id="${usernameSpanId}">${window.ProfileData.escapeHtml(cachedUsername)}</span>
+                                    </a>`;
+                    }
+                    if (user.telegramId) {
+                        linksHtml += `<a target="_blank" id="link_prof" class="discord-link telegram-link TG" href="https://t.me/${user.telegramId}">
+                                        <svg viewBox="0 0 48 48" fill="none">
+                                            <use href="./content/svg/link-telegram.svg"></use>
+                                        </svg>
+                                        <span class="discord-username">ID: ${window.ProfileData.escapeHtml(user.telegramId)}</span>
+                                    </a>`;
+                    }
+                } else {
+                    linksHtml = `<a target="_blank" id="link_prof" style="max-width: 100%;" class="no-link">
+                                    <p id="no-link">Без привязки!</p>
+                                </a>`;
                 }
             }
             
-            const usernameSpanId = `username-${(user.sid || user.hwid).replace(/[^a-zA-Z0-9-]/g, '_')}`;
-            const cachedUsername = user.sid ? loadDiscordUsernameSync(user.sid, user.name) : user.name;
-            
+            // Формируем карточку
             userCard.innerHTML = `
             <div id="admins_card">
                 <div class="admin_term">
-                    <div class="adminlist_button steam_button" id="tag-${banStatus && !banStatus.wasBanned ? 'banned' : userRole}">
-                        <span>${userRole === 'creator' ? 'Создатель' : (userRole === 'admin' ? 'Партнёр' : (userRole === 'bot' ? 'Менеджер' : (banStatus && !banStatus.wasBanned ? 'Забанен' : (user.group_id === 'Медиа' ? 'Медиа' : 'Игрок'))))}</span>
+                    <div class="adminlist_button steam_button" id="tag-${tagId}">
+                        <span>${window.ProfileData.escapeHtml(user.roleText)}</span>
                     </div>
-                    ${!(banStatus && !banStatus.wasBanned) ? `
-                    <div class="admin_group">
-                        <span class="admin_group_text">${user.group_id}</span>
-                    </div>`:``
-                    }
-                    <span class="admin_term_text">${banText ? banEnd : endText}</span>
+                    ${statusHtml}
+                    <span class="admin_term_text" id="${user.termId}">${window.ProfileData.escapeHtml(user.formattedEndDate)}</span>
                 </div>
                 <div class="adminlist_info">
-                    <a href="./profile?hwid=${user.name}">
+                    <a href="#" onclick="ProfileModal.openByHwid('${user.hwid}'); return false;">
                         <div class="avatar_block">
-                            <div class="avatar_letter">${user.name.charAt(0).toUpperCase()}</div>
+                            <div class="avatar_letter">${window.ProfileData.escapeHtml(user.hwid.charAt(0).toUpperCase())}</div>
                             <div class='avatar-img'>
-                                <img class="admins_avatar" id="user-${user.sid}-avatar" src="./images/none.png" alt="">
+                                <img class="admins_avatar" id="user-${user.discordId}-avatar" src="./images/none.png" alt="">
                             </div>
                         </div>
                         <get-avatar></get-avatar>
                     </a>
                     <div class="adminlist_buttons">
                         <div id="admins_info">
-                        <span class="admin_nickname">${user.name}</span>
-                            ${!(banStatus && !banStatus.wasBanned) && (user.sid || user.telegramId) ? 
-                            `${user.sid ? `<div id="link_block">
-                                <a 
-                                href="https://discord.com/users/${user.sid}" 
-                                target="_blank" 
-                                id="link_prof" 
-                                class="discord-link DS" 
-                                data-discord-id="${user.sid}" 
-                                data-original-name="${user.name}">
-                                    <svg viewBox="0 0 24 24" style='display: none;'><path d="M14.82 4.26a10.14 10.14 0 0 0-.53 1.1 14.66 14.66 0 0 0-4.58 0 10.14 10.14 0 0 0-.53-1.1 16 16 0 0 0-4.13 1.3 17.33 17.33 0 0 0-3 11.59 16.6 16.6 0 0 0 5.07 2.59A12.89 12.89 0 0 0 8.23 18a9.65 9.65 0 0 1-1.71-.83 3.39 3.39 0 0 0 .42-.33 11.66 11.66 0 0 0 10.12 0c.14.09.28.19.42.33a10.14 10.14 0 0 1-1.71.83 12.89 12.89 0 0 0 1.08 1.78 16.44 16.44 0 0 0 5.06-2.59 17.22 17.22 0 0 0-3-11.59 16.09 16.09 0 0 0-4.09-1.35zM8.68 14.81a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.93 1.93 0 0 1 1.8 2 1.93 1.93 0 0 1-1.8 2zm6.64 0a1.94 1.94 0 0 1-1.8-2 1.93 1.93 0 0 1 1.8-2 1.92 1.92 0 0 1 1.8 2 1.92 1.92 0 0 1-1.8 2z"/></svg>
-                                    <svg viewBox="0 0 48 48" fill="none">
-                                        <use href="./content/svg/link-discord.svg"></use>
-                                    </svg>
-                                    <span class="discord-username" id="${usernameSpanId}">${cachedUsername}</span>
-                                </a>` : ''}
-                                ${user.telegramId ? `<a 
-                                target="_blank"
-                                id="link_prof"
-                                class="discord-link telegram-link TG"
-                                data-discord-id="${user.sid}"
-                                data-original-name="${user.name}">
-                                    <svg viewBox="0 0 100 100" style='display: none;'><path d="M89.442 11.418c-12.533 5.19-66.27 27.449-81.118 33.516-9.958 3.886-4.129 7.529-4.129 7.529s8.5 2.914 15.786 5.1 11.172-.243 11.172-.243l34.244-23.073c12.143-8.257 9.229-1.457 6.315 1.457-6.315 6.315-16.758 16.272-25.501 24.287-3.886 3.4-1.943 6.315-.243 7.772 6.315 5.343 23.558 16.272 24.53 17.001 5.131 3.632 15.223 8.861 16.758-2.186l6.072-38.13c1.943-12.872 3.886-24.773 4.129-28.173.728-8.257-8.015-4.857-8.015-4.857z"/></svg>
-                                    <svg viewBox="0 0 48 48" fill="none">
-                                        <use href="./content/svg/link-telegram.svg"></use>
-                                    </svg>
-                                    <span class="discord-username">ID: ${user.telegramId}</span>
-                                </a>` : ''}</div>` : 
-                                `${!(banStatus && !banStatus.wasBanned) ? `<a 
-                                target="_blank" 
-                                id="link_prof" 
-                                style="max-width: 100%;" 
-                                class="no-link">
-                                    <p id="no-link">Без привязки!</p>
-                                </a>` : ''}
-                                ${banStatus && !banStatus.wasBanned ? `<div 
-                                class="admin_term_reason">
-                                    ${banStatus.reason}
-                                </div>` : ''}
-                            </div>`
-                            }
+                            <span class="admin_nickname">${window.ProfileData.escapeHtml(window.ProfileData.getShortHwid(user.hwid, 20))}</span>
+                            ${!user.isBanned ? `<div id="link_block">${linksHtml}</div>` : ''}
+                            ${banReasonHtml}
                         </div>
                     </div>
                 </div>
@@ -887,19 +357,170 @@ document.addEventListener('DOMContentLoaded', function() {
             
             adminListBlocks.appendChild(userCard);
             
-            // Загружаем аватар, если данные уже в кэше
-            if (user.sid && user.sid.match(/^\d{17,19}$/)) {
-                const userData = getDiscordUserDataFromCache(user.sid);
-                if (userData) {
-                    loadAvatarForUser(user.sid, userData);
-                }
+            // Асинхронно загружаем Discord данные для этого пользователя
+            if (user.discordId && user.discordId.match(/^\d{17,19}$/)) {
+                window.ProfileData.getDiscordUserData(user.discordId).then(discordData => {
+                    if (discordData) {
+                        loadAvatarForUser(user.discordId, discordData);
+                        updateUsernameOnPage(user.discordId, discordData);
+                    }
+                });
             }
         });
     }
     
-    async function init() {
-        await loadDraftData();
+    /**
+     * Основная загрузка данных
+     */
+    async function loadDraftData() {
+        try {
+            console.log('Загрузка данных из API...');
+            const users = await window.ProfileData.fetchAllUsers();
+            
+            if (!users || users.length === 0) {
+                console.error('Не удалось загрузить данные');
+                const adminListTitle = document.getElementById('adminListTitle');
+                if (adminListTitle) adminListTitle.textContent = 'Ошибка загрузки данных';
+                return null;
+            }
+            
+            console.log(`Загружено ${users.length} записей из API`);
+            
+            // Сортируем пользователей
+            users.sort((a, b) => {
+                const priorityA = getSortPriority(a);
+                const priorityB = getSortPriority(b);
+                if (priorityA !== priorityB) return priorityA - priorityB;
+                return a.hwid.localeCompare(b.hwid);
+            });
+            
+            draftUsers = users;
+            
+            // Загружаем кэш Discord данных из localStorage
+            const allDiscordIds = [];
+            draftUsers.forEach(user => {
+                if (user.discordId && user.discordId.match(/^\d{17,19}$/)) {
+                    allDiscordIds.push(user.discordId);
+                }
+            });
+            loadCacheFromLocalStorage(allDiscordIds);
+            
+            // Отображаем пользователей
+            displayUsers(draftUsers);
+            draftDataLoaded = true;
+            console.log('Данные загружены и отображены');
+            
+            // Фоновое обновление Discord данных (только если прошло более 1 дня)
+            setTimeout(async () => {
+                if (window.ProfileData.shouldUpdateDiscordData()) {
+                    console.log('Прошло более 1 дня, выполняем фоновое обновление Discord данных...');
+                    
+                    const discordIds = draftUsers
+                        .filter(u => u.discordId && u.discordId.match(/^\d{17,19}$/))
+                        .map(u => u.discordId);
+                    
+                    if (discordIds.length > 0) {
+                        const results = await window.ProfileData.refreshAllDiscordData(discordIds, (progress) => {
+                            if (progress.current) {
+                                console.log(`Обновление Discord: ${progress.current}/${progress.total}`);
+                            } else if (progress.skipped) {
+                                console.log(`Обновление пропущено: ${progress.reason}`);
+                                console.log(`Следующее обновление через: ${progress.nextUpdateIn}`);
+                            } else if (progress.completed) {
+                                console.log(`Обновление завершено. Обновлено ${progress.updated} из ${progress.total} пользователей`);
+                            }
+                        });
+                        
+                        // Обновляем отображение для обновленных пользователей
+                        for (const result of results) {
+                            if (result.data) {
+                                await processUserDataResult(result.discordId, result.data);
+                            }
+                        }
+                        
+                        if (results.length > 0) {
+                            console.log(`Фоновое обновление завершено. Обновлено ${results.length} пользователей`);
+                        }
+                    }
+                } else {
+                    const nextUpdateIn = window.ProfileData.getTimeUntilNextDiscordUpdate();
+                    console.log(`Discord данные актуальны. Следующее обновление через: ${nextUpdateIn}`);
+                    
+                    // Показываем информацию в консоли о времени последнего обновления
+                    const lastUpdate = window.ProfileData.getLastDiscordUpdateTime();
+                    if (lastUpdate) {
+                        console.log(`Последнее обновление Discord: ${new Date(lastUpdate).toLocaleString()}`);
+                    }
+                }
+            }, 2000);
+            
+            return { draftUsers: users };
+        } catch (error) {
+            console.error('Ошибка загрузки данных:', error);
+            const adminListTitle = document.getElementById('adminListTitle');
+            if (adminListTitle) adminListTitle.textContent = 'Ошибка загрузки данных';
+            return null;
+        }
     }
     
+    /**
+     * Обновление данных в реальном времени (опционально)
+     */
+    async function refreshData() {
+        if (updateInProgress) {
+            console.log('Обновление уже выполняется');
+            return;
+        }
+        
+        updateInProgress = true;
+        console.log('Ручное обновление данных...');
+        
+        try {
+            const users = await window.ProfileData.fetchAllUsers();
+            if (users && users.length > 0) {
+                users.sort((a, b) => {
+                    const priorityA = getSortPriority(a);
+                    const priorityB = getSortPriority(b);
+                    if (priorityA !== priorityB) return priorityA - priorityB;
+                    return a.hwid.localeCompare(b.hwid);
+                });
+                draftUsers = users;
+                displayUsers(draftUsers);
+                console.log('Данные обновлены');
+            }
+        } catch (error) {
+            console.error('Ошибка обновления:', error);
+        } finally {
+            updateInProgress = false;
+        }
+    }
+    
+    /**
+     * Инициализация
+     */
+    async function init() {
+        // Ждем загрузки ProfileData модуля
+        if (!window.ProfileData) {
+            console.log('Users: Ожидание загрузки ProfileData...');
+            const checkInterval = setInterval(() => {
+                if (window.ProfileData) {
+                    clearInterval(checkInterval);
+                    init();
+                }
+            }, 100);
+            return;
+        }
+        
+        console.log('Users: ProfileData загружен, инициализация...');
+        await loadDraftData();
+        
+        // Добавляем кнопку обновления, если она существует
+        const refreshBtn = document.getElementById('refreshDataBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', refreshData);
+        }
+    }
+    
+    // Запускаем инициализацию
     init();
 });

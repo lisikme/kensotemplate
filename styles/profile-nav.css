@@ -1,0 +1,367 @@
+/* profile-nav.css - стили для мини-профиля в меню аккаунта */
+
+/* Секция мини-профиля в меню */
+.profile-nav-section {
+    padding: 8px 10px;
+    border-bottom: 1px solid #303030;
+    background: #0a0a0a;
+}
+
+.profile-nav-header {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.profile-nav-avatar {
+    width: 30px;
+    height: 30px;
+    background: #000;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-nav-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-nav-avatar-letter {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    background: linear-gradient(45deg, #1a1a2e, #16213e);
+    color: #d7fe7b;
+}
+
+.profile-nav-info {
+    background: rgba(189, 223, 108, 0.1);
+    border-left: 3px solid #BDDF6C;
+    flex: 1;
+    height: 30px;
+    border-radius: 2px;
+    padding: 0px 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-nav-name {
+    color: #ecffc1;
+    font-size: 13px;
+    font-weight: 600;
+    /* margin-bottom: 2px; */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.context-menu-hwid {
+    background: #0e0e0e;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 3px 3px;
+    gap: 3px;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-nav-hwid {
+    font-size: 10px;
+    color: #b3b3b3;
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.profile-modal-close {
+    position: absolute;
+    border-radius: 2px;
+    right: 3px;
+    top: 3px;
+    height: 18px;
+    width: 30px;
+    padding: 2px 5px;
+}
+.profile-modal-close > svg {
+    width: 20px !important;
+    height: 20px !important;
+    stroke: #ffffff;
+    transition: all 0.25s;
+}
+.profile-modal-close:hover {
+    background: rgba(255, 0, 0, 0.15);
+    color: #fff;
+    border-color: rgba(255, 0, 0, 0.5);
+}
+
+/* Статус-бейджи */
+.profile-nav-status {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.profile-nav-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 8px;
+    font-weight: 600;
+
+    padding: 1px 8px 2px 8px;
+    font-size: 10px;
+}
+
+.profile-nav-badge svg {
+    width: 10px;
+    height: 10px;
+}
+
+.profile-nav-badge.active {
+    background: #c5b0ff;
+    color: #000000;
+}
+
+.profile-nav-badge.expired {
+    background: rgba(255, 100, 100, 0.15);
+    color: #ff8888;
+}
+
+.profile-nav-badge.forever {
+background: #c5b0ff;
+    color: #000000;
+}
+
+.profile-nav-badge.banned {
+    background: #ff5454;
+    color: #000000;
+}
+.profile-nav-badge.nolicense {
+    background: #ff8a54;
+    color: #000000;
+}
+
+/* Бейдж роли */
+.profile-nav-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 8px;
+    font-weight: 500;
+
+    padding: 1px 8px 2px 8px;
+    font-size: 10px;
+}
+
+
+.nav-bt-title-hwid {
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent;
+    background-clip: text !important;
+    font-weight: 600;
+    background: #7c7c7c;
+}
+
+.profile-nav-role.creator {
+    background: rgba(255, 100, 150, 0.15);
+    color: #ff99bb;
+}
+.nav-bt-title-hwid.role-creator {
+    background: linear-gradient(45deg, #ff9bcd, #ffc4e7);
+}
+
+.profile-nav-role.admin {
+    background: rgba(255, 180, 70, 0.15);
+    color: #ffb347;
+}
+.nav-bt-title-hwid.role-admin {
+    background: linear-gradient(45deg, #ffd000, #faffb0);
+}
+
+.profile-nav-role.manager {
+    background: rgba(100, 200, 255, 0.15);
+    color: #61edff;
+}
+.nav-bt-title-hwid.role-manager {
+    background: linear-gradient(45deg, #61edff, #caf7ff);
+}
+
+.profile-nav-role.partner {
+    background: rgba(200, 140, 255, 0.15);
+    color: #c88cff;
+}
+.nav-bt-title-hwid.role-partner {
+    background: linear-gradient(45deg, #be78ff, #efceff);
+}
+
+.profile-nav-role.media {
+    background: rgba(255, 100, 100, 0.15);
+    color: #ff8888;
+}
+.nav-bt-title-hwid.role-media {
+    background: linear-gradient(45deg, #ff5454, #ff9595);
+}
+
+.profile-nav-role.player {
+    background: rgba(100, 255, 100, 0.15);
+    color: #a7ff54;
+}
+.nav-bt-title-hwid.role-player {
+    background: linear-gradient(45deg, #2ec529, #c7ff93);
+}
+
+.profile-nav-role.banned {
+    background: rgba(255, 50, 50, 0.15);
+    color: #ff6666;
+}
+.nav-bt-title-hwid.role-banned {
+    background: linear-gradient(45deg, #ff8989, #ffd6d6);
+}
+
+/* Прогресс-бар подписки */
+.profile-nav-progress {
+    margin-top: 8px;
+}
+
+.profile-nav-progress-bar {
+    height: 2px;
+    background: #1a1a1a;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.profile-nav-progress-fill {
+    height: 100%;
+    background: #d7fe7b;
+    width: 0%;
+    transition: width 0.3s;
+}
+
+.profile-nav-progress-text {
+    font-size: 7px;
+    color: #666;
+    margin-top: 3px;
+    text-align: right;
+}
+
+/* Секция быстрых действий */
+.profile-nav-actions {
+    padding: 5px 8px;
+    border-top: 1px solid #303030;
+    background: #000000;
+}
+
+.profile-nav-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 8px;
+    background: #0a0a0a;
+    border: 1px solid #303030;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.profile-nav-action-btn svg {
+    width: 12px;
+    height: 12px;
+    stroke: currentColor;
+}
+
+.profile-nav-action-btn:hover {
+    background: #1a1a1a;
+    border-color: #d7fe7b;
+    color: #d7fe7b;
+}
+
+/* Разделитель */
+.profile-nav-divider {
+    height: 1px;
+    background: #303030;
+    margin: 5px 0;
+}
+
+/* Секция HWID информации (расширенная) */
+.profile-nav-hwid-section {
+    padding: 8px 10px;
+    border-bottom: 1px solid #303030;
+    background: #050505;
+}
+
+.profile-nav-hwid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 9px;
+    color: #888;
+}
+
+.profile-nav-hwid-code {
+    font-family: monospace;
+    font-size: 9px;
+    background: #000;
+    padding: 4px 6px;
+    border-radius: 2px;
+    word-break: break-all;
+    color: #a6deff;
+    border: 1px solid #303030;
+}
+
+.profile-nav-copy-btn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 2px;
+    font-size: 9px;
+    transition: all 0.2s;
+}
+
+.profile-nav-copy-btn:hover {
+    background: #1a1a1a;
+    color: #d7fe7b;
+}
+
+/* Секция бана в мини-профиле */
+.profile-nav-ban-info {
+    padding: 2px 5px;
+    background: rgba(255, 50, 50, 0.1);
+    border-radius: 2px;
+    border-left: 3px solid #ff5757;
+    font-size: 8px;
+    /* color: #ff8888; */
+    color: #ffa3a3;
+}
+
+.profile-nav-status > div {
+    display: flex;
+    flex-direction: column;
+    border: #303030 solid 1px;
+    background: #000000;
+    border-radius: 2px;
+    padding: 3px;
+    gap: 3px;
+    color: #b1b1b1;
+    font-size: 10px;
+}
