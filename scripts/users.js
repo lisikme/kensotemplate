@@ -1,20 +1,10 @@
-// users.js - полная версия с интеграцией profile-data модуля
-// Версия 2.2 (сначала кэш, потом обновление из API)
-
-const originalFetchAllUsers = window.ProfileData?.fetchAllUsers;
-if (originalFetchAllUsers) {
-    window.ProfileData.fetchAllUsers = async function(...args) {
-        console.log('fetchAllUsers вызван в:', new Date().toLocaleTimeString());
-        const result = await originalFetchAllUsers.apply(this, args);
-        console.log('fetchAllUsers вернул:', result?.length || 0, 'записей');
-        return result;
-    };
-}
+// users.js - полная версия с данными из таблицы (Tab9 = UserName, Tab10 = AvatarHash)
+// Версия 3.0 - без dis-api
 
 document.addEventListener('DOMContentLoaded', function() {
     // ==================== ОЧЕРЕДЬ ЗАГРУЗКИ АВАТАРОВ ====================
     class AvatarQueue {
-        constructor(maxConcurrent = 3, delayBetweenBatches = 500) {
+        constructor(maxConcurrent = 5, delayBetweenBatches = 200) {
             this.maxConcurrent = maxConcurrent;
             this.delayBetweenBatches = delayBetweenBatches;
             this.current = 0;
@@ -58,88 +48,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
-    const avatarLoadQueue = new AvatarQueue(3, 300);
+    const avatarLoadQueue = new AvatarQueue(5, 200);
     let draftDataLoaded = false;
     let draftUsers = [];
     const loadedAvatars = new Set();
     let updateInProgress = false;
-    let isFirstLoad = true; // Флаг для первой загрузки
     
-    // Ключи для localStorage кэша списка пользователей
-    const USERS_CACHE_KEY = 'users_list_cache';
-    const USERS_CACHE_TTL = 5 * 60 * 1000; // 5 минут кэш списка пользователей
-    
-    // Ключ для localStorage кэша аватаров
-    const AVATAR_CACHE_KEY = 'avatar_url_cache';
-    const AVATAR_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 дней
-    
-    // Загрузка кэша пользователей из localStorage
-    function loadUsersFromCache() {
-        try {
-            const cached = localStorage.getItem(USERS_CACHE_KEY);
-            if (cached) {
-                const cache = JSON.parse(cached);
-                // Проверяем TTL
-                if (cache.timestamp && Date.now() - cache.timestamp < USERS_CACHE_TTL) {
-                    console.log(`Загружено ${cache.users?.length || 0} пользователей из кэша`);
-                    return cache.users || null;
-                }
-            }
-        } catch (e) {
-            console.warn('Ошибка загрузки кэша пользователей:', e);
-        }
-        return null;
-    }
-    
-    // Сохранение кэша пользователей
-    function saveUsersToCache(users) {
-        try {
-            localStorage.setItem(USERS_CACHE_KEY, JSON.stringify({
-                users: users,
-                timestamp: Date.now()
-            }));
-            console.log(`Сохранено ${users.length} пользователей в кэш`);
-        } catch (e) {
-            console.warn('Ошибка сохранения кэша пользователей:', e);
-        }
-    }
-    
-    // Загрузка кэша аватаров из localStorage
-    function loadAvatarCache() {
-        try {
-            const cached = localStorage.getItem(AVATAR_CACHE_KEY);
-            if (cached) {
-                const cache = JSON.parse(cached);
-                // Проверяем TTL
-                if (cache.timestamp && Date.now() - cache.timestamp < AVATAR_CACHE_TTL) {
-                    return cache.urls || {};
-                }
-            }
-        } catch (e) {
-            console.warn('Ошибка загрузки кэша аватаров:', e);
-        }
-        return {};
-    }
-    
-    // Сохранение URL аватара в кэш
-    function saveAvatarToCache(discordId, avatarUrl) {
-        try {
-            const cache = loadAvatarCache();
-            cache[discordId] = avatarUrl;
-            localStorage.setItem(AVATAR_CACHE_KEY, JSON.stringify({
-                urls: cache,
-                timestamp: Date.now()
-            }));
-        } catch (e) {
-            console.warn('Ошибка сохранения кэша аватара:', e);
-        }
-    }
-    
-    // Получение кэшированного URL аватара
-    function getCachedAvatarUrl(discordId) {
-        const cache = loadAvatarCache();
-        return cache[discordId] || null;
-    }
+    // Ключи для localStorage кэша
+    const USERS_CACHE_KEY = 'users_list_cache_v2';
+    const USERS_CACHE_TTL = 5 * 60 * 1000; // 5 минут
     
     // Приоритеты ролей для сортировки
     const ROLE_PRIORITY = {
@@ -154,9 +71,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     
-    /**
-     * Получить приоритет сортировки пользователя
-     */
     function getSortPriority(user) {
         if (user.isBanned) return 999;
         if (user.licenseCategory === 'nolicense') return 500;
@@ -165,16 +79,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
-     * Загрузить аватар для пользователя (с кэшированием)
+     * Загрузить аватар для пользователя (из таблицы Tab10)
      */
-    async function loadAvatarForUser(discordId, userData) {
-        if (!discordId || !userData || loadedAvatars.has(discordId)) return;
+    async function loadAvatarForUser(discordId, avatarHash) {
+        if (!discordId || !avatarHash || loadedAvatars.has(discordId)) return;
         
         const avatarElement = document.getElementById(`user-${discordId}-avatar`);
         if (!avatarElement) return;
         
         // Проверяем кэш аватара
-        const cachedAvatarUrl = getCachedAvatarUrl(discordId);
+        const cachedAvatarUrl = window.ProfileData.getCachedAvatarUrl(discordId);
         if (cachedAvatarUrl) {
             avatarElement.src = cachedAvatarUrl;
             avatarElement.style.opacity = '1';
@@ -188,85 +102,63 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        if (userData.avatar) {
-            avatarLoadQueue.add(async () => {
-                const avatarUrl = await window.ProfileData.getDiscordAvatarUrl(discordId, userData.avatar);
-                if (avatarUrl) {
-                    avatarElement.src = avatarUrl;
-                    avatarElement.style.opacity = '1';
-                    loadedAvatars.add(discordId);
-                    
-                    // Сохраняем в кэш
-                    saveAvatarToCache(discordId, avatarUrl);
-                    
-                    // Скрываем букву
-                    const avatarBlock = avatarElement.closest('.avatar_block');
-                    if (avatarBlock) {
-                        const letterDiv = avatarBlock.querySelector('.avatar_letter');
-                        if (letterDiv) letterDiv.style.opacity = '0';
-                    }
+        // Загружаем через очередь
+        avatarLoadQueue.add(async () => {
+            const avatarUrl = await window.ProfileData.getDiscordAvatarUrl(discordId, avatarHash);
+            if (avatarUrl) {
+                avatarElement.src = avatarUrl;
+                avatarElement.style.opacity = '1';
+                loadedAvatars.add(discordId);
+                
+                // Скрываем букву
+                const avatarBlock = avatarElement.closest('.avatar_block');
+                if (avatarBlock) {
+                    const letterDiv = avatarBlock.querySelector('.avatar_letter');
+                    if (letterDiv) letterDiv.style.opacity = '0';
                 }
-            });
-        } else {
-            if (avatarElement.src !== './images/none.png' && !avatarElement.src.includes('none.png')) {
-                avatarElement.src = './images/none.png';
             }
-        }
-    }
-    
-    /**
-     * Обновить имя пользователя на странице
-     */
-    function updateUsernameOnPage(discordId, userData) {
-        const usernameElements = document.querySelectorAll(`.discord-link[data-discord-id="${discordId}"] .discord-username`);
-        let displayName = window.ProfileData.getDisplayName(null, userData);
-        
-        usernameElements.forEach(element => {
-            element.textContent = displayName;
         });
     }
     
     /**
-     * Синхронная загрузка имени из кэша
+     * Получить отображаемое имя пользователя (из таблицы Tab9)
      */
-    function loadDiscordUsernameSync(discordId, originalName) {
-        if (!discordId || !discordId.match(/^\d{17,19}$/)) {
-            return originalName || 'No ID';
+    function getDisplayNameFromUser(user) {
+        if (user.userName && user.userName.trim() !== '') {
+            return user.userName;
         }
-        return originalName || discordId.slice(0, 8);
-    }
-    
-    /**
-     * Обработка полученных Discord данных
-     */
-    async function processUserDataResult(discordId, userData) {
-        if (!userData) return;
-        updateUsernameOnPage(discordId, userData);
-        await loadAvatarForUser(discordId, userData);
+        // fallback на HWID
+        return window.ProfileData.getShortHwid(user.hwid, 20);
     }
     
     /**
      * Загрузка кэша из localStorage
      */
-    function loadCacheFromLocalStorage(discordIds) {
-        console.log('Загрузка кэша Discord из localStorage...');
-        let loadedCount = 0;
-        
-        for (const discordId of discordIds) {
-            try {
-                const stored = localStorage.getItem(`discord_user_${discordId}`);
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    if (parsed.data && Date.now() - parsed.timestamp < window.ProfileData.config.discordCacheTTL) {
-                        setTimeout(() => {
-                            processUserDataResult(discordId, parsed.data);
-                        }, 100);
-                        loadedCount++;
-                    }
+    function loadUsersFromCache() {
+        try {
+            const cached = localStorage.getItem(USERS_CACHE_KEY);
+            if (cached) {
+                const cache = JSON.parse(cached);
+                if (cache.timestamp && Date.now() - cache.timestamp < USERS_CACHE_TTL) {
+                    console.log(`Загружено ${cache.users?.length || 0} пользователей из кэша`);
+                    return cache.users || null;
                 }
-            } catch(e) {}
+            }
+        } catch (e) {
+            console.warn('Ошибка загрузки кэша:', e);
         }
-        console.log(`Загружено ${loadedCount} записей из кэша`);
+        return null;
+    }
+    
+    function saveUsersToCache(users) {
+        try {
+            localStorage.setItem(USERS_CACHE_KEY, JSON.stringify({
+                users: users,
+                timestamp: Date.now()
+            }));
+        } catch (e) {
+            console.warn('Ошибка сохранения кэша:', e);
+        }
     }
     
     /**
@@ -293,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (activeUsers.length > 0) parts.push(`
             <div id="activeUsers" class="stat-badge stat-active" title="Активные лицензии">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
                     <polyline points="9 15 11 17 16 12"></polyline>
@@ -304,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (bannedUsers.length > 0) parts.push(`
             <div id="bannedUsers" class="stat-badge stat-banned" title="Забаненные пользователи">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
                 </svg>
@@ -314,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (expiredUsers.length > 0) parts.push(`
             <div id="expiredUsers" class="stat-badge stat-expired" title="Истекшие лицензии">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
@@ -324,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (nolicenseUsers.length > 0) parts.push(`
             <div id="nolicenseUsers" class="stat-badge stat-nolicense" title="Без лицензии">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
                     <line x1="8" y1="12" x2="16" y2="18"></line>
@@ -334,10 +226,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `);
         
-        // Добавляем индикатор, если данные из кэша
         const cacheIndicator = isFromCache ? '<span class="cache-indicator" title="Данные из кэша">📦</span>' : '';
         
-        // Обновляем заголовок
         adminListTitle.innerHTML = `Лицензии${cacheIndicator}<div class="adminlist_box">
             <div id="allUsers" class="stat-badge stat-all" title="Все пользователи">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -348,14 +238,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         ${parts.join('')}</div>`;
         
-        // Очищаем контейнер с карточками
         adminListBlocks.innerHTML = '';
         
-        // Создаем карточки для каждого пользователя
         users.forEach(user => {
             const userCard = document.createElement('div');
             
-            // Определяем ID карточки в зависимости от роли
             let cardId = 'item-player';
             if (user.roleRaw === 'Создатель') cardId = 'item-creator';
             else if (user.roleRaw === 'Менеджер') cardId = 'item-manager';
@@ -368,7 +255,6 @@ document.addEventListener('DOMContentLoaded', function() {
             userCard.className = 'admin_card';
             userCard.id = cardId;
             
-            // Определяем тег роли
             let tagId = 'player';
             if (user.roleRaw === 'Создатель') tagId = 'creator';
             else if (user.roleRaw === 'Менеджер') tagId = 'manager';
@@ -378,8 +264,9 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (user.roleRaw === 'Игрок') tagId = 'player';
             else if (user.isBanned) tagId = 'banned';
             
-            const usernameSpanId = `username-${(user.discordId || user.hwid).replace(/[^a-zA-Z0-9-]/g, '_')}`;
-            const cachedUsername = user.discordId ? loadDiscordUsernameSync(user.discordId, user.hwid) : user.hwid;
+            const displayName = getDisplayNameFromUser(user);
+            const escapedName = window.ProfileData.escapeHtml(displayName);
+            const escapedHwid = window.ProfileData.escapeHtml(window.ProfileData.getShortHwid(user.hwid, 20));
             
             // Статус HWID
             let statusHtml = '';
@@ -401,11 +288,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!user.isBanned) {
                 if (user.discordId || user.telegramId) {
                     if (user.discordId) {
-                        linksHtml += `<a href="https://discord.com/users/${user.discordId}" target="_blank" id="link_prof" class="discord-link DS" data-discord-id="${user.discordId}" data-original-name="${user.hwid}">
+                        linksHtml += `<a href="https://discord.com/users/${user.discordId}" target="_blank" id="link_prof" class="discord-link DS" data-discord-id="${user.discordId}">
                                         <svg viewBox="0 0 48 48" fill="none">
                                             <use href="./content/svg/link-discord.svg"></use>
                                         </svg>
-                                        <span class="discord-username" id="${usernameSpanId}">${window.ProfileData.escapeHtml(cachedUsername)}</span>
+                                        <span class="discord-username">${escapedName}</span>
                                     </a>`;
                     }
                     if (user.telegramId) {
@@ -423,7 +310,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Формируем карточку
             userCard.innerHTML = `
             <div id="admins_card">
                 <div class="admin_term">
@@ -436,7 +322,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="adminlist_info">
                     <a href="#" onclick="ProfileModal.openByHwid('${user.hwid}'); return false;">
                         <div class="avatar_block">
-                            <div class="avatar_letter">${window.ProfileData.escapeHtml(user.hwid.charAt(0).toUpperCase())}</div>
+                            <div class="avatar_letter">${escapedName.charAt(0).toUpperCase()}</div>
                             <div class='avatar-img'>
                                 <img class="admins_avatar" id="user-${user.discordId}-avatar" src="./images/none.png" alt="">
                             </div>
@@ -445,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </a>
                     <div class="adminlist_buttons">
                         <div id="admins_info">
-                            <span class="admin_nickname">${window.ProfileData.escapeHtml(window.ProfileData.getShortHwid(user.hwid, 20))}</span>
+                            <span class="admin_nickname">${escapedHwid}</span>
                             ${!user.isBanned ? `<div id="link_block">${linksHtml}</div>` : ''}
                             ${banReasonHtml}
                         </div>
@@ -455,88 +341,42 @@ document.addEventListener('DOMContentLoaded', function() {
             
             adminListBlocks.appendChild(userCard);
             
-            // Асинхронно загружаем Discord данные для этого пользователя
-            if (user.discordId && user.discordId.match(/^\d{17,19}$/)) {
-                window.ProfileData.getDiscordUserData(user.discordId).then(discordData => {
-                    if (discordData) {
-                        loadAvatarForUser(user.discordId, discordData);
-                        updateUsernameOnPage(user.discordId, discordData);
-                    }
-                });
-                
-                // Также проверяем кэш аватара и сразу устанавливаем, если есть
-                const cachedAvatar = getCachedAvatarUrl(user.discordId);
+            // Загружаем аватар из таблицы (Tab10)
+            if (user.discordId && user.avatarHash) {
+                // Проверяем кэш аватара
+                const cachedAvatar = window.ProfileData.getCachedAvatarUrl(user.discordId);
                 if (cachedAvatar) {
                     const avatarElement = document.getElementById(`user-${user.discordId}-avatar`);
                     if (avatarElement && avatarElement.src !== cachedAvatar) {
                         avatarElement.src = cachedAvatar;
                         avatarElement.style.opacity = '1';
-                        
                         const avatarBlock = avatarElement.closest('.avatar_block');
                         if (avatarBlock) {
                             const letterDiv = avatarBlock.querySelector('.avatar_letter');
                             if (letterDiv) letterDiv.style.opacity = '0';
                         }
                     }
+                } else {
+                    // Асинхронная загрузка
+                    loadAvatarForUser(user.discordId, user.avatarHash);
                 }
             }
         });
-        
-        // Добавляем стиль для индикатора кэша
-        if (!document.querySelector('#cache-indicator-style')) {
-            const style = document.createElement('style');
-            style.id = 'cache-indicator-style';
-            style.textContent = `
-                .cache-indicator {
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin-left: 8px;
-                    font-size: 14px;
-                    opacity: 0.7;
-                    cursor: help;
-                }
-            `;
-            document.head.appendChild(style);
-        }
     }
     
     function showLoadingIndicator() {
         const adminListBlocks = document.getElementById('adminListBlocks');
         if (adminListBlocks && adminListBlocks.children.length === 0) {
             adminListBlocks.innerHTML = `
-                <div class="loading-indicator" style="
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    flex-direction: column;
-                    padding: 40px;
-                    text-align: center;
-                    color: #888;
-                ">
-                    <div class="loading-spinner" style="
-                        width: 40px;
-                        height: 40px;
-                        border: 3px solid #2a2a2a;
-                        border-top-color: #ff6b6b;
-                        border-radius: 50%;
-                        animation: spin 1s linear infinite;
-                        margin-bottom: 15px;
-                    "></div>
+                <div class="loading-indicator" style="display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 40px; text-align: center; color: #888;">
+                    <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid #2a2a2a; border-top-color: #ff6b6b; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
                     <span>Загрузка данных...</span>
-                    <small style="margin-top: 10px; font-size: 12px;">Попытка подключения к API</small>
                 </div>
             `;
-            
-            // Добавляем стили для анимации, если их нет
             if (!document.querySelector('#loading-spinner-style')) {
                 const style = document.createElement('style');
                 style.id = 'loading-spinner-style';
-                style.textContent = `
-                    @keyframes spin {
-                        to { transform: rotate(360deg); }
-                    }
-                `;
+                style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
                 document.head.appendChild(style);
             }
         }
@@ -546,48 +386,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const adminListBlocks = document.getElementById('adminListBlocks');
         if (adminListBlocks) {
             adminListBlocks.innerHTML = `
-                <div class="error-message" style="
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    flex-direction: column;
-                    padding: 40px;
-                    text-align: center;
-                    color: #ff5d5d;
-                ">
+                <div class="error-message" style="display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 40px; text-align: center; color: #ff5d5d;">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <circle cx="12" cy="12" r="10"/>
                         <line x1="12" y1="8" x2="12" y2="12"/>
                         <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/>
                     </svg>
                     <span style="margin-top: 15px;">${message}</span>
-                    <button id="retryLoadBtn" style="
-                        margin-top: 20px;
-                        padding: 8px 20px;
-                        background: #ff6b6b;
-                        border: none;
-                        border-radius: 6px;
-                        color: white;
-                        cursor: pointer;
-                    ">Повторить</button>
+                    <button id="retryLoadBtn" style="margin-top: 20px; padding: 8px 20px; background: #ff6b6b; border: none; border-radius: 6px; color: white; cursor: pointer;">Повторить</button>
                 </div>
             `;
-            
             const retryBtn = document.getElementById('retryLoadBtn');
             if (retryBtn) {
-                retryBtn.addEventListener('click', () => {
-                    loadDraftData(true); // Принудительное обновление из API
-                });
+                retryBtn.addEventListener('click', () => loadDraftData(true));
             }
         }
     }
     
-    /**
-     * Обновление данных из API (фоновое обновление)
-     */
     async function refreshDataFromAPI() {
         if (updateInProgress) {
-            console.log('Обновление уже выполняется, пропускаем');
+            console.log('Обновление уже выполняется');
             return;
         }
         
@@ -598,7 +416,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const users = await window.ProfileData.fetchAllUsers();
             
             if (users && users.length > 0) {
-                // Сортируем пользователей
                 users.sort((a, b) => {
                     const priorityA = getSortPriority(a);
                     const priorityB = getSortPriority(b);
@@ -607,38 +424,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 draftUsers = users;
-                
-                // Сохраняем в кэш
                 saveUsersToCache(users);
-                
-                // Обновляем отображение (без индикатора кэша)
                 displayUsers(draftUsers, false);
-                
                 console.log(`Данные обновлены: ${users.length} пользователей`);
-                
-                // Обновляем Discord данные аватаров
-                const allDiscordIds = [];
-                draftUsers.forEach(user => {
-                    if (user.discordId && user.discordId.match(/^\d{17,19}$/)) {
-                        allDiscordIds.push(user.discordId);
-                    }
-                });
-                
-                // Фоновое обновление Discord данных (только если прошло более 1 дня)
-                if (window.ProfileData && window.ProfileData.shouldUpdateDiscordData && window.ProfileData.shouldUpdateDiscordData()) {
-                    console.log('Требуется обновление Discord данных...');
-                    setTimeout(async () => {
-                        for (const discordId of allDiscordIds) {
-                            const discordData = await window.ProfileData.getDiscordUserData(discordId, true);
-                            if (discordData) {
-                                updateUsernameOnPage(discordId, discordData);
-                                if (discordData.avatar) {
-                                    await loadAvatarForUser(discordId, discordData);
-                                }
-                            }
-                        }
-                    }, 2000);
-                }
             }
         } catch (error) {
             console.error('Ошибка фонового обновления:', error);
@@ -647,42 +435,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    /**
-     * Основная загрузка данных (сначала кэш, потом API)
-     */
     async function loadDraftData(forceRefresh = false) {
         try {
-            // 1. Сначала пытаемся загрузить из кэша
             const cachedUsers = !forceRefresh ? loadUsersFromCache() : null;
             
             if (cachedUsers && cachedUsers.length > 0) {
                 console.log(`Отображаем ${cachedUsers.length} пользователей из кэша`);
                 draftUsers = cachedUsers;
-                displayUsers(draftUsers, true); // true = данные из кэша
+                displayUsers(draftUsers, true);
                 draftDataLoaded = true;
                 
-                // 2. Затем фоново обновляем из API
-                setTimeout(() => {
-                    refreshDataFromAPI();
-                }, 100);
-                
+                setTimeout(() => refreshDataFromAPI(), 100);
                 return { draftUsers: cachedUsers, fromCache: true };
             }
             
-            // 3. Если кэша нет - загружаем из API с индикатором
             console.log('Кэш пуст, загружаем из API...');
             showLoadingIndicator();
             
             const users = await window.ProfileData.fetchAllUsers();
             
             if (!users || users.length === 0) {
-                showErrorMessage('Не удалось загрузить данные. Пожалуйста, проверьте соединение и попробуйте снова.');
+                showErrorMessage('Не удалось загрузить данные.');
                 return null;
             }
             
             console.log(`Загружено ${users.length} записей из API`);
             
-            // Сортируем пользователей
             users.sort((a, b) => {
                 const priorityA = getSortPriority(a);
                 const priorityB = getSortPriority(b);
@@ -691,43 +469,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             draftUsers = users;
-            
-            // Сохраняем в кэш
             saveUsersToCache(users);
-            
-            // Отображаем
             displayUsers(draftUsers, false);
             draftDataLoaded = true;
-            
-            // Загружаем кэш Discord данных из localStorage
-            const allDiscordIds = [];
-            draftUsers.forEach(user => {
-                if (user.discordId && user.discordId.match(/^\d{17,19}$/)) {
-                    allDiscordIds.push(user.discordId);
-                }
-            });
-            loadCacheFromLocalStorage(allDiscordIds);
-            
-            // Фоновое обновление Discord данных (только если прошло более 1 дня)
-            if (window.ProfileData && window.ProfileData.shouldUpdateDiscordData && window.ProfileData.shouldUpdateDiscordData()) {
-                setTimeout(async () => {
-                    for (const discordId of allDiscordIds) {
-                        const discordData = await window.ProfileData.getDiscordUserData(discordId, true);
-                        if (discordData) {
-                            updateUsernameOnPage(discordId, discordData);
-                            if (discordData.avatar) {
-                                await loadAvatarForUser(discordId, discordData);
-                            }
-                        }
-                    }
-                }, 2000);
-            }
             
             return { draftUsers: users, fromCache: false };
             
         } catch (error) {
             console.error('Ошибка загрузки данных:', error);
-            showErrorMessage(`Ошибка загрузки данных: ${error.message || 'Неизвестная ошибка'}`);
+            showErrorMessage(`Ошибка загрузки: ${error.message || 'Неизвестная ошибка'}`);
             return null;
         }
     }
@@ -743,24 +493,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     async function init() {
-        // Ждем DOM
         await waitForDOM();
         
-        // Ждем загрузки ProfileData модуля
         if (!window.ProfileData) {
             console.log('Users: Ожидание загрузки ProfileData...');
-            
-            // Ожидаем с таймаутом
             const startTime = Date.now();
-            const timeout = 10000; // 10 секунд максимум
+            const timeout = 10000;
             
             while (!window.ProfileData && (Date.now() - startTime) < timeout) {
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
             
             if (!window.ProfileData) {
-                console.error('ProfileData не загрузился вовремя');
-                showErrorMessage('Не удалось загрузить модуль данных. Обновите страницу.');
+                console.error('ProfileData не загрузился');
+                showErrorMessage('Не удалось загрузить модуль данных.');
                 return;
             }
         }
@@ -768,19 +514,13 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Users: ProfileData загружен, инициализация...');
         await loadDraftData();
         
-        // Добавляем кнопку обновления
         const refreshBtn = document.getElementById('refreshDataBtn');
         if (refreshBtn) {
-            // Удаляем старые обработчики
             const newRefreshBtn = refreshBtn.cloneNode(true);
             refreshBtn.parentNode.replaceChild(newRefreshBtn, refreshBtn);
-            newRefreshBtn.addEventListener('click', () => {
-                // Принудительное обновление из API
-                refreshDataFromAPI();
-            });
+            newRefreshBtn.addEventListener('click', () => refreshDataFromAPI());
         }
     }
     
-    // Запускаем инициализацию
     init();
 });

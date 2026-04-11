@@ -1,4 +1,4 @@
-// profile-modal.js - модальное окно профиля с динамическими параметрами URL
+// profile-modal.js - модальное окно профиля (Версия 3.0 - данные из таблицы)
 
 (function() {
     // Текущие параметры URL
@@ -11,7 +11,6 @@
     // Состояние модального окна
     let isModalOpen = false;
     let currentProfileData = null;
-    let currentDiscordData = null;
     
     // DOM элементы
     let modalOverlay = null;
@@ -84,14 +83,8 @@
         const subscription = window.ProfileData.getSubscriptionStatus(userData);
         const isBanned = userData.isBanned;
         
-        // Загружаем Discord данные
-        let discordData = null;
-        if (userData.discordId) {
-            discordData = await window.ProfileData.getDiscordUserData(userData.discordId);
-            currentDiscordData = discordData;
-        }
-        
-        const displayName = window.ProfileData.getDisplayName(userData, discordData);
+        // Используем имя из таблицы (Tab9)
+        const displayName = window.ProfileData.getDisplayName(userData);
         const avatarLetter = window.ProfileData.getAvatarLetter(displayName);
         const shortHwid = window.ProfileData.getShortHwid(userData.hwid, 16);
         
@@ -195,10 +188,10 @@
                             <div class="profile-links">
                                 ${userData.discordId ? `
                                 <a href="https://discord.com/users/${userData.discordId}" target="_blank" class="profile-link discord" id="profileDiscordLink">
-                                        <svg viewBox="0 0 48 48" fill="none">
+                                    <svg viewBox="0 0 48 48" fill="none">
                                         <use href="./content/svg/link-discord.svg"></use>
                                     </svg>
-                                    <span>Discord: ${discordData ? window.ProfileData.escapeHtml(window.ProfileData.getDisplayName(null, discordData)) : window.ProfileData.escapeHtml(userData.discordId.substring(0, 12))}</span>
+                                    <span>Discord ID: ${window.ProfileData.escapeHtml(userData.discordId)}</span>
                                 </a>
                                 ` : ''}
                                 ${userData.telegramId ? `
@@ -227,11 +220,11 @@
             closeBtn.addEventListener('click', closeProfileModal);
         }
         
-        // Загружаем аватар
-        if (userData.discordId && discordData && discordData.avatar) {
+        // Загружаем аватар (используем avatarHash из таблицы Tab10)
+        if (userData.discordId && userData.avatarHash) {
             const avatarImg = document.getElementById('profileAvatarImg');
             if (avatarImg) {
-                await loadDiscordAvatarToElement(userData.discordId, discordData.avatar, avatarImg);
+                await loadDiscordAvatarToElement(userData.discordId, userData.avatarHash, avatarImg);
             }
         }
         
@@ -385,7 +378,6 @@
         isModalOpen = false;
         document.body.style.overflow = '';
         currentProfileData = null;
-        currentDiscordData = null;
         
         clearAllProfileParams();
     }

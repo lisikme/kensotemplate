@@ -1,36 +1,27 @@
 // profile-data.js - универсальный модуль для работы с данными профиля
-// Версия 2.2 - исправлена загрузка Discord данных
+// Версия 4.0 - ПОЛНОСТЬЮ НА ТАБЛИЦЕ (без dis-api)
 
 (function() {
     // ==================== КОНФИГУРАЦИЯ ====================
     const PROFILE_DATA_CONFIG = {
         // API для получения данных пользователей
         hwidApiUrl: 'https://hwid-api.fascord.workers.dev/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA?gid=834339051',
-        // API для Discord данных
-        discordApiBase: 'https://dis-api.sakuri.ru/api/discord/user/',
-        discordBatchApi: 'https://dis-api.sakuri.ru/api/discord/users',
-        // Прокси для обхода CORS
-        proxy: 'https://gentle-cell-c591.fascord.workers.dev/proxy?url=',
         // Настройки кэширования
-        cacheTTL: 60 * 60 * 1000, // 1 час для обычного кэша
-        discordCacheTTL: 24 * 60 * 60 * 1000, // 24 часа для Discord данных (1 день)
+        cacheTTL: 5 * 60 * 1000, // 5 минут для кэша пользователей
+        avatarCacheTTL: 7 * 24 * 60 * 60 * 1000, // 7 дней для аватаров
         requestTimeout: 15000,
-        discordRequestTimeout: 8000,
         avatarTimeout: 5000
     };
 
     // Ключи для localStorage
     const STORAGE_KEYS = {
-        DISCORD_LAST_UPDATE: 'discord_last_update_timestamp',
-        DISCORD_USER_PREFIX: 'discord_user_'
+        USERS_CACHE_KEY: 'users_list_cache_v2',
+        AVATAR_CACHE_KEY: 'avatar_url_cache_v3'
     };
 
     // ==================== КЭШ ====================
-    const discordDataCache = new Map();
     const userDataCache = new Map();
     const avatarCache = new Map();
-    let lastDiscordUpdate = null;
-    let updateInProgress = false;
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     function escapeHtml(str) {
@@ -70,7 +61,6 @@
         try {
             if (typeof dateString === 'number') return dateString;
             
-            // Формат "DD.MM.YYYY" или "DD.MM.YY"
             const dotPattern = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})/;
             const dotMatch = dateString.match(dotPattern);
             if (dotMatch) {
@@ -81,7 +71,6 @@
                 return Math.floor(new Date(year, month, day, 23, 59, 59).getTime() / 1000);
             }
             
-            // Формат "YYYY-MM-DD"
             const isoPattern = /(\d{4})-(\d{1,2})-(\d{1,2})/;
             const isoMatch = dateString.match(isoPattern);
             if (isoMatch) {
@@ -113,6 +102,8 @@
         const discordId = apiItem.Tab6 || null;
         const telegramId = apiItem.Tab7 || null;
         const banReason = apiItem.Tab8 || null;
+        const userName = apiItem.Tab9 || null;      // НОВОЕ: имя пользователя
+        const avatarHash = apiItem.Tab10 || null;    // НОВОЕ: хеш аватара
         
         const isBanned = role === 'Забанен';
         const hasLicense = licenseStatus === 'ЕСТЬ';
@@ -121,7 +112,6 @@
         const isForever = limitType === 'ВЫКЛ' && !noLicense && !isBanned;
         const isActiveLicense = !isBanned && !noLicense && hasLicense && !isExpired;
 
-        // Парсим дату окончания
         let endTimestamp = 0;
         let formattedEndDate = '';
         
@@ -142,7 +132,6 @@
             formattedEndDate = 'Нет лицензии';
         }
 
-        // Определяем категорию лицензии
         let licenseCategory = 'unknown';
         if (isBanned) licenseCategory = 'banned';
         else if (isForever) licenseCategory = 'forever';
@@ -150,7 +139,6 @@
         else if (isExpired) licenseCategory = 'expired';
         else if (noLicense) licenseCategory = 'nolicense';
 
-        // Определяем роль для CSS класса
         let roleClass = 'player';
         if (isBanned) roleClass = 'banned';
         else if (role === 'Создатель') roleClass = 'creator';
@@ -161,37 +149,28 @@
         else if (role === 'Игрок') roleClass = 'player';
 
         return {
-            // Основные данные
             hwid: hwid,
             discordId: discordId,
             telegramId: telegramId,
-            
-            // Статусные флаги
+            userName: userName,           // НОВОЕ: имя из таблицы
+            avatarHash: avatarHash,       // НОВОЕ: хеш аватара из таблицы
             isBanned: isBanned,
             isActiveLicense: isActiveLicense,
             isForever: isForever,
             isExpired: isExpired,
             noLicense: noLicense,
             hasLicense: hasLicense,
-            
-            // Роли и текст
             roleRaw: role,
             roleText: isBanned ? 'Забанен' : role,
             roleClass: roleClass,
             licenseCategory: licenseCategory,
-            
-            // Данные лицензии
             licenseStatus: licenseStatus,
             limitType: limitType,
             remainingTime: remainingTime,
             endDateRaw: endDateRaw,
             endTimestamp: endTimestamp,
             formattedEndDate: formattedEndDate,
-            
-            // Бан
             banReason: banReason,
-            
-            // Дополнительные поля
             displayStatus: (!isBanned && isActiveLicense) ? 'HWID' : '',
             termId: isBanned ? 'term-banned' : 
                     (isForever ? 'term-forever' : 
@@ -200,78 +179,275 @@
         };
     }
 
-    // ==================== УПРАВЛЕНИЕ ВРЕМЕНЕМ ОБНОВЛЕНИЯ DISCORD ====================
+    // ==================== HTTP ЗАПРОСЫ ====================
+    async function fetchWithTimeout(url, timeoutMs = PROFILE_DATA_CONFIG.requestTimeout) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeout);
+            return response;
+        } catch (error) {
+            clearTimeout(timeout);
+            if (error.name === 'AbortError') {
+                throw new Error(`Request timeout after ${timeoutMs}ms`);
+            }
+            throw error;
+        }
+    }
+
+    // ==================== ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЕЙ ====================
+    async function fetchAllUsers(retryCount = 0) {
+        const maxRetries = 5;
+        const retryDelays = [1000, 2000, 3000, 5000, 10000];
+        
+        try {
+            console.log(`Загрузка пользователей (попытка ${retryCount + 1}/${maxRetries})...`);
+            const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.hwidApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!Array.isArray(data)) {
+                throw new Error('Ответ не является массивом');
+            }
+            
+            if (data.length === 0 && retryCount < maxRetries) {
+                console.log('Получен пустой массив, повторная попытка...');
+                await new Promise(resolve => setTimeout(resolve, retryDelays[retryCount]));
+                return fetchAllUsers(retryCount + 1);
+            }
+            
+            console.log(`Успешно загружено ${data.length} записей`);
+            return data.map(item => parseUserFromApiItem(item));
+            
+        } catch (error) {
+            console.error(`Ошибка загрузки (попытка ${retryCount + 1}):`, error);
+            
+            if (retryCount < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, retryDelays[retryCount]));
+                return fetchAllUsers(retryCount + 1);
+            }
+            
+            return [];
+        }
+    }
+
+    // Загрузка кэша пользователей из localStorage
+    function loadUsersFromCache() {
+        try {
+            const cached = localStorage.getItem(STORAGE_KEYS.USERS_CACHE_KEY);
+            if (cached) {
+                const cache = JSON.parse(cached);
+                if (cache.timestamp && Date.now() - cache.timestamp < PROFILE_DATA_CONFIG.cacheTTL) {
+                    console.log(`Загружено ${cache.users?.length || 0} пользователей из кэша`);
+                    return cache.users || null;
+                }
+            }
+        } catch (e) {
+            console.warn('Ошибка загрузки кэша пользователей:', e);
+        }
+        return null;
+    }
+
+    // Сохранение кэша пользователей
+    function saveUsersToCache(users) {
+        try {
+            localStorage.setItem(STORAGE_KEYS.USERS_CACHE_KEY, JSON.stringify({
+                users: users,
+                timestamp: Date.now()
+            }));
+            console.log(`Сохранено ${users.length} пользователей в кэш`);
+        } catch (e) {
+            console.warn('Ошибка сохранения кэша пользователей:', e);
+        }
+    }
+
+    async function fetchUserByHwid(hwid) {
+        if (!hwid) return null;
+        
+        // Проверяем кэш
+        const cached = userDataCache.get(hwid);
+        if (cached && Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.cacheTTL) {
+            return cached.data;
+        }
+        
+        try {
+            const users = await fetchAllUsers();
+            const user = users.find(u => u.hwid === hwid);
+            
+            if (user) {
+                userDataCache.set(hwid, {
+                    data: user,
+                    timestamp: Date.now()
+                });
+            }
+            
+            return user || null;
+        } catch (error) {
+            console.error('Ошибка получения пользователя по HWID:', error);
+            return null;
+        }
+    }
+
+    async function fetchUserByDiscordId(discordId) {
+        if (!discordId) return null;
+        
+        try {
+            const users = await fetchAllUsers();
+            return users.find(u => u.discordId === discordId) || null;
+        } catch (error) {
+            console.error('Ошибка поиска по Discord ID:', error);
+            return null;
+        }
+    }
+
+    async function fetchUserByTelegramId(telegramId) {
+        if (!telegramId) return null;
+        
+        try {
+            const users = await fetchAllUsers();
+            return users.find(u => u.telegramId === telegramId) || null;
+        } catch (error) {
+            console.error('Ошибка поиска по Telegram ID:', error);
+            return null;
+        }
+    }
+
+    // ==================== АВАТАРЫ (ИЗ ТАБЛИЦЫ) ====================
     
-    function getLastDiscordUpdateTime() {
+    // Загрузка кэша аватаров из localStorage
+    function loadAvatarCache() {
         try {
-            const stored = localStorage.getItem(STORAGE_KEYS.DISCORD_LAST_UPDATE);
-            if (stored) {
-                const timestamp = parseInt(stored);
-                if (!isNaN(timestamp)) {
-                    lastDiscordUpdate = timestamp;
-                    return timestamp;
+            const cached = localStorage.getItem(STORAGE_KEYS.AVATAR_CACHE_KEY);
+            if (cached) {
+                const cache = JSON.parse(cached);
+                if (cache.timestamp && Date.now() - cache.timestamp < PROFILE_DATA_CONFIG.avatarCacheTTL) {
+                    return cache.urls || {};
                 }
             }
-            return null;
         } catch (e) {
-            console.warn('Ошибка чтения времени последнего обновления:', e);
-            return null;
+            console.warn('Ошибка загрузки кэша аватаров:', e);
         }
+        return {};
     }
-
-    function setLastDiscordUpdateTime() {
-        const timestamp = Date.now();
-        lastDiscordUpdate = timestamp;
+    
+    // Сохранение URL аватара в кэш
+    function saveAvatarToCache(discordId, avatarUrl) {
         try {
-            localStorage.setItem(STORAGE_KEYS.DISCORD_LAST_UPDATE, timestamp.toString());
+            const cache = loadAvatarCache();
+            cache[discordId] = avatarUrl;
+            localStorage.setItem(STORAGE_KEYS.AVATAR_CACHE_KEY, JSON.stringify({
+                urls: cache,
+                timestamp: Date.now()
+            }));
         } catch (e) {
-            console.warn('Ошибка сохранения времени обновления:', e);
+            console.warn('Ошибка сохранения кэша аватара:', e);
         }
     }
-
-    function shouldUpdateDiscordData() {
-        const lastUpdate = getLastDiscordUpdateTime();
-        if (!lastUpdate) {
-            console.log('Discord данные никогда не обновлялись, требуется обновление');
-            return true;
-        }
-        const timeSinceLastUpdate = Date.now() - lastUpdate;
-        const needsUpdate = timeSinceLastUpdate >= PROFILE_DATA_CONFIG.discordCacheTTL;
-        if (needsUpdate) {
-            const hoursPassed = Math.floor(timeSinceLastUpdate / (60 * 60 * 1000));
-            console.log(`Прошло ${hoursPassed} часов с последнего обновления Discord данных, требуется обновление`);
-        }
-        return needsUpdate;
+    
+    // Получение кэшированного URL аватара
+    function getCachedAvatarUrl(discordId) {
+        const cache = loadAvatarCache();
+        return cache[discordId] || null;
     }
 
-    function getTimeUntilNextDiscordUpdate() {
-        const lastUpdate = getLastDiscordUpdateTime();
-        if (!lastUpdate) return 'требуется обновление';
-        const timeSinceLastUpdate = Date.now() - lastUpdate;
-        if (timeSinceLastUpdate >= PROFILE_DATA_CONFIG.discordCacheTTL) {
-            return 'требуется обновление';
-        }
-        const timeLeft = PROFILE_DATA_CONFIG.discordCacheTTL - timeSinceLastUpdate;
-        const hoursLeft = Math.floor(timeLeft / (60 * 60 * 1000));
-        const minutesLeft = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
-        if (hoursLeft > 0) {
-            return `${hoursLeft} ч ${minutesLeft} мин`;
-        }
-        return `${minutesLeft} мин`;
-    }
-
-    function isDiscordCacheValid(discordId) {
-        try {
-            const stored = localStorage.getItem(`${STORAGE_KEYS.DISCORD_USER_PREFIX}${discordId}`);
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                if (parsed.timestamp) {
-                    const age = Date.now() - parsed.timestamp;
-                    return age < PROFILE_DATA_CONFIG.discordCacheTTL;
-                }
+    // Загрузка аватара из CDN (без прокси)
+    async function loadAvatarFromCdn(discordId, avatarHash) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const timeout = setTimeout(() => {
+                cleanup();
+                reject(new Error('Timeout'));
+            }, PROFILE_DATA_CONFIG.avatarTimeout);
+            
+            function cleanup() {
+                clearTimeout(timeout);
+                img.onload = null;
+                img.onerror = null;
             }
-        } catch (e) {}
-        return false;
+            
+            img.onload = () => { cleanup(); resolve(); };
+            img.onerror = () => { cleanup(); reject(new Error('Load error')); };
+            
+            // Используем CDN без прокси
+            img.src = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
+        });
+    }
+
+    async function getDiscordAvatarUrl(discordId, avatarHash) {
+        if (!discordId || !avatarHash) return null;
+        
+        const cacheKey = `avatar_${discordId}`;
+        
+        // Проверяем кэш в памяти
+        const cached = avatarCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.avatarCacheTTL) {
+            return cached.url;
+        }
+        
+        // Проверяем localStorage кэш
+        const cachedUrl = getCachedAvatarUrl(discordId);
+        if (cachedUrl) {
+            avatarCache.set(cacheKey, { url: cachedUrl, timestamp: Date.now() });
+            return cachedUrl;
+        }
+        
+        const avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
+        
+        try {
+            await loadAvatarFromCdn(discordId, avatarHash);
+            saveAvatarToCache(discordId, avatarUrl);
+            avatarCache.set(cacheKey, { url: avatarUrl, timestamp: Date.now() });
+            return avatarUrl;
+        } catch (error) {
+            console.warn(`Не удалось загрузить аватар для ${discordId}:`, error);
+            return null;
+        }
+    }
+
+    // ==================== ФОРМАТИРОВАНИЕ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ ====================
+    
+    /**
+     * Получить отображаемое имя пользователя
+     * Приоритет: userName из таблицы > Discord данные > HWID
+     */
+    function getDisplayName(userInfo, discordData = null) {
+        // 1. Сначала используем userName из таблицы (Tab9)
+        if (userInfo && userInfo.userName && userInfo.userName.trim() !== '') {
+            return userInfo.userName;
+        }
+        
+        // 2. Если есть Discord данные (для обратной совместимости)
+        if (discordData) {
+            if (discordData.username) {
+                if (discordData.discriminator && discordData.discriminator !== '0') {
+                    return `${discordData.username}#${discordData.discriminator}`;
+                }
+                return discordData.username;
+            }
+            if (discordData.global_name) return discordData.global_name;
+        }
+        
+        // 3. Иначе показываем HWID
+        if (userInfo && userInfo.hwid) {
+            return userInfo.hwid.substring(0, 20) + (userInfo.hwid.length > 20 ? '...' : '');
+        }
+        
+        return 'Пользователь';
+    }
+
+    function getShortHwid(hwid, length = 16) {
+        if (!hwid) return 'Не привязан';
+        return hwid.substring(0, length) + (hwid.length > length ? '...' : '');
+    }
+
+    function getAvatarLetter(name) {
+        if (!name) return '?';
+        return name.charAt(0).toUpperCase();
     }
 
     // ==================== СТАТУС ПОДПИСКИ ====================
@@ -327,422 +503,21 @@
         return { status: 'nolicense', text: 'Нет лицензии', daysLeft: null, formattedTime: null };
     }
 
-    // ==================== HTTP ЗАПРОСЫ ====================
-    async function fetchWithTimeout(url, timeoutMs = PROFILE_DATA_CONFIG.requestTimeout) {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    // ==================== ОЧИСТКА КЭША ====================
+    function clearAllCache() {
+        userDataCache.clear();
+        avatarCache.clear();
         try {
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeout);
-            return response;
-        } catch (error) {
-            clearTimeout(timeout);
-            if (error.name === 'AbortError') {
-                throw new Error(`Request timeout after ${timeoutMs}ms`);
-            }
-            throw error;
-        }
-    }
-
-    async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
-        try {
-            const response = await fetchWithTimeout(url, options.timeout || PROFILE_DATA_CONFIG.requestTimeout);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            if (retries > 0) {
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return fetchWithRetry(url, options, retries - 1, delay * 2);
-            }
-            throw error;
-        }
-    }
-
-    // ==================== ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЕЙ ====================
-    async function fetchAllUsers(retryCount = 0) {
-        const maxRetries = 5;
-        const retryDelays = [1000, 2000, 3000, 5000, 10000];
-        
-        try {
-            console.log(`Загрузка пользователей (попытка ${retryCount + 1}/${maxRetries})...`);
-            const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.hwidApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            if (!Array.isArray(data)) {
-                throw new Error('Ответ не является массивом');
-            }
-            
-            if (data.length === 0 && retryCount < maxRetries) {
-                console.log('Получен пустой массив, повторная попытка...');
-                await new Promise(resolve => setTimeout(resolve, retryDelays[retryCount]));
-                return fetchAllUsers(retryCount + 1);
-            }
-            
-            console.log(`Успешно загружено ${data.length} записей`);
-            return data.map(item => parseUserFromApiItem(item));
-            
-        } catch (error) {
-            console.error(`Ошибка загрузки (попытка ${retryCount + 1}):`, error);
-            
-            if (retryCount < maxRetries) {
-                await new Promise(resolve => setTimeout(resolve, retryDelays[retryCount]));
-                return fetchAllUsers(retryCount + 1);
-            }
-            
-            return [];
-        }
-    }
-
-    async function fetchUserByHwid(hwid) {
-        if (!hwid) return null;
-        
-        const cached = userDataCache.get(hwid);
-        if (cached && Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.cacheTTL) {
-            return cached.data;
-        }
-        
-        try {
-            const users = await fetchAllUsers();
-            const user = users.find(u => u.hwid === hwid);
-            
-            if (user) {
-                userDataCache.set(hwid, {
-                    data: user,
-                    timestamp: Date.now()
-                });
-            }
-            
-            return user || null;
-        } catch (error) {
-            console.error('Ошибка получения пользователя по HWID:', error);
-            return null;
-        }
-    }
-
-    async function fetchUserByDiscordId(discordId) {
-        if (!discordId) return null;
-        
-        try {
-            const users = await fetchAllUsers();
-            return users.find(u => u.discordId === discordId) || null;
-        } catch (error) {
-            console.error('Ошибка поиска по Discord ID:', error);
-            return null;
-        }
-    }
-
-    async function fetchUserByTelegramId(telegramId) {
-        if (!telegramId) return null;
-        
-        try {
-            const users = await fetchAllUsers();
-            return users.find(u => u.telegramId === telegramId) || null;
-        } catch (error) {
-            console.error('Ошибка поиска по Telegram ID:', error);
-            return null;
-        }
-    }
-
-    // ==================== DISCORD ДАННЫЕ ====================
-    
-    async function fetchSingleDiscordUser(discordId, retryCount = 0) {
-        if (!discordId || !discordId.match(/^\d{17,19}$/)) return null;
-        const maxRetries = 3;
-        
-        try {
-            const url = `${PROFILE_DATA_CONFIG.discordApiBase}${discordId}`;
-            console.log(`Загрузка Discord данных для ${discordId}...`);
-            const response = await fetchWithTimeout(url, PROFILE_DATA_CONFIG.discordRequestTimeout);
-            
-            if (response.status === 429) {
-                const retryAfter = response.headers.get('Retry-After') || 5;
-                await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-                return fetchSingleDiscordUser(discordId, retryCount);
-            }
-            
-            if (!response.ok) return null;
-            const data = await response.json();
-            if (data && (data.username || data.global_name)) {
-                console.log(`Получены Discord данные для ${discordId}: ${data.username || data.global_name}`);
-                return data;
-            }
-            return null;
-        } catch (error) {
-            console.error(`Ошибка загрузки Discord данных для ${discordId}:`, error);
-            if (retryCount < maxRetries) {
-                await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-                return fetchSingleDiscordUser(discordId, retryCount + 1);
-            }
-            return null;
-        }
-    }
-
-    /**
-     * Получить Discord данные пользователя (с кэшем 24 часа)
-     * @param {string} discordId 
-     * @param {boolean} forceRefresh - принудительное обновление
-     * @returns {Promise<Object|null>}
-     */
-    async function getDiscordUserData(discordId, forceRefresh = false) {
-        if (!discordId) return null;
-        
-        // Проверяем кэш в памяти
-        const cached = discordDataCache.get(discordId);
-        if (!forceRefresh && cached && Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.discordCacheTTL) {
-            console.log(`Используем кэш Discord данных для ${discordId}`);
-            return cached.data;
-        }
-        
-        // Проверяем localStorage
-        if (!forceRefresh) {
-            try {
-                const stored = localStorage.getItem(`${STORAGE_KEYS.DISCORD_USER_PREFIX}${discordId}`);
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    if (parsed.data && Date.now() - parsed.timestamp < PROFILE_DATA_CONFIG.discordCacheTTL) {
-                        console.log(`Используем localStorage кэш Discord данных для ${discordId}`);
-                        discordDataCache.set(discordId, parsed);
-                        return parsed.data;
-                    }
-                }
-            } catch(e) {}
-        }
-        
-        // Загружаем свежие данные
-        console.log(`Загрузка свежих Discord данных для ${discordId}...`);
-        const data = await fetchSingleDiscordUser(discordId);
-        if (data) {
-            discordDataCache.set(discordId, {
-                data: data,
-                timestamp: Date.now()
-            });
-            try {
-                localStorage.setItem(`${STORAGE_KEYS.DISCORD_USER_PREFIX}${discordId}`, JSON.stringify({
-                    data: data,
-                    timestamp: Date.now()
-                }));
-            } catch(e) {}
-        }
-        return data;
-    }
-
-    /**
-     * Получить имя пользователя Discord (синхронно из кэша или асинхронно)
-     */
-    function getDiscordUsernameSync(discordId) {
-        if (!discordId) return null;
-        
-        try {
-            const stored = localStorage.getItem(`${STORAGE_KEYS.DISCORD_USER_PREFIX}${discordId}`);
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                if (parsed.data) {
-                    return getDisplayName(null, parsed.data);
-                }
-            }
+            localStorage.removeItem(STORAGE_KEYS.USERS_CACHE_KEY);
+            localStorage.removeItem(STORAGE_KEYS.AVATAR_CACHE_KEY);
+            console.log('Весь кэш очищен');
         } catch(e) {}
-        return null;
-    }
-
-    async function fetchMultipleDiscordUsers(discordIds) {
-        const uniqueIds = [...new Set(discordIds.filter(id => id && id.match(/^\d{17,19}$/)))];
-        if (uniqueIds.length === 0) return [];
-        
-        const results = [];
-        const chunkSize = 5;
-        
-        for (let i = 0; i < uniqueIds.length; i += chunkSize) {
-            const chunk = uniqueIds.slice(i, i + chunkSize);
-            
-            for (const id of chunk) {
-                const data = await fetchSingleDiscordUser(id);
-                if (data) {
-                    results.push({ discordId: id, data: data });
-                    discordDataCache.set(id, {
-                        data: data,
-                        timestamp: Date.now()
-                    });
-                    try {
-                        localStorage.setItem(`${STORAGE_KEYS.DISCORD_USER_PREFIX}${id}`, JSON.stringify({
-                            data: data,
-                            timestamp: Date.now()
-                        }));
-                    } catch(e) {}
-                }
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-            
-            if (i + chunkSize < uniqueIds.length) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-        }
-        
-        return results;
-    }
-
-    async function refreshAllDiscordData(discordIds, onProgress, forceRefresh = false) {
-        if (!forceRefresh && !shouldUpdateDiscordData()) {
-            console.log('Массовое обновление Discord данных пропущено: прошло менее 1 дня');
-            if (onProgress) {
-                onProgress({ skipped: true, reason: 'not_needed', nextUpdateIn: getTimeUntilNextDiscordUpdate() });
-            }
-            return [];
-        }
-        
-        if (updateInProgress && !forceRefresh) {
-            console.log('Обновление уже выполняется');
-            return [];
-        }
-        
-        updateInProgress = true;
-        const uniqueIds = [...new Set(discordIds.filter(id => id && id.match(/^\d{17,19}$/)))];
-        const results = [];
-        
-        console.log(`Начинаем массовое обновление Discord данных для ${uniqueIds.length} пользователей...`);
-        
-        for (let i = 0; i < uniqueIds.length; i++) {
-            const id = uniqueIds[i];
-            if (onProgress) {
-                onProgress({ current: i + 1, total: uniqueIds.length, discordId: id });
-            }
-            
-            const data = await fetchSingleDiscordUser(id);
-            if (data) {
-                results.push({ discordId: id, data: data });
-                discordDataCache.set(id, {
-                    data: data,
-                    timestamp: Date.now()
-                });
-                try {
-                    localStorage.setItem(`${STORAGE_KEYS.DISCORD_USER_PREFIX}${id}`, JSON.stringify({
-                        data: data,
-                        timestamp: Date.now()
-                    }));
-                } catch(e) {}
-            }
-            
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
-        
-        setLastDiscordUpdateTime();
-        updateInProgress = false;
-        
-        console.log(`Обновление завершено. Обновлено ${results.length} из ${uniqueIds.length} пользователей`);
-        
-        if (onProgress) {
-            onProgress({ completed: true, updated: results.length, total: uniqueIds.length });
-        }
-        
-        return results;
-    }
-
-    // ==================== АВАТАРЫ ====================
-    async function loadAvatarWithFallback(discordCdnUrl, timeoutMs = PROFILE_DATA_CONFIG.avatarTimeout) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            const timeout = setTimeout(() => {
-                cleanup();
-                reject(new Error('Timeout'));
-            }, timeoutMs);
-            
-            function cleanup() {
-                clearTimeout(timeout);
-                img.onload = null;
-                img.onerror = null;
-            }
-            
-            img.onload = () => { cleanup(); resolve(discordCdnUrl); };
-            img.onerror = () => { cleanup(); reject(new Error('Load error')); };
-            img.src = discordCdnUrl;
-        });
-    }
-
-    async function loadAvatarViaProxy(discordCdnUrl, timeoutMs = 8000) {
-        const proxyUrl = `${PROFILE_DATA_CONFIG.proxy}"${discordCdnUrl}"`;
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            const timeout = setTimeout(() => {
-                cleanup();
-                reject(new Error(`Proxy timeout ${timeoutMs}ms`));
-            }, timeoutMs);
-            
-            function cleanup() {
-                clearTimeout(timeout);
-                img.onload = null;
-                img.onerror = null;
-            }
-            
-            img.onload = () => { cleanup(); resolve(proxyUrl); };
-            img.onerror = () => { cleanup(); reject(new Error('Proxy load error')); };
-            img.src = proxyUrl;
-        });
-    }
-
-    async function getDiscordAvatarUrl(discordId, avatarHash) {
-        if (!discordId || !avatarHash) return null;
-        
-        const cacheKey = `avatar_${discordId}`;
-        const cached = avatarCache.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.cacheTTL) {
-            return cached.url;
-        }
-        
-        const discordCdnPng = `https://divine-surf-da82.fascord.workers.dev/avatars/${discordId}/${avatarHash}.png`;
-        const discordCdnGif = `https://divine-surf-da82.fascord.workers.dev/avatars/${discordId}/${avatarHash}.gif`;
-        
-        try {
-            await loadAvatarWithFallback(discordCdnGif, 3000);
-            avatarCache.set(cacheKey, { url: discordCdnGif, timestamp: Date.now() });
-            return discordCdnGif;
-        } catch {
-            try {
-                await loadAvatarWithFallback(discordCdnPng, 3000);
-                avatarCache.set(cacheKey, { url: discordCdnPng, timestamp: Date.now() });
-                return discordCdnPng;
-            } catch {
-                return null;
-            }
-        }
-    }
-
-    // ==================== ФОРМАТИРОВАНИЕ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ ====================
-    function getDisplayName(userInfo, discordData) {
-        if (discordData) {
-            if (discordData.username) {
-                if (discordData.discriminator && discordData.discriminator !== '0') {
-                    return `${discordData.username}#${discordData.discriminator}`;
-                }
-                return discordData.username;
-            }
-            if (discordData.global_name) return discordData.global_name;
-        }
-        if (userInfo && userInfo.hwid) {
-            return userInfo.hwid.substring(0, 20) + (userInfo.hwid.length > 20 ? '...' : '');
-        }
-        return 'Пользователь';
-    }
-
-    function getShortHwid(hwid, length = 16) {
-        if (!hwid) return 'Не привязан';
-        return hwid.substring(0, length) + (hwid.length > length ? '...' : '');
-    }
-
-    function getAvatarLetter(name) {
-        if (!name) return '?';
-        return name.charAt(0).toUpperCase();
     }
 
     // ==================== ИНИЦИАЛИЗАЦИЯ ====================
     function init() {
-        getLastDiscordUpdateTime();
-        console.log('ProfileData модуль инициализирован');
-        console.log(`Discord кэш действителен в течение: ${PROFILE_DATA_CONFIG.discordCacheTTL / (60 * 60 * 1000)} часов`);
-        console.log(`Последнее обновление Discord: ${lastDiscordUpdate ? new Date(lastDiscordUpdate).toLocaleString() : 'никогда'}`);
+        console.log('ProfileData модуль инициализирован (Версия 4.0 - данные из таблицы)');
+        console.log('Поля: Tab9 = UserName, Tab10 = AvatarHash');
     }
 
     // ==================== ЭКСПОРТ ====================
@@ -754,17 +529,7 @@
         fetchUserByHwid: fetchUserByHwid,
         fetchUserByDiscordId: fetchUserByDiscordId,
         fetchUserByTelegramId: fetchUserByTelegramId,
-        getDiscordUserData: getDiscordUserData,
-        getDiscordUsernameSync: getDiscordUsernameSync,
-        fetchMultipleDiscordUsers: fetchMultipleDiscordUsers,
-        refreshAllDiscordData: refreshAllDiscordData,
-        shouldUpdateDiscordData: shouldUpdateDiscordData,
-        getLastDiscordUpdateTime: getLastDiscordUpdateTime,
-        setLastDiscordUpdateTime: setLastDiscordUpdateTime,
-        getTimeUntilNextDiscordUpdate: getTimeUntilNextDiscordUpdate,
-        isDiscordCacheValid: isDiscordCacheValid,
         getDiscordAvatarUrl: getDiscordAvatarUrl,
-        loadAvatarWithFallback: loadAvatarWithFallback,
         getDisplayName: getDisplayName,
         getShortHwid: getShortHwid,
         getAvatarLetter: getAvatarLetter,
@@ -772,11 +537,11 @@
         formatDate: formatDate,
         escapeHtml: escapeHtml,
         fetchWithTimeout: fetchWithTimeout,
-        clearCache: () => {
-            discordDataCache.clear();
-            userDataCache.clear();
-            avatarCache.clear();
-        }
+        getCachedAvatarUrl: getCachedAvatarUrl,
+        saveAvatarToCache: saveAvatarToCache,
+        loadUsersFromCache: loadUsersFromCache,
+        saveUsersToCache: saveUsersToCache,
+        clearCache: clearAllCache
     };
     
     init();

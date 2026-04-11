@@ -1,11 +1,6 @@
 /* profile-nav.css - стили для мини-профиля в меню аккаунта */
 
 /* Секция мини-профиля в меню */
-.profile-nav-section {
-    padding: 8px 10px;
-    border-bottom: 1px solid #303030;
-    background: #0a0a0a;
-}
 
 .profile-nav-header {
     display: flex;

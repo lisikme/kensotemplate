@@ -1,4 +1,4 @@
-// profile-nav.js - мини-профиль аккаунта в меню пользователя (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+// profile-nav.js - мини-профиль аккаунта в меню пользователя (Версия 3.0 - данные из таблицы)
 
 (function() {
     // Функция закрытия меню
@@ -23,33 +23,71 @@
             return;
         }
         
-        // Получаем информацию о HWID через универсальный модуль
-        const userInfo = await window.ProfileData.fetchUserByDiscordId(String(discordUser.id));
+        // Находим или создаём секцию профиля
+        let profileSection = contextMenu.querySelector('.context-menu-hwid');
+        if (!profileSection) {
+            profileSection = document.createElement('div');
+            profileSection.className = 'context-menu-hwid';
+            // Вставляем в начало контекстного меню
+            contextMenu.insertBefore(profileSection, contextMenu.firstChild);
+        }
+        
+        // Показываем индикатор загрузки
+
+        
+        // Получаем информацию о пользователе с повторными попытками
+        let userInfo = null;
+        let retries = 0;
+        const maxRetries = 10;
+        
+        while (!userInfo && retries < maxRetries) {
+            try {
+                userInfo = await window.ProfileData.fetchUserByDiscordId(String(discordUser.id));
+                if (!userInfo) {
+                    retries++;
+                    if (retries < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+                }
+            } catch (error) {
+                console.warn(`ProfileNav: Попытка ${retries + 1} не удалась:`, error);
+                retries++;
+                if (retries < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+        }
         
         if (!userInfo) {
-            console.log('ProfileNav: Пользователь не найден в базе');
+            console.log('ProfileNav: Пользователь не найден в базе после всех попыток');
+            profileSection.innerHTML = `
+                <div class="profile-nav-error">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/>
+                    </svg>
+                    <div>Пользователь не найден</div>
+                    <div style="font-size: 8px; margin-top: 4px; opacity: 0.7;">Обновите страницу</div>
+                </div>
+            `;
             return;
         }
         
         // Сохраняем HWID текущего пользователя глобально
         window.currentUserHwid = userInfo.hwid;
         
-        // Получаем Discord данные для аватара и имени
-        let discordData = null;
-        if (userInfo.discordId) {
-            discordData = await window.ProfileData.getDiscordUserData(userInfo.discordId);
-        }
-        
-        const subscription = window.ProfileData.getSubscriptionStatus(userInfo);
-        const displayName = window.ProfileData.getDisplayName(userInfo, discordData);
+        // Получаем отображаемое имя
+        const displayName = window.ProfileData.getDisplayName(userInfo);
         const shortHwid = window.ProfileData.getShortHwid(userInfo.hwid, 16);
         const avatarLetter = window.ProfileData.getAvatarLetter(displayName);
         
-        // Определяем класс для статуса
+        const subscription = window.ProfileData.getSubscriptionStatus(userInfo);
+        
+        // Определяем класс и текст для статуса
         let statusClass = subscription.status;
         let statusText = subscription.text;
         
-        // Если статус активный и есть форматированное время, показываем его
         if (subscription.status === 'active' && subscription.formattedTime) {
             statusText = subscription.formattedTime;
         } else if (userInfo.isForever) {
@@ -66,7 +104,49 @@
             statusClass = 'nolicense';
         }
         
-        // 1. Обновляем основную информацию в btn_logout
+        // Рендерим макет профиля
+        profileSection.innerHTML = `
+            <div class="profile-nav-header">
+                <div class="profile-nav-avatar">
+                    <img id="navProfileAvatar" src="" alt="" style="opacity: 0;">
+                    <div class="profile-nav-avatar-letter">${window.ProfileData.escapeHtml(avatarLetter)}</div>
+                </div>
+                <div class="profile-nav-info">
+                    <div class="profile-nav-name">${window.ProfileData.escapeHtml(displayName)}</div>
+                    <div class="profile-nav-hwid" title="${window.ProfileData.escapeHtml(userInfo.hwid || '')}">HWID: ${window.ProfileData.escapeHtml(shortHwid)}</div>
+                </div>
+            </div>
+            <div class="profile-nav-status">
+                <div>
+                    Роль:
+                    <span class="profile-nav-role ${userInfo.roleClass}">
+                        ${window.ProfileData.escapeHtml(userInfo.roleText)}
+                    </span>
+                </div>
+                <div>
+                    Статус подписки:
+                    <span class="profile-nav-badge ${statusClass}">
+                        ${window.ProfileData.escapeHtml(statusText)}
+                    </span>
+                </div>
+            </div>
+            ${subscription.status === 'active' && subscription.daysLeft > 0 && subscription.daysLeft <= 30 ? `
+            <div class="profile-nav-progress">
+                <div class="profile-nav-progress-bar">
+                    <div class="profile-nav-progress-fill" style="width: ${Math.min(100, (subscription.daysLeft / 30) * 100)}%;"></div>
+                </div>
+                <div class="profile-nav-progress-text">Осталось ${subscription.daysLeft} ${window.ProfileData.getDaysWord(subscription.daysLeft)}</div>
+            </div>
+            ` : ''}
+            ${userInfo.isBanned && userInfo.banReason ? `
+            <div class="profile-nav-ban-info">
+                <span style='font-weight: 500; font-size: 9px; color: #ff5d5d'>Причина:</span><br>
+                ${window.ProfileData.escapeHtml(userInfo.banReason.length > 60 ? userInfo.banReason.substring(0, 60) + '...' : userInfo.banReason)}
+            </div>
+            ` : ''}
+        `;
+        
+        // Обновляем также основную информацию в btn_logout
         const avatarImg = btnLogout.querySelector('.avatar-account .avatar');
         const navTitle = btnLogout.querySelector('.nav-bt-title');
         const navRole = btnLogout.querySelector('.nav-bt-title-hwid');
@@ -77,99 +157,27 @@
         
         if (navRole) {
             navRole.textContent = userInfo.roleText;
-            // Обновляем класс роли
             navRole.className = `nav-bt-title-hwid role-${userInfo.roleClass}`;
         }
         
-        // Обновляем аватар
-        if (avatarImg && discordData && discordData.avatar) {
-            const avatarUrl = await window.ProfileData.getDiscordAvatarUrl(discordData.id, discordData.avatar);
+        // Загружаем аватар
+        if (avatarImg && userInfo.discordId && userInfo.avatarHash) {
+            const avatarUrl = await window.ProfileData.getDiscordAvatarUrl(userInfo.discordId, userInfo.avatarHash);
             if (avatarUrl) {
                 avatarImg.src = avatarUrl;
                 avatarImg.style.visibility = 'visible';
-            }
-        }
-        
-        // 2. Обновляем секцию contextHwidInfo (если существует)
-        let hwidSection = contextMenu.querySelector('#contextHwidInfo');
-        
-        if (hwidSection) {
-            // Обновляем существующую секцию, а не перезаписываем
-            const hwidCode = hwidSection.querySelector('.hwid-code');
-            const statusValue = hwidSection.querySelector('.hwid-status .value');
-            const roleSpan = hwidSection.querySelector('.hwid-role');
-            const progressBar = hwidSection.querySelector('.hwid-expire-progress');
-            const expireBarContainer = hwidSection.querySelector('.hwid-expire-bar');
-            
-            if (hwidCode) {
-                hwidCode.textContent = displayName;
-            }
-            
-            if (statusValue) {
-                statusValue.textContent = statusText;
-                statusValue.className = `value ${statusClass}`;
-            }
-            
-            if (roleSpan) {
-                roleSpan.textContent = userInfo.roleText;
-                roleSpan.className = `hwid-role ${userInfo.roleClass}`;
-            }
-            
-            // Обновляем прогресс-бар для активной лицензии с остатком < 30 дней
-            if (expireBarContainer) {
-                if (subscription.status === 'active' && subscription.daysLeft > 0 && subscription.daysLeft <= 30) {
-                    const percent = Math.min(100, (subscription.daysLeft / 30) * 100);
-                    if (progressBar) {
-                        progressBar.style.width = `${percent}%`;
-                    }
-                    expireBarContainer.style.display = 'block';
-                } else {
-                    expireBarContainer.style.display = 'none';
+                
+                // Также обновляем аватар в макете
+                const navProfileAvatar = profileSection.querySelector('#navProfileAvatar');
+                if (navProfileAvatar) {
+                    navProfileAvatar.src = avatarUrl;
+                    navProfileAvatar.style.opacity = '1';
+                    const letterDiv = profileSection.querySelector('.profile-nav-avatar-letter');
+                    if (letterDiv) letterDiv.style.opacity = '0';
                 }
             }
-        } else {
-            // Если секции нет, создаем её (для обратной совместимости)
-            const newHwidSection = document.createElement('div');
-            newHwidSection.id = 'contextHwidInfo';
-            newHwidSection.className = 'context-menu-hwid';
-            
-            const progressStyle = (subscription.status === 'active' && subscription.daysLeft > 0 && subscription.daysLeft <= 30) 
-                ? `style="width: ${Math.min(100, (subscription.daysLeft / 30) * 100)}%;"` 
-                : 'style="width: 100%; display: none;"';
-            
-            const expireBarDisplay = (subscription.status === 'active' && subscription.daysLeft > 0 && subscription.daysLeft <= 30) 
-                ? '' 
-                : 'style="display: none;"';
-            
-            newHwidSection.innerHTML = `
-                <div class="hwid-header">
-                    <span>Информация HWID</span>
-                </div>
-                <div class="hwid-info">
-                    <div class="hwid-code">${window.ProfileData.escapeHtml(displayName)}</div>
-                    <div id="infr">
-                        <div class="hwid-status">
-                            <span class="label">Статус</span>
-                            <span class="value ${statusClass}">${window.ProfileData.escapeHtml(statusText)}</span>
-                        </div>
-                        <div class="hwid-status">
-                            <span class="label">Роль</span>
-                            <span class="hwid-role ${userInfo.roleClass}">${window.ProfileData.escapeHtml(userInfo.roleText)}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="hwid-expire-bar" ${expireBarDisplay}>
-                    <div class="hwid-expire-progress" ${progressStyle}></div>
-                </div>
-            `;
-            
-            // Вставляем в начало контекстного меню
-            const firstChild = contextMenu.firstChild;
-            if (firstChild) {
-                contextMenu.insertBefore(newHwidSection, firstChild);
-            } else {
-                contextMenu.appendChild(newHwidSection);
-            }
+        } else if (avatarImg) {
+            avatarImg.style.visibility = 'hidden';
         }
     }
 
@@ -196,6 +204,11 @@
         }
     };
 
+    // Добавляем стили для загрузки и ошибки
+    function injectStyles() {
+        if (document.getElementById('profile-nav-styles')) return;
+    }
+
     // Обновление при открытии меню
     function setupMenuOpenHandler() {
         const originalToggle = window.toggleContextMenu;
@@ -205,15 +218,31 @@
             
             const contextMenu = document.querySelector('.context-menu');
             if (contextMenu && contextMenu.classList.contains('active')) {
-                setTimeout(async () => {
-                    await updateNavProfile();
-                }, 50);
+                // Запускаем обновление без блокировки интерфейса
+                updateNavProfile().catch(error => {
+                    console.error('ProfileNav: Ошибка обновления профиля:', error);
+                    const profileSection = contextMenu.querySelector('.context-menu-hwid');
+                    if (profileSection) {
+                        profileSection.innerHTML = `
+                            <div class="profile-nav-error">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/>
+                                </svg>
+                                <div>Ошибка загрузки</div>
+                            </div>
+                        `;
+                    }
+                });
             }
         };
     }
 
     // Инициализация
     async function initNavProfile() {
+        injectStyles();
+        
         if (!window.ProfileData) {
             console.log('ProfileNav: Ожидание загрузки ProfileData...');
             const checkInterval = setInterval(() => {
