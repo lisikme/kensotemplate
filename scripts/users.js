@@ -174,47 +174,49 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Подсчет пользователей по категориям
-        const activeUsers = users.filter(user => user.licenseCategory === 'active');
-        const nolicenseUsers = users.filter(user => user.licenseCategory === 'nolicense');
-        const bannedUsers = users.filter(user => user.licenseCategory === 'banned');
-        const expiredUsers = users.filter(user => user.licenseCategory === 'expired');
-        const allUsers = activeUsers.length+nolicenseUsers.length+bannedUsers.length+expiredUsers.length;
+        const allUsers = users.length;
+        const nolicenseUsers = users.filter(user => user.licenseCategory === 'nolicense').length;
+        const bannedUsers = users.filter(user => user.licenseCategory === 'banned').length;
+        const expiredUsers = users.filter(user => user.licenseCategory === 'expired').length;
+        const activeUsers = (
+            allUsers-bannedUsers-expiredUsers-nolicenseUsers
+        );
         
         // Формирование заголовка со статистикой
         const parts = [];
         
-        if (activeUsers.length > 0) parts.push(`
+        if (activeUsers > 0) parts.push(`
             <div id="activeUsers" class="stat-badge stat-active" title="Активные лицензии">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
                     <polyline points="9 15 11 17 16 12"></polyline>
                 </svg>
-                <span>${activeUsers.length}</span>
+                <span>${activeUsers}</span>
             </div>
         `);
         
-        if (bannedUsers.length > 0) parts.push(`
+        if (bannedUsers > 0) parts.push(`
             <div id="bannedUsers" class="stat-badge stat-banned" title="Забаненные пользователи">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
                 </svg>
-                <span>${bannedUsers.length}</span>
+                <span>${bannedUsers}</span>
             </div>
         `);
         
-        if (expiredUsers.length > 0) parts.push(`
+        if (expiredUsers > 0) parts.push(`
             <div id="expiredUsers" class="stat-badge stat-expired" title="Истекшие лицензии">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
-                <span>${expiredUsers.length}</span>
+                <span>${expiredUsers}</span>
             </div>
         `);
         
-        if (nolicenseUsers.length > 0) parts.push(`
+        if (nolicenseUsers > 0) parts.push(`
             <div id="nolicenseUsers" class="stat-badge stat-nolicense" title="Без лицензии">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -222,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <line x1="8" y1="12" x2="16" y2="18"></line>
                     <line x1="16" y1="12" x2="8" y2="18"></line>
                 </svg>
-                <span>${nolicenseUsers.length}</span>
+                <span>${nolicenseUsers}</span>
             </div>
         `);
         
