@@ -125,7 +125,10 @@
         let endTimestamp = 0;
         let formattedEndDate = '';
         
-        if (isForever) {
+        if (isBanned) {
+            endTimestamp = 0;
+            formattedEndDate = 'Блокировка';
+        } else if (isForever) {
             endTimestamp = 0;
             formattedEndDate = 'Навсегда';
         } else if (isActiveLicense && endDateRaw && endDateRaw !== '') {
