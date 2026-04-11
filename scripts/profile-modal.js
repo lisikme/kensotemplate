@@ -230,6 +230,7 @@
             <div class="profile-modal-container">
                 <div class="profile-modal-header">
                     <div class="profile-modal-title">
+
                         Профиль пользователя
                     </div>
                     <button class="profile-modal-close" id="profileModalCloseLoader">

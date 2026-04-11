@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const nolicenseUsers = users.filter(user => user.licenseCategory === 'nolicense');
         const bannedUsers = users.filter(user => user.licenseCategory === 'banned');
         const expiredUsers = users.filter(user => user.licenseCategory === 'expired');
-        const allUsers = users;
+        const allUsers = activeUsers.length+nolicenseUsers.length+bannedUsers.length+expiredUsers.length;
         
         // Формирование заголовка со статистикой
         const parts = [];
@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <rect x="8" y="8" width="12" height="12" rx="2"></rect>
                     <rect x="4" y="4" width="12" height="12" rx="2"></rect>
                 </svg>
-                <span>${allUsers.length}</span>
+                <span>${allUsers}</span>
             </div>
         ${parts.join('')}</div>`;
         
