@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `);
         
-        const cacheIndicator = isFromCache ? '<span class="cache-indicator" title="Данные из кэша">📦</span>' : '';
+        const cacheIndicator = isFromCache ? '' : '';
         
         adminListTitle.innerHTML = `Лицензии${cacheIndicator}<div class="adminlist_box">
             <div id="allUsers" class="stat-badge stat-all" title="Все пользователи">

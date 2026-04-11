@@ -25,17 +25,16 @@
 
 /* Контейнер модального окна */
 .profile-modal-container {
+    background: linear-gradient(135deg, #0c0c0c 0%, #080808 100%);
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
     width: 90%;
     max-width: 500px;
-    background: linear-gradient(135deg, #0c0c0c 0%, #080808 100%);
-    border-radius: 8px;
-    border: 1px solid rgba(215, 254, 123, 0.3);
-    overflow: hidden;
-    transform: scale(0.95) translateY(-20px);
-    transition: transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
-    max-height: 85vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.95);
+    transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
 .profile-modal-overlay.active .profile-modal-container {
@@ -44,12 +43,13 @@
 
 /* Заголовок */
 .profile-modal-header {
+    justify-content: center;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 15px;
-    background: rgba(0, 0, 0, 0.7);
-    border-bottom: 1px solid rgba(215, 254, 123, 0.2);
+    background: #000000;
+    padding-left: 6px;
+    height: 24px;
+    padding: 0px 0px;
+    border-bottom: 1px solid #303030;
 }
 
 .profile-modal-title {
@@ -96,7 +96,10 @@
 
 /* Контент */
 .profile-modal-content {
-    padding: 15px;
+    padding: 10px;
+    gap: 5px;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
     flex: 1;
 }
@@ -106,13 +109,14 @@
     background: #0a0a0a;
     border: 1px solid #303030;
     border-radius: 6px;
-    margin-bottom: 12px;
+    /* margin-bottom: 12px; */
     overflow: hidden;
 }
 
 .profile-section-header {
     background: #000000;
-    padding: 8px 12px;
+    padding: 0px 5px;
+    height: 25px;
     border-bottom: 1px solid #303030;
     font-size: 12px;
     font-weight: 500;
@@ -129,7 +133,7 @@
 }
 
 .profile-section-content {
-    padding: 10px 12px;
+    padding: 5px 5px;
 }
 
 /* Информационные строки */
@@ -137,7 +141,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 0;
+    padding: 6px 5px;
     border-bottom: 1px solid #1a1a1a;
     font-size: 12px;
 }
@@ -172,7 +176,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 12px;
+    /* margin-bottom: 12px; */
 }
 
 .profile-avatar {
@@ -233,7 +237,7 @@
     /* padding: 2px 8px; */
     border-radius: 3px;
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .profile-status-badge.active {
@@ -266,7 +270,7 @@
     /* padding: 2px 8px; */
     /* border-radius: 3px; */
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .profile-role.creator {

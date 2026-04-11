@@ -96,11 +96,12 @@
             statusText = 'Заблокирован';
             statusClass = 'banned';
         } else if (userData.isForever) {
-            statusText = 'Бессрочная';
+            statusText = 'Навсегда';
             statusClass = 'forever';
         } else if (userData.isActiveLicense) {
             if (subscription.formattedTime) {
-                statusText = `Активна (осталось ${subscription.formattedTime})`;
+                const endDateFormatted = subscription.endTimestamp ? new Date(subscription.endTimestamp * 1000).toLocaleDateString('ru-RU') : 'неизвестно';
+                statusText = `До ${endDateFormatted} — [${subscription.formattedTime}]`;
             } else {
                 statusText = 'Активна';
             }
@@ -140,16 +141,10 @@
                     
                     <!-- Статус и роль -->
                     <div class="profile-section">
-                        <div class="profile-section-header">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 6v6l4 2"/>
-                            </svg>
-                            Статус лицензии
-                        </div>
+                        <div class="profile-section-header">Информация</div>
                         <div class="profile-section-content">
                             <div class="profile-info-row">
-                                <span class="profile-info-label">Статус</span>
+                                <span class="profile-info-label">Подписка</span>
                                 <span class="profile-info-value">
                                     <span class="profile-status-badge ${statusClass}">${window.ProfileData.escapeHtml(statusText)}</span>
                                 </span>
@@ -178,11 +173,7 @@
                     <!-- Связи -->
                     <div class="profile-section">
                         <div class="profile-section-header">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                            </svg>
-                            Связи
+                            Привязки
                         </div>
                         <div class="profile-section-content">
                             <div class="profile-links">
@@ -195,7 +186,7 @@
                                 </a>
                                 ` : ''}
                                 ${userData.telegramId ? `
-                                <a href="https://t.me/${userData.telegramId}" target="_blank" class="profile-link telegram">
+                                <a class="profile-link telegram">
                                     <svg viewBox="0 0 48 48" fill="none">
                                         <use href="./content/svg/link-telegram.svg"></use>
                                     </svg>
@@ -288,10 +279,6 @@
                 </div>
                 <div class="profile-modal-content">
                     <div class="profile-error">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 8v4M12 16h.01"/>
-                        </svg>
                         <p>${window.ProfileData.escapeHtml(message)}</p>
                     </div>
                 </div>

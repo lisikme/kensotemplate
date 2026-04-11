@@ -123,7 +123,7 @@
             formattedEndDate = 'Навсегда';
         } else if (isActiveLicense && endDateRaw && endDateRaw !== '') {
             endTimestamp = parseDateToTimestamp(endDateRaw);
-            formattedEndDate = endDateRaw;
+            formattedEndDate = `До ${endDateRaw}`;
         } else if (isExpired) {
             endTimestamp = 0;
             formattedEndDate = 'Истекла';
@@ -541,7 +541,8 @@
         saveAvatarToCache: saveAvatarToCache,
         loadUsersFromCache: loadUsersFromCache,
         saveUsersToCache: saveUsersToCache,
-        clearCache: clearAllCache
+        clearCache: clearAllCache,
+        parseDateToTimestamp: parseDateToTimestamp,
     };
     
     init();
