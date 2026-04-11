@@ -1,5 +1,5 @@
 // users.js - полная версия с интеграцией profile-data модуля
-// Версия 2.0
+// Версия 2.1 (с кэшированием аватаров)
 
 document.addEventListener('DOMContentLoaded', function() {
     // ==================== ОЧЕРЕДЬ ЗАГРУЗКИ АВАТАРОВ ====================
@@ -54,6 +54,47 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadedAvatars = new Set();
     let updateInProgress = false;
     
+    // Ключ для localStorage кэша аватаров
+    const AVATAR_CACHE_KEY = 'avatar_url_cache';
+    const AVATAR_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 дней
+    
+    // Загрузка кэша аватаров из localStorage
+    function loadAvatarCache() {
+        try {
+            const cached = localStorage.getItem(AVATAR_CACHE_KEY);
+            if (cached) {
+                const cache = JSON.parse(cached);
+                // Проверяем TTL
+                if (cache.timestamp && Date.now() - cache.timestamp < AVATAR_CACHE_TTL) {
+                    return cache.urls || {};
+                }
+            }
+        } catch (e) {
+            console.warn('Ошибка загрузки кэша аватаров:', e);
+        }
+        return {};
+    }
+    
+    // Сохранение URL аватара в кэш
+    function saveAvatarToCache(discordId, avatarUrl) {
+        try {
+            const cache = loadAvatarCache();
+            cache[discordId] = avatarUrl;
+            localStorage.setItem(AVATAR_CACHE_KEY, JSON.stringify({
+                urls: cache,
+                timestamp: Date.now()
+            }));
+        } catch (e) {
+            console.warn('Ошибка сохранения кэша аватара:', e);
+        }
+    }
+    
+    // Получение кэшированного URL аватара
+    function getCachedAvatarUrl(discordId) {
+        const cache = loadAvatarCache();
+        return cache[discordId] || null;
+    }
+    
     // Приоритеты ролей для сортировки
     const ROLE_PRIORITY = {
         'Создатель': 1,
@@ -78,13 +119,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
-     * Загрузить аватар для пользователя
+     * Загрузить аватар для пользователя (с кэшированием)
      */
     async function loadAvatarForUser(discordId, userData) {
         if (!discordId || !userData || loadedAvatars.has(discordId)) return;
         
         const avatarElement = document.getElementById(`user-${discordId}-avatar`);
         if (!avatarElement) return;
+        
+        // Проверяем кэш аватара
+        const cachedAvatarUrl = getCachedAvatarUrl(discordId);
+        if (cachedAvatarUrl) {
+            avatarElement.src = cachedAvatarUrl;
+            avatarElement.style.opacity = '1';
+            loadedAvatars.add(discordId);
+            
+            const avatarBlock = avatarElement.closest('.avatar_block');
+            if (avatarBlock) {
+                const letterDiv = avatarBlock.querySelector('.avatar_letter');
+                if (letterDiv) letterDiv.style.opacity = '0';
+            }
+            return;
+        }
         
         if (userData.avatar) {
             avatarLoadQueue.add(async () => {
@@ -93,6 +149,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     avatarElement.src = avatarUrl;
                     avatarElement.style.opacity = '1';
                     loadedAvatars.add(discordId);
+                    
+                    // Сохраняем в кэш
+                    saveAvatarToCache(discordId, avatarUrl);
                     
                     // Скрываем букву
                     const avatarBlock = avatarElement.closest('.avatar_block');
@@ -181,7 +240,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const nolicenseUsers = users.filter(user => user.licenseCategory === 'nolicense');
         const bannedUsers = users.filter(user => user.licenseCategory === 'banned');
         const expiredUsers = users.filter(user => user.licenseCategory === 'expired');
-        // const foreverUsers = users.filter(user => user.licenseCategory === 'forever');
         const allUsers = users;
         
         // Формирование заголовка со статистикой
@@ -197,15 +255,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span>${activeUsers.length}</span>
             </div>
         `);
-        
-        // if (foreverUsers.length > 0) parts.push(`
-        //     <div id="foreverUsers" class="stat-badge stat-forever" title="Бессрочные лицензии">
-        //         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        //             <path d="M12 2L15 9H22L16 14L19 21L12 16.5L5 21L8 14L2 9H9L12 2Z" stroke="currentColor" fill="none"/>
-        //         </svg>
-        //         <span>${foreverUsers.length}</span>
-        //     </div>
-        // `);
         
         if (bannedUsers.length > 0) parts.push(`
             <div id="bannedUsers" class="stat-badge stat-banned" title="Забаненные пользователи">
@@ -365,6 +414,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         updateUsernameOnPage(user.discordId, discordData);
                     }
                 });
+                
+                // Также проверяем кэш аватара и сразу устанавливаем, если есть
+                const cachedAvatar = getCachedAvatarUrl(user.discordId);
+                if (cachedAvatar) {
+                    const avatarElement = document.getElementById(`user-${user.discordId}-avatar`);
+                    if (avatarElement && avatarElement.src !== cachedAvatar) {
+                        avatarElement.src = cachedAvatar;
+                        avatarElement.style.opacity = '1';
+                        
+                        const avatarBlock = avatarElement.closest('.avatar_block');
+                        if (avatarBlock) {
+                            const letterDiv = avatarBlock.querySelector('.avatar_letter');
+                            if (letterDiv) letterDiv.style.opacity = '0';
+                        }
+                    }
+                }
             }
         });
     }
@@ -446,7 +511,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     const nextUpdateIn = window.ProfileData.getTimeUntilNextDiscordUpdate();
                     console.log(`Discord данные актуальны. Следующее обновление через: ${nextUpdateIn}`);
                     
-                    // Показываем информацию в консоли о времени последнего обновления
                     const lastUpdate = window.ProfileData.getLastDiscordUpdateTime();
                     if (lastUpdate) {
                         console.log(`Последнее обновление Discord: ${new Date(lastUpdate).toLocaleString()}`);
