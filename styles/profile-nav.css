@@ -173,7 +173,7 @@ background: #c5b0ff;
     -webkit-text-fill-color: transparent;
     background-clip: text !important;
     font-weight: 600;
-    background: #7c7c7c;
+    background: linear-gradient(45deg, #b9b9b9, #d8d8d8);
 }
 
 .profile-nav-role.creator {
@@ -181,7 +181,7 @@ background: #c5b0ff;
     color: #ff99bb;
 }
 .nav-bt-title-hwid.role-creator {
-    background: linear-gradient(45deg, #ff9bcd, #ffc4e7);
+    background: linear-gradient(45deg, #ff70b7, #ffc4e7);
 }
 
 .profile-nav-role.admin {

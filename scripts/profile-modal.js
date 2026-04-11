@@ -195,7 +195,7 @@
                             <div class="profile-links">
                                 ${userData.discordId ? `
                                 <a href="https://discord.com/users/${userData.discordId}" target="_blank" class="profile-link discord" id="profileDiscordLink">
-                                    <svg viewBox="0 0 48 48" fill="none">
+                                        <svg viewBox="0 0 48 48" fill="none">
                                         <use href="./content/svg/link-discord.svg"></use>
                                     </svg>
                                     <span>Discord: ${discordData ? window.ProfileData.escapeHtml(window.ProfileData.getDisplayName(null, discordData)) : window.ProfileData.escapeHtml(userData.discordId.substring(0, 12))}</span>

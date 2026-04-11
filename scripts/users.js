@@ -1,5 +1,15 @@
 // users.js - полная версия с интеграцией profile-data модуля
-// Версия 2.1 (с кэшированием аватаров)
+// Версия 2.2 (сначала кэш, потом обновление из API)
+
+const originalFetchAllUsers = window.ProfileData?.fetchAllUsers;
+if (originalFetchAllUsers) {
+    window.ProfileData.fetchAllUsers = async function(...args) {
+        console.log('fetchAllUsers вызван в:', new Date().toLocaleTimeString());
+        const result = await originalFetchAllUsers.apply(this, args);
+        console.log('fetchAllUsers вернул:', result?.length || 0, 'записей');
+        return result;
+    };
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // ==================== ОЧЕРЕДЬ ЗАГРУЗКИ АВАТАРОВ ====================
@@ -53,10 +63,46 @@ document.addEventListener('DOMContentLoaded', function() {
     let draftUsers = [];
     const loadedAvatars = new Set();
     let updateInProgress = false;
+    let isFirstLoad = true; // Флаг для первой загрузки
+    
+    // Ключи для localStorage кэша списка пользователей
+    const USERS_CACHE_KEY = 'users_list_cache';
+    const USERS_CACHE_TTL = 5 * 60 * 1000; // 5 минут кэш списка пользователей
     
     // Ключ для localStorage кэша аватаров
     const AVATAR_CACHE_KEY = 'avatar_url_cache';
     const AVATAR_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 дней
+    
+    // Загрузка кэша пользователей из localStorage
+    function loadUsersFromCache() {
+        try {
+            const cached = localStorage.getItem(USERS_CACHE_KEY);
+            if (cached) {
+                const cache = JSON.parse(cached);
+                // Проверяем TTL
+                if (cache.timestamp && Date.now() - cache.timestamp < USERS_CACHE_TTL) {
+                    console.log(`Загружено ${cache.users?.length || 0} пользователей из кэша`);
+                    return cache.users || null;
+                }
+            }
+        } catch (e) {
+            console.warn('Ошибка загрузки кэша пользователей:', e);
+        }
+        return null;
+    }
+    
+    // Сохранение кэша пользователей
+    function saveUsersToCache(users) {
+        try {
+            localStorage.setItem(USERS_CACHE_KEY, JSON.stringify({
+                users: users,
+                timestamp: Date.now()
+            }));
+            console.log(`Сохранено ${users.length} пользователей в кэш`);
+        } catch (e) {
+            console.warn('Ошибка сохранения кэша пользователей:', e);
+        }
+    }
     
     // Загрузка кэша аватаров из localStorage
     function loadAvatarCache() {
@@ -226,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /**
      * Отображение списка пользователей
      */
-    function displayUsers(users) {
+    function displayUsers(users, isFromCache = false) {
         const adminListTitle = document.getElementById('adminListTitle');
         const adminListBlocks = document.getElementById('adminListBlocks');
         
@@ -288,8 +334,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `);
         
+        // Добавляем индикатор, если данные из кэша
+        const cacheIndicator = isFromCache ? '<span class="cache-indicator" title="Данные из кэша">📦</span>' : '';
+        
         // Обновляем заголовок
-        adminListTitle.innerHTML = `Лицензии<div class="adminlist_box">
+        adminListTitle.innerHTML = `Лицензии${cacheIndicator}<div class="adminlist_box">
             <div id="allUsers" class="stat-badge stat-all" title="Все пользователи">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <rect x="8" y="8" width="12" height="12" rx="2"></rect>
@@ -432,20 +481,202 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+        
+        // Добавляем стиль для индикатора кэша
+        if (!document.querySelector('#cache-indicator-style')) {
+            const style = document.createElement('style');
+            style.id = 'cache-indicator-style';
+            style.textContent = `
+                .cache-indicator {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-left: 8px;
+                    font-size: 14px;
+                    opacity: 0.7;
+                    cursor: help;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    function showLoadingIndicator() {
+        const adminListBlocks = document.getElementById('adminListBlocks');
+        if (adminListBlocks && adminListBlocks.children.length === 0) {
+            adminListBlocks.innerHTML = `
+                <div class="loading-indicator" style="
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    flex-direction: column;
+                    padding: 40px;
+                    text-align: center;
+                    color: #888;
+                ">
+                    <div class="loading-spinner" style="
+                        width: 40px;
+                        height: 40px;
+                        border: 3px solid #2a2a2a;
+                        border-top-color: #ff6b6b;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin-bottom: 15px;
+                    "></div>
+                    <span>Загрузка данных...</span>
+                    <small style="margin-top: 10px; font-size: 12px;">Попытка подключения к API</small>
+                </div>
+            `;
+            
+            // Добавляем стили для анимации, если их нет
+            if (!document.querySelector('#loading-spinner-style')) {
+                const style = document.createElement('style');
+                style.id = 'loading-spinner-style';
+                style.textContent = `
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+    }
+    
+    function showErrorMessage(message) {
+        const adminListBlocks = document.getElementById('adminListBlocks');
+        if (adminListBlocks) {
+            adminListBlocks.innerHTML = `
+                <div class="error-message" style="
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    flex-direction: column;
+                    padding: 40px;
+                    text-align: center;
+                    color: #ff5d5d;
+                ">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/>
+                    </svg>
+                    <span style="margin-top: 15px;">${message}</span>
+                    <button id="retryLoadBtn" style="
+                        margin-top: 20px;
+                        padding: 8px 20px;
+                        background: #ff6b6b;
+                        border: none;
+                        border-radius: 6px;
+                        color: white;
+                        cursor: pointer;
+                    ">Повторить</button>
+                </div>
+            `;
+            
+            const retryBtn = document.getElementById('retryLoadBtn');
+            if (retryBtn) {
+                retryBtn.addEventListener('click', () => {
+                    loadDraftData(true); // Принудительное обновление из API
+                });
+            }
+        }
     }
     
     /**
-     * Основная загрузка данных
+     * Обновление данных из API (фоновое обновление)
      */
-    async function loadDraftData() {
+    async function refreshDataFromAPI() {
+        if (updateInProgress) {
+            console.log('Обновление уже выполняется, пропускаем');
+            return;
+        }
+        
+        updateInProgress = true;
+        console.log('Фоновое обновление данных из API...');
+        
         try {
-            console.log('Загрузка данных из API...');
+            const users = await window.ProfileData.fetchAllUsers();
+            
+            if (users && users.length > 0) {
+                // Сортируем пользователей
+                users.sort((a, b) => {
+                    const priorityA = getSortPriority(a);
+                    const priorityB = getSortPriority(b);
+                    if (priorityA !== priorityB) return priorityA - priorityB;
+                    return (a.hwid || '').localeCompare(b.hwid || '');
+                });
+                
+                draftUsers = users;
+                
+                // Сохраняем в кэш
+                saveUsersToCache(users);
+                
+                // Обновляем отображение (без индикатора кэша)
+                displayUsers(draftUsers, false);
+                
+                console.log(`Данные обновлены: ${users.length} пользователей`);
+                
+                // Обновляем Discord данные аватаров
+                const allDiscordIds = [];
+                draftUsers.forEach(user => {
+                    if (user.discordId && user.discordId.match(/^\d{17,19}$/)) {
+                        allDiscordIds.push(user.discordId);
+                    }
+                });
+                
+                // Фоновое обновление Discord данных (только если прошло более 1 дня)
+                if (window.ProfileData && window.ProfileData.shouldUpdateDiscordData && window.ProfileData.shouldUpdateDiscordData()) {
+                    console.log('Требуется обновление Discord данных...');
+                    setTimeout(async () => {
+                        for (const discordId of allDiscordIds) {
+                            const discordData = await window.ProfileData.getDiscordUserData(discordId, true);
+                            if (discordData) {
+                                updateUsernameOnPage(discordId, discordData);
+                                if (discordData.avatar) {
+                                    await loadAvatarForUser(discordId, discordData);
+                                }
+                            }
+                        }
+                    }, 2000);
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка фонового обновления:', error);
+        } finally {
+            updateInProgress = false;
+        }
+    }
+    
+    /**
+     * Основная загрузка данных (сначала кэш, потом API)
+     */
+    async function loadDraftData(forceRefresh = false) {
+        try {
+            // 1. Сначала пытаемся загрузить из кэша
+            const cachedUsers = !forceRefresh ? loadUsersFromCache() : null;
+            
+            if (cachedUsers && cachedUsers.length > 0) {
+                console.log(`Отображаем ${cachedUsers.length} пользователей из кэша`);
+                draftUsers = cachedUsers;
+                displayUsers(draftUsers, true); // true = данные из кэша
+                draftDataLoaded = true;
+                
+                // 2. Затем фоново обновляем из API
+                setTimeout(() => {
+                    refreshDataFromAPI();
+                }, 100);
+                
+                return { draftUsers: cachedUsers, fromCache: true };
+            }
+            
+            // 3. Если кэша нет - загружаем из API с индикатором
+            console.log('Кэш пуст, загружаем из API...');
+            showLoadingIndicator();
+            
             const users = await window.ProfileData.fetchAllUsers();
             
             if (!users || users.length === 0) {
-                console.error('Не удалось загрузить данные');
-                const adminListTitle = document.getElementById('adminListTitle');
-                if (adminListTitle) adminListTitle.textContent = 'Ошибка загрузки данных';
+                showErrorMessage('Не удалось загрузить данные. Пожалуйста, проверьте соединение и попробуйте снова.');
                 return null;
             }
             
@@ -456,10 +687,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 const priorityA = getSortPriority(a);
                 const priorityB = getSortPriority(b);
                 if (priorityA !== priorityB) return priorityA - priorityB;
-                return a.hwid.localeCompare(b.hwid);
+                return (a.hwid || '').localeCompare(b.hwid || '');
             });
             
             draftUsers = users;
+            
+            // Сохраняем в кэш
+            saveUsersToCache(users);
+            
+            // Отображаем
+            displayUsers(draftUsers, false);
+            draftDataLoaded = true;
             
             // Загружаем кэш Discord данных из localStorage
             const allDiscordIds = [];
@@ -470,118 +708,76 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             loadCacheFromLocalStorage(allDiscordIds);
             
-            // Отображаем пользователей
-            displayUsers(draftUsers);
-            draftDataLoaded = true;
-            console.log('Данные загружены и отображены');
-            
             // Фоновое обновление Discord данных (только если прошло более 1 дня)
-            setTimeout(async () => {
-                if (window.ProfileData.shouldUpdateDiscordData()) {
-                    console.log('Прошло более 1 дня, выполняем фоновое обновление Discord данных...');
-                    
-                    const discordIds = draftUsers
-                        .filter(u => u.discordId && u.discordId.match(/^\d{17,19}$/))
-                        .map(u => u.discordId);
-                    
-                    if (discordIds.length > 0) {
-                        const results = await window.ProfileData.refreshAllDiscordData(discordIds, (progress) => {
-                            if (progress.current) {
-                                console.log(`Обновление Discord: ${progress.current}/${progress.total}`);
-                            } else if (progress.skipped) {
-                                console.log(`Обновление пропущено: ${progress.reason}`);
-                                console.log(`Следующее обновление через: ${progress.nextUpdateIn}`);
-                            } else if (progress.completed) {
-                                console.log(`Обновление завершено. Обновлено ${progress.updated} из ${progress.total} пользователей`);
-                            }
-                        });
-                        
-                        // Обновляем отображение для обновленных пользователей
-                        for (const result of results) {
-                            if (result.data) {
-                                await processUserDataResult(result.discordId, result.data);
+            if (window.ProfileData && window.ProfileData.shouldUpdateDiscordData && window.ProfileData.shouldUpdateDiscordData()) {
+                setTimeout(async () => {
+                    for (const discordId of allDiscordIds) {
+                        const discordData = await window.ProfileData.getDiscordUserData(discordId, true);
+                        if (discordData) {
+                            updateUsernameOnPage(discordId, discordData);
+                            if (discordData.avatar) {
+                                await loadAvatarForUser(discordId, discordData);
                             }
                         }
-                        
-                        if (results.length > 0) {
-                            console.log(`Фоновое обновление завершено. Обновлено ${results.length} пользователей`);
-                        }
                     }
-                } else {
-                    const nextUpdateIn = window.ProfileData.getTimeUntilNextDiscordUpdate();
-                    console.log(`Discord данные актуальны. Следующее обновление через: ${nextUpdateIn}`);
-                    
-                    const lastUpdate = window.ProfileData.getLastDiscordUpdateTime();
-                    if (lastUpdate) {
-                        console.log(`Последнее обновление Discord: ${new Date(lastUpdate).toLocaleString()}`);
-                    }
-                }
-            }, 2000);
+                }, 2000);
+            }
             
-            return { draftUsers: users };
+            return { draftUsers: users, fromCache: false };
+            
         } catch (error) {
             console.error('Ошибка загрузки данных:', error);
-            const adminListTitle = document.getElementById('adminListTitle');
-            if (adminListTitle) adminListTitle.textContent = 'Ошибка загрузки данных';
+            showErrorMessage(`Ошибка загрузки данных: ${error.message || 'Неизвестная ошибка'}`);
             return null;
         }
     }
     
-    /**
-     * Обновление данных в реальном времени (опционально)
-     */
-    async function refreshData() {
-        if (updateInProgress) {
-            console.log('Обновление уже выполняется');
-            return;
-        }
-        
-        updateInProgress = true;
-        console.log('Ручное обновление данных...');
-        
-        try {
-            const users = await window.ProfileData.fetchAllUsers();
-            if (users && users.length > 0) {
-                users.sort((a, b) => {
-                    const priorityA = getSortPriority(a);
-                    const priorityB = getSortPriority(b);
-                    if (priorityA !== priorityB) return priorityA - priorityB;
-                    return a.hwid.localeCompare(b.hwid);
-                });
-                draftUsers = users;
-                displayUsers(draftUsers);
-                console.log('Данные обновлены');
+    function waitForDOM() {
+        return new Promise((resolve) => {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', resolve);
+            } else {
+                resolve();
             }
-        } catch (error) {
-            console.error('Ошибка обновления:', error);
-        } finally {
-            updateInProgress = false;
-        }
+        });
     }
     
-    /**
-     * Инициализация
-     */
     async function init() {
+        // Ждем DOM
+        await waitForDOM();
+        
         // Ждем загрузки ProfileData модуля
         if (!window.ProfileData) {
             console.log('Users: Ожидание загрузки ProfileData...');
-            const checkInterval = setInterval(() => {
-                if (window.ProfileData) {
-                    clearInterval(checkInterval);
-                    init();
-                }
-            }, 100);
-            return;
+            
+            // Ожидаем с таймаутом
+            const startTime = Date.now();
+            const timeout = 10000; // 10 секунд максимум
+            
+            while (!window.ProfileData && (Date.now() - startTime) < timeout) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            if (!window.ProfileData) {
+                console.error('ProfileData не загрузился вовремя');
+                showErrorMessage('Не удалось загрузить модуль данных. Обновите страницу.');
+                return;
+            }
         }
         
         console.log('Users: ProfileData загружен, инициализация...');
         await loadDraftData();
         
-        // Добавляем кнопку обновления, если она существует
+        // Добавляем кнопку обновления
         const refreshBtn = document.getElementById('refreshDataBtn');
         if (refreshBtn) {
-            refreshBtn.addEventListener('click', refreshData);
+            // Удаляем старые обработчики
+            const newRefreshBtn = refreshBtn.cloneNode(true);
+            refreshBtn.parentNode.replaceChild(newRefreshBtn, refreshBtn);
+            newRefreshBtn.addEventListener('click', () => {
+                // Принудительное обновление из API
+                refreshDataFromAPI();
+            });
         }
     }
     
