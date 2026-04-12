@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </a>`;
                     }
                     if (user.telegramId) {
-                        linksHtml += `<a target="_blank" id="link_prof" class="discord-link telegram-link TG" href="https://t.me/${user.telegramId}">
+                        linksHtml += `<a id="link_prof" class="discord-link telegram-link TG">
                                         <svg viewBox="0 0 48 48" fill="none">
                                             <use href="./content/svg/link-telegram.svg"></use>
                                         </svg>
@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </a>`;
                     }
                 } else {
-                    linksHtml = `<a target="_blank" id="link_prof" style="max-width: 100%;" class="no-link">
+                    linksHtml = `<a id="link_prof" style="max-width: 100%;" class="no-link">
                                     <p id="no-link">Без привязки!</p>
                                 </a>`;
                 }
