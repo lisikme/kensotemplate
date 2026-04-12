@@ -282,7 +282,17 @@ document.addEventListener('DOMContentLoaded', function() {
             // Причина бана
             let banReasonHtml = '';
             if (user.isBanned && user.banReason) {
-                banReasonHtml = `<div class="admin_term_reason">${window.ProfileData.escapeHtml(user.banReason)}</div>`;
+                banReasonHtml = `
+                        <div class="profile-ban-reason2">
+                            <div class="label">Причина бана:</div>
+                            <div class="reason">Предательство, угрозы, слив данных.</div>
+                        </div>
+                    `;
+                // banReasonHtml = `
+                //         <div class="admin_term_reason">
+                //         ${window.ProfileData.escapeHtml(user.banReason)}
+                //         </div>
+                //     `;
             }
             
             // Ссылки на соцсети
@@ -334,7 +344,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="adminlist_buttons">
                         <div id="admins_info">
                             <span class="admin_nickname">${escapedHwid}</span>
-                            ${!user.isBanned ? `<div id="link_block">${linksHtml}</div>` : ''}
+                            ${!user.isBanned ? `
+                                <div id="link_block">${linksHtml}</div>
+                                ` : ''}
                             ${banReasonHtml}
                         </div>
                     </div>

@@ -428,22 +428,51 @@
 .profile-ban-reason {
     background: rgba(255, 50, 50, 0.1);
     border-left: 3px solid #ff4444;
-    padding: 8px 10px;
-    border-radius: 4px;
-    margin-top: 8px;
+    padding: 6px 8px;
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .profile-ban-reason .label {
-    font-size: 10px;
+    font-size: 9px;
     color: #ff8888;
     display: block;
-    margin-bottom: 4px;
 }
 
 .profile-ban-reason .reason {
     font-size: 11px;
     color: #ffaaaa;
 }
+
+
+.profile-ban-reason2 {
+    background: rgba(255, 50, 50, 0.1);
+    border-left: 3px solid #ff4444;
+    padding: 2px 8px;
+    min-height: 35px;
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.profile-ban-reason2 .label {
+    font-size: 9px;
+    color: #ff8888;
+    display: block;
+}
+
+.profile-ban-reason2 .reason {
+    font-size: 10px;
+    color: #ffaaaa;
+}
+
+
+
 
 /* Секция без данных */
 .profile-no-data {

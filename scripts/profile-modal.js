@@ -175,7 +175,13 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div>                    
+                            ${isBanned && userData.banReason ? `
+                                <div class="profile-ban-reason">
+                                <div class="label">Причина бана:</div>
+                                <div class="reason">${window.ProfileData.escapeHtml(userData.banReason)}</div>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
 
@@ -198,12 +204,6 @@
                                     </div>
                                 </span>
                             </div>
-                            ${isBanned && userData.banReason ? `
-                                <div class="profile-ban-reason">
-                                <div class="label">Причина бана:</div>
-                                <div class="reason">${window.ProfileData.escapeHtml(userData.banReason)}</div>
-                                </div>
-                            ` : ''}
                             <div class="profile-info-row">
                                 <span class="profile-info-label">Discord:</span>
                                 ${userData.discordId ? `
