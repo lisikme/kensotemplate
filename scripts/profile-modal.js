@@ -94,8 +94,8 @@
         let statusClass = subscription.status;
         
         if (userData.isBanned) {
-            statusText = 'Заблокирован';
-            statusText2 = 'Заблокирован';
+            statusText = 'Заблокирована';
+            statusText2 = 'Блокировка';
             statusClass = 'banned';
         } else if (userData.isForever) {
             statusText = 'Активна - Навсегда';
@@ -181,7 +181,12 @@
                                 <div class="label">Причина бана:</div>
                                 <div class="reason">${window.ProfileData.escapeHtml(userData.banReason)}</div>
                                 </div>
-                            ` : ''}
+                            ` : `
+                                <div class="profile-ban-reason">
+                                <div class="label">Причина бана:</div>
+                                <div class="reason">Не указана администратором!</div>
+                                </div>
+                            `}
                         </div>
                     </div>
 
