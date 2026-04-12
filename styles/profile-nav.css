@@ -144,7 +144,7 @@
 }
 
 .profile-nav-badge.forever {
-background: #c5b0ff;
+    background: #c5b0ff;
     color: #000000;
 }
 
@@ -389,7 +389,8 @@ background: #c5b0ff;
     height: 25px;
     display: flex;
 }
-.profile-nav-badge.active{
+.profile-nav-badge.active,
+.profile-nav-badge.forever{
     background: #111111;
     color: #b093ff;
 }
