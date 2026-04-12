@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
             userCard.className = 'admin_card';
             userCard.id = cardId;
             
-            let tagId = 'player';
+            let tagId = 'other';
             if (user.roleRaw === 'Создатель') tagId = 'creator';
             else if (user.roleRaw === 'Менеджер') tagId = 'manager';
             else if (user.roleRaw === 'Админ') tagId = 'admin';
