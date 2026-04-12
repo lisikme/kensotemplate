@@ -124,7 +124,11 @@
             formattedEndDate = 'Навсегда';
         } else if (isActiveLicense && endDateRaw && endDateRaw !== '') {
             endTimestamp = parseDateToTimestamp(endDateRaw);
-            formattedEndDate = `До ${endDateRaw}`;
+            let formattedDate = endDateRaw;
+            if (endDateRaw && endDateRaw.match(/\d{2}\.\d{2}\.\d{4}/)) {
+                formattedDate = endDateRaw.replace(/(\d{2}\.\d{2}\.)\d{2}(\d{2})/, '$1$2');
+            }
+            formattedEndDate = `До ${formattedDate}`;
         } else if (isExpired) {
             endTimestamp = 0;
             formattedEndDate = 'Истекла';

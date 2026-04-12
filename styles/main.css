@@ -966,46 +966,85 @@ h2 {
 
 
 /* Создатель */
-#item-creator { border: 1px solid #ff4995; }
-#tag-creator { background: rgb(102, 0, 77); }
+#item-creator {
+    border: 1px solid #ff4995;
+    background: #0f0007;
+}
+#tag-creator {
+    background: rgb(102, 0, 77);
+}
 #tag-creator > span {
     background: linear-gradient(45deg, #ff9bcd, #ffc4e7);
 }
 /* Менеджер */
-#item-manager { border: 1px solid #6a99ff; }
-#tag-manager { background: #00415a; }
+#item-manager {
+    border: 1px solid #6a99ff;
+    background: #000613;
+}
+#tag-manager {
+    background: #00415a;
+}
 #tag-manager > span {
     background: linear-gradient(45deg, #61edff, #caf7ff);
 }
 /* Админ */
-#item-admin { border: 1px solid #e6d750; }
-#tag-admin { background: #554500; }
+#item-admin {
+    border: 1px solid #e6d750;
+    background: #0c0b00;
+}
+#tag-admin {
+    background: #554500;
+}
 #tag-admin > span {
     background: linear-gradient(45deg, #ffd000, #faffb0);
 }
 /* Партнёр */
-#item-partner { border: 1px solid #8d5cff; }
-#tag-partner { background: #460074; }
+#item-partner {
+    border: 1px solid #8d5cff;
+    background: #05000c;
+}
+#tag-partner {
+    background: #460074;
+}
 #tag-partner > span {
     background: linear-gradient(45deg, #be78ff, #efceff);
 }
 /* Медиа */
-#item-media { border: 1px solid #ff4444 !important; }
-#tag-media { background: #490000; }
+#item-media {
+    border: 1px solid #ff4444;
+    background: #0c0000;
+}
+#tag-media {
+    background: #490000;
+}
 #tag-media > span {
     background: linear-gradient(45deg, #ff5454, #ff9595);
 }
 /* Игрок */
-#item-player { border: 1px solid #303030; }
-#tag-player { background: #003d1f; }
+#item-player {
+    border: 1px solid #1b1b1b;
+    background: #000000;
+}
+#tag-player {
+    background: #003d1f;
+}
 #tag-player > span {
     background: linear-gradient(45deg, #2ec529, #c7ff93);
 }
 /* Забанен */
-#item-banned { border: 1px solid #720000 !important; }
-#tag-banned { background: #720000; }
+#item-banned {
+    border: 1px solid #720000;
+    background: #0a0000;
+}
+#tag-banned {
+    background: #720000;
+}
 #tag-banned > span {
     background: linear-gradient(45deg, #ff8989, #ffd6d6);
+}
+
+.admin_nickname{
+    background: #13170B !important;
 }
 
 
