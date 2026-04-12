@@ -1,5 +1,5 @@
 // profile-data.js - универсальный модуль для работы с данными профиля
-// Версия 4.0 - ПОЛНОСТЬЮ НА ТАБЛИЦЕ (без dis-api)
+// Версия 5.0 - БЕСКОНЕЧНЫЙ КЕШ ТАБЛИЦЫ + обновление при каждом заходе
 
 (function() {
     // ==================== КОНФИГУРАЦИЯ ====================
@@ -7,16 +7,17 @@
         // API для получения данных пользователей
         hwidApiUrl: 'https://hwid-api.fascord.workers.dev/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA?gid=834339051',
         // Настройки кэширования
-        cacheTTL: 5 * 60 * 1000, // 5 минут для кэша пользователей
-        avatarCacheTTL: 7 * 24 * 60 * 60 * 1000, // 7 дней для аватаров
+        tableCacheTTL: Infinity,        // Бесконечный кеш для таблицы (до обновления при заходе)
+        avatarCacheTTL: 60 * 60 * 1000, // 1 час для аватаров
         requestTimeout: 15000,
         avatarTimeout: 5000
     };
 
     // Ключи для localStorage
     const STORAGE_KEYS = {
-        USERS_CACHE_KEY: 'users_list_cache_v2',
-        AVATAR_CACHE_KEY: 'avatar_url_cache_v3'
+        USERS_CACHE_KEY: 'users_list_cache_v5',      // новая версия
+        AVATAR_CACHE_KEY: 'avatar_url_cache_v5',     // новая версия
+        LAST_UPDATE_KEY: 'last_table_update_time'    // время последнего обновления таблицы
     };
 
     // ==================== КЭШ ====================
@@ -102,8 +103,8 @@
         const discordId = apiItem.Tab6 || null;
         const telegramId = apiItem.Tab7 || null;
         const banReason = apiItem.Tab8 || null;
-        const userName = apiItem.Tab9 || null;      // НОВОЕ: имя пользователя
-        const avatarHash = apiItem.Tab10 || null;    // НОВОЕ: хеш аватара
+        const userName = apiItem.Tab9 || null;
+        const avatarHash = apiItem.Tab10 || null;
         
         const isBanned = role === 'Забанен';
         const hasLicense = licenseStatus === 'ЕСТЬ';
@@ -152,8 +153,8 @@
             hwid: hwid,
             discordId: discordId,
             telegramId: telegramId,
-            userName: userName,           // НОВОЕ: имя из таблицы
-            avatarHash: avatarHash,       // НОВОЕ: хеш аватара из таблицы
+            userName: userName,
+            avatarHash: avatarHash,
             isBanned: isBanned,
             isActiveLicense: isActiveLicense,
             isForever: isForever,
@@ -236,15 +237,16 @@
         }
     }
 
-    // Загрузка кэша пользователей из localStorage
+    // Загрузка кэша пользователей из localStorage (бесконечный, пока не обновится)
     function loadUsersFromCache() {
         try {
             const cached = localStorage.getItem(STORAGE_KEYS.USERS_CACHE_KEY);
             if (cached) {
                 const cache = JSON.parse(cached);
-                if (cache.timestamp && Date.now() - cache.timestamp < PROFILE_DATA_CONFIG.cacheTTL) {
-                    console.log(`Загружено ${cache.users?.length || 0} пользователей из кэша`);
-                    return cache.users || null;
+                // Бесконечный кеш - проверяем только наличие данных
+                if (cache.users && cache.users.length > 0) {
+                    console.log(`Загружено ${cache.users.length} пользователей из бесконечного кэша`);
+                    return cache.users;
                 }
             }
         } catch (e) {
@@ -253,71 +255,96 @@
         return null;
     }
 
-    // Сохранение кэша пользователей
+    // Сохранение кэша пользователей (бесконечный)
     function saveUsersToCache(users) {
         try {
             localStorage.setItem(STORAGE_KEYS.USERS_CACHE_KEY, JSON.stringify({
                 users: users,
-                timestamp: Date.now()
+                timestamp: Date.now()  // сохраняем для информации, но не используем для TTL
             }));
-            console.log(`Сохранено ${users.length} пользователей в кэш`);
+            localStorage.setItem(STORAGE_KEYS.LAST_UPDATE_KEY, Date.now().toString());
+            console.log(`Сохранено ${users.length} пользователей в бесконечный кэш`);
         } catch (e) {
             console.warn('Ошибка сохранения кэша пользователей:', e);
+        }
+    }
+
+    // Основная функция: всегда обновляем кеш при заходе на сайт
+    async function getUsersTable(forceRefresh = false) {
+        // Всегда пытаемся обновить данные при вызове (при заходе на сайт)
+        try {
+            console.log('Обновление таблицы пользователей при заходе на сайт...');
+            const freshUsers = await fetchAllUsers();
+            
+            if (freshUsers && freshUsers.length > 0) {
+                saveUsersToCache(freshUsers);
+                // Обновляем Map кэш
+                freshUsers.forEach(user => {
+                    if (user.hwid) {
+                        userDataCache.set(user.hwid, {
+                            data: user,
+                            timestamp: Date.now()
+                        });
+                    }
+                });
+                return freshUsers;
+            } else {
+                // Если API вернул пустой массив, пробуем взять из кэша
+                console.warn('API вернул пустой массив, использую кэш');
+                const cached = loadUsersFromCache();
+                if (cached) return cached;
+                return [];
+            }
+        } catch (error) {
+            console.error('Ошибка обновления таблицы:', error);
+            // При ошибке сети используем кэш
+            const cached = loadUsersFromCache();
+            if (cached) {
+                console.log('Использую сохранённый кэш из-за ошибки сети');
+                return cached;
+            }
+            return [];
         }
     }
 
     async function fetchUserByHwid(hwid) {
         if (!hwid) return null;
         
-        // Проверяем кэш
+        // Проверяем кэш в памяти
         const cached = userDataCache.get(hwid);
-        if (cached && Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.cacheTTL) {
+        if (cached && cached.data) {
             return cached.data;
         }
         
-        try {
-            const users = await fetchAllUsers();
-            const user = users.find(u => u.hwid === hwid);
-            
-            if (user) {
-                userDataCache.set(hwid, {
-                    data: user,
-                    timestamp: Date.now()
-                });
-            }
-            
-            return user || null;
-        } catch (error) {
-            console.error('Ошибка получения пользователя по HWID:', error);
-            return null;
+        // Загружаем всю таблицу (с обновлением)
+        const users = await getUsersTable();
+        const user = users.find(u => u.hwid === hwid);
+        
+        if (user) {
+            userDataCache.set(hwid, {
+                data: user,
+                timestamp: Date.now()
+            });
         }
+        
+        return user || null;
     }
 
     async function fetchUserByDiscordId(discordId) {
         if (!discordId) return null;
         
-        try {
-            const users = await fetchAllUsers();
-            return users.find(u => u.discordId === discordId) || null;
-        } catch (error) {
-            console.error('Ошибка поиска по Discord ID:', error);
-            return null;
-        }
+        const users = await getUsersTable();
+        return users.find(u => u.discordId === discordId) || null;
     }
 
     async function fetchUserByTelegramId(telegramId) {
         if (!telegramId) return null;
         
-        try {
-            const users = await fetchAllUsers();
-            return users.find(u => u.telegramId === telegramId) || null;
-        } catch (error) {
-            console.error('Ошибка поиска по Telegram ID:', error);
-            return null;
-        }
+        const users = await getUsersTable();
+        return users.find(u => u.telegramId === telegramId) || null;
     }
 
-    // ==================== АВАТАРЫ (ИЗ ТАБЛИЦЫ) ====================
+    // ==================== АВАТАРЫ (обновление не чаще 1 часа) ====================
     
     // Загрузка кэша аватаров из localStorage
     function loadAvatarCache() {
@@ -325,8 +352,14 @@
             const cached = localStorage.getItem(STORAGE_KEYS.AVATAR_CACHE_KEY);
             if (cached) {
                 const cache = JSON.parse(cached);
-                if (cache.timestamp && Date.now() - cache.timestamp < PROFILE_DATA_CONFIG.avatarCacheTTL) {
+                const now = Date.now();
+                // Проверяем TTL для аватаров (1 час)
+                if (cache.timestamp && (now - cache.timestamp) < PROFILE_DATA_CONFIG.avatarCacheTTL) {
                     return cache.urls || {};
+                }
+                // Если кеш устарел, возвращаем пустой объект (будет обновлён)
+                if (cache.timestamp && (now - cache.timestamp) >= PROFILE_DATA_CONFIG.avatarCacheTTL) {
+                    console.log('Кеш аватаров устарел (>1 часа), будет обновлён');
                 }
             }
         } catch (e) {
@@ -373,7 +406,6 @@
             img.onload = () => { cleanup(); resolve(); };
             img.onerror = () => { cleanup(); reject(new Error('Load error')); };
             
-            // Используем CDN без прокси
             img.src = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
         });
     }
@@ -383,13 +415,13 @@
         
         const cacheKey = `avatar_${discordId}`;
         
-        // Проверяем кэш в памяти
+        // Проверяем кэш в памяти (с учётом TTL)
         const cached = avatarCache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.avatarCacheTTL) {
             return cached.url;
         }
         
-        // Проверяем localStorage кэш
+        // Проверяем localStorage кэш (с учётом TTL)
         const cachedUrl = getCachedAvatarUrl(discordId);
         if (cachedUrl) {
             avatarCache.set(cacheKey, { url: cachedUrl, timestamp: Date.now() });
@@ -411,17 +443,11 @@
 
     // ==================== ФОРМАТИРОВАНИЕ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ ====================
     
-    /**
-     * Получить отображаемое имя пользователя
-     * Приоритет: userName из таблицы > Discord данные > HWID
-     */
     function getDisplayName(userInfo, discordData = null) {
-        // 1. Сначала используем userName из таблицы (Tab9)
         if (userInfo && userInfo.userName && userInfo.userName.trim() !== '') {
             return userInfo.userName;
         }
         
-        // 2. Если есть Discord данные (для обратной совместимости)
         if (discordData) {
             if (discordData.username) {
                 if (discordData.discriminator && discordData.discriminator !== '0') {
@@ -432,7 +458,6 @@
             if (discordData.global_name) return discordData.global_name;
         }
         
-        // 3. Иначе показываем HWID
         if (userInfo && userInfo.hwid) {
             return userInfo.hwid.substring(0, 20) + (userInfo.hwid.length > 20 ? '...' : '');
         }
@@ -510,22 +535,57 @@
         try {
             localStorage.removeItem(STORAGE_KEYS.USERS_CACHE_KEY);
             localStorage.removeItem(STORAGE_KEYS.AVATAR_CACHE_KEY);
+            localStorage.removeItem(STORAGE_KEYS.LAST_UPDATE_KEY);
             console.log('Весь кэш очищен');
         } catch(e) {}
     }
 
     // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-    function init() {
-        console.log('ProfileData модуль инициализирован (Версия 4.0 - данные из таблицы)');
-        console.log('Поля: Tab9 = UserName, Tab10 = AvatarHash');
+    // Автоматически обновляем таблицу при загрузке модуля
+    async function autoRefreshOnLoad() {
+        console.log('ProfileData: Автоматическое обновление таблицы при загрузке страницы...');
+        try {
+            const users = await fetchAllUsers();
+            if (users && users.length > 0) {
+                saveUsersToCache(users);
+                // Обновляем Map кэш
+                users.forEach(user => {
+                    if (user.hwid) {
+                        userDataCache.set(user.hwid, {
+                            data: user,
+                            timestamp: Date.now()
+                        });
+                    }
+                });
+                console.log(`ProfileData: Таблица обновлена, сохранено ${users.length} записей в бесконечный кэш`);
+            }
+        } catch (error) {
+            console.error('ProfileData: Ошибка автообновления таблицы:', error);
+            // При ошибке используем существующий кэш
+            const cached = loadUsersFromCache();
+            if (cached) {
+                console.log(`ProfileData: Использую существующий кэш (${cached.length} записей)`);
+            }
+        }
     }
+
+    function init() {
+        console.log('ProfileData модуль инициализирован (Версия 5.0 - бесконечный кеш таблицы)');
+        console.log('- Кеш таблицы: бесконечный, обновляется при каждом заходе на сайт');
+        console.log('- Кеш аватаров: 1 час');
+        
+        // Запускаем автообновление
+        autoRefreshOnLoad();
+    }
+    
+    init();
 
     // ==================== ЭКСПОРТ ====================
     window.ProfileData = {
         config: PROFILE_DATA_CONFIG,
         parseUserFromApiItem: parseUserFromApiItem,
         getSubscriptionStatus: getSubscriptionStatus,
-        fetchAllUsers: fetchAllUsers,
+        fetchAllUsers: getUsersTable,           // Теперь возвращает обновлённые данные
         fetchUserByHwid: fetchUserByHwid,
         fetchUserByDiscordId: fetchUserByDiscordId,
         fetchUserByTelegramId: fetchUserByTelegramId,
@@ -543,7 +603,8 @@
         saveUsersToCache: saveUsersToCache,
         clearCache: clearAllCache,
         parseDateToTimestamp: parseDateToTimestamp,
+        // Дополнительные методы для управления кешем
+        forceRefreshTable: getUsersTable,       // Принудительное обновление таблицы
+        getLastUpdateTime: () => localStorage.getItem(STORAGE_KEYS.LAST_UPDATE_KEY)
     };
-    
-    init();
 })();

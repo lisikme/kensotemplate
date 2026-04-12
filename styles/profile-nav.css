@@ -24,6 +24,15 @@
     object-fit: cover;
 }
 
+.profile-nav-error {
+    font-size: 10px;
+    display: flex;
+    /* padding: 5px; */
+    height: 90px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 .profile-nav-avatar-letter {
     position: absolute;
     top: 0;

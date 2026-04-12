@@ -62,13 +62,10 @@
             console.log('ProfileNav: Пользователь не найден в базе после всех попыток');
             profileSection.innerHTML = `
                 <div class="profile-nav-error">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/>
-                    </svg>
                     <div>Пользователь не найден</div>
-                    <div style="font-size: 8px; margin-top: 4px; opacity: 0.7;">Обновите страницу</div>
+                    <div style="font-size: 10px; margin-top: 4px; opacity: 0.7;">
+                        Ваш аккаунт не привязан к HWID
+                    </div>
                 </div>
             `;
             return;
