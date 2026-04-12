@@ -144,7 +144,7 @@
         else if (isExpired) licenseCategory = 'expired';
         else if (noLicense) licenseCategory = 'nolicense';
 
-        let roleClass = 'player';
+        let roleClass = 'other';
         if (isBanned) roleClass = 'banned';
         else if (role === 'Создатель') roleClass = 'creator';
         else if (role === 'Менеджер') roleClass = 'manager';

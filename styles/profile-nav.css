@@ -180,6 +180,10 @@ background: #c5b0ff;
     background: linear-gradient(45deg, #b9b9b9, #d8d8d8);
 }
 
+.profile-nav-role.other{
+    background: rgba(155, 155, 155, 0.15);
+    color: #d2d2d2;
+}
 .profile-nav-role.creator {
     background: rgba(255, 100, 150, 0.15);
     color: #ff99bb;
@@ -361,11 +365,31 @@ background: #c5b0ff;
 .profile-nav-status > div {
     display: flex;
     flex-direction: column;
-    border: #303030 solid 1px;
-    background: #000000;
+    border-left: #676975 solid 3px;
+    background: #212121;
     border-radius: 2px;
     padding: 3px;
     gap: 3px;
     color: #b1b1b1;
     font-size: 10px;
+}
+.profile-nav-role{
+    /* background: #333333 !important; */
+    /* background: #111111; */
+    text-align: center;
+    justify-content: center;
+    padding: 0px;
+    height: 25px;
+    display: flex;
+}
+.profile-nav-badge {
+    text-align: center;
+    justify-content: center;
+    padding: 0px;
+    height: 25px;
+    display: flex;
+}
+.profile-nav-badge.active{
+    background: #111111;
+    color: #b093ff;
 }

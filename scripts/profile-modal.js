@@ -90,27 +90,34 @@
         
         // Определяем текст статуса
         let statusText = '';
+        let statusText2 = '';
         let statusClass = subscription.status;
         
         if (userData.isBanned) {
             statusText = 'Заблокирован';
+            statusText2 = 'Заблокирован';
             statusClass = 'banned';
         } else if (userData.isForever) {
-            statusText = 'Навсегда';
+            statusText = 'Активна - Навсегда';
+            statusText2 = 'Навсегда';
             statusClass = 'forever';
         } else if (userData.isActiveLicense) {
             if (subscription.formattedTime) {
                 const endDateFormatted = subscription.endTimestamp ? new Date(subscription.endTimestamp * 1000).toLocaleDateString('ru-RU') : 'неизвестно';
-                statusText = `До ${endDateFormatted} — [${subscription.formattedTime}]`;
+                statusText = `Активна - ${subscription.formattedTime}`;
+                statusText2 = `До ${endDateFormatted}`;
             } else {
                 statusText = 'Активна';
+                statusText2 = 'Активна';
             }
             statusClass = 'active';
         } else if (userData.isExpired) {
             statusText = 'Истекла';
+            statusText2 = 'Истекла';
             statusClass = 'expired';
         } else {
             statusText = 'Нет лицензии';
+            statusText2 = 'Нет лицензии';
             statusClass = 'nolicense';
         }
         
@@ -127,78 +134,112 @@
                     </button>
                 </div>
                 <div class="profile-modal-content">
-                    <!-- Аватар и основная информация -->
-                    <div class="profile-avatar-section">
-                        <div class="profile-avatar">
-                            <img id="profileAvatarImg" src="" alt="" style="opacity: 0;">
-                            <div class="profile-avatar-letter">${window.ProfileData.escapeHtml(avatarLetter)}</div>
+                    <div class="admin_card" id="item-${userData.roleClass === 'other' ? 'player' : userData.roleClass}">
+                        <div class="admin_term">
+                            <div class="adminlist_button steam_button" id="tag-${userData.roleClass}">
+                                <span>${window.ProfileData.escapeHtml(userData.roleText)}</span>
+                            </div>
+                            <span class="admin_term_text" id="term-${statusClass}">${window.ProfileData.escapeHtml(statusText2)}</span>
                         </div>
-                        <div class="profile-avatar-info">
-                            <h3 id="profileDisplayName">${window.ProfileData.escapeHtml(displayName)}</h3>
-                            <p>HWID: <span class="profile-status-badge ${statusClass}">${window.ProfileData.escapeHtml(shortHwid)}</span></p>
+                        <div id="admins_card">
+                            <div class="adminlist_info">
+                                <a>
+                                    <div class="avatar_block">
+                                        <div class="avatar_letter" style="opacity: 1;">${window.ProfileData.escapeHtml(avatarLetter)}</div>
+                                        <div class="avatar-img">
+                                            <img id="profileAvatarImg" src="" alt="" style="opacity: 0;">
+                                        </div>
+                                    </div>
+                                    <get-avatar></get-avatar>
+                                </a>
+                                <div class="adminlist_buttons">
+                                    <div id="admins_info">
+                                        <span class="admin_nickname">${window.ProfileData.escapeHtml(shortHwid)}</span>
+                                        <div id="link_block">
+                                            ${userData.discordId ? `
+                                                <a href="https://discord.com/users/${userData.discordId}" target="_blank" id="link_prof" class="discord-link DS" data-discord-id="${userData.discordId}">
+                                                    <svg viewBox="0 0 48 48" fill="none">
+                                                        <use href="./content/svg/link-discord.svg"></use>
+                                                    </svg>
+                                                    <span class="discord-username">${window.ProfileData.escapeHtml(displayName)}</span>
+                                                </a>
+                                            ` : ''}
+                                            ${userData.telegramId ? `
+                                                <a target="_blank" id="link_prof" class="discord-link telegram-link TG">
+                                                    <svg viewBox="0 0 48 48" fill="none">
+                                                        <use href="./content/svg/link-telegram.svg"></use>
+                                                    </svg>
+                                                    <span class="discord-username">ID: ${window.ProfileData.escapeHtml(userData.telegramId)}</span>
+                                                </a>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
                     
                     <!-- Статус и роль -->
                     <div class="profile-section">
                         <div class="profile-section-header">Информация</div>
                         <div class="profile-section-content">
                             <div class="profile-info-row">
-                                <span class="profile-info-label">Подписка</span>
+                                <span class="profile-info-label">Подписка:</span>
                                 <span class="profile-info-value">
                                     <span class="profile-status-badge ${statusClass}">${window.ProfileData.escapeHtml(statusText)}</span>
                                 </span>
                             </div>
                             <div class="profile-info-row">
-                                <span class="profile-info-label">Роль</span>
+                                <span class="profile-info-label">Роль:</span>
                                 <span class="profile-info-value">
-                                    <span class="profile-role ${userData.roleClass}">${window.ProfileData.escapeHtml(userData.roleText)}</span>
+                                    <div class="adminlist_button steam_button" id="tag-${userData.roleClass}">
+                                        <span>${window.ProfileData.escapeHtml(userData.roleText)}</span>
+                                    </div>
                                 </span>
                             </div>
-                            ${subscription.status === 'active' && subscription.daysLeft > 0 && subscription.daysLeft <= 30 ? `
-                            <div class="profile-progress-bar">
-                                <div class="profile-progress-fill" style="width: ${Math.min(100, (subscription.daysLeft / 30) * 100)}%;"></div>
-                                <div class="profile-progress-text">Осталось ${subscription.daysLeft} ${window.ProfileData.getDaysWord(subscription.daysLeft)}</div>
-                            </div>
-                            ` : ''}
                             ${isBanned && userData.banReason ? `
-                            <div class="profile-ban-reason">
+                                <div class="profile-ban-reason">
                                 <div class="label">Причина бана:</div>
                                 <div class="reason">${window.ProfileData.escapeHtml(userData.banReason)}</div>
-                            </div>
+                                </div>
                             ` : ''}
-                        </div>
-                    </div>
-
-                    <!-- Связи -->
-                    <div class="profile-section">
-                        <div class="profile-section-header">
-                            Привязки
-                        </div>
-                        <div class="profile-section-content">
-                            <div class="profile-links">
+                            <div class="profile-info-row">
+                                <span class="profile-info-label">Discord:</span>
                                 ${userData.discordId ? `
-                                <a href="https://discord.com/users/${userData.discordId}" target="_blank" class="profile-link discord" id="profileDiscordLink">
-                                    <svg viewBox="0 0 48 48" fill="none">
-                                        <use href="./content/svg/link-discord.svg"></use>
-                                    </svg>
-                                    <span>Discord ID: ${window.ProfileData.escapeHtml(userData.discordId)}</span>
-                                </a>
-                                ` : ''}
+                                    <a href="https://discord.com/users/${userData.discordId}" target="_blank" id="link_prof" class="discord-link DS" data-discord-id="${userData.discordId}">
+                                        <svg viewBox="0 0 48 48" fill="none">
+                                            <use href="./content/svg/link-discord.svg"></use>
+                                        </svg>
+                                        <span class="discord-username">ID: ${userData.discordId}</span>
+                                    </a>
+                                ` : `
+                                    <a id="link_prof" class="discord-link DS">
+                                        <svg viewBox="0 0 48 48" fill="none">
+                                            <use href="./content/svg/link-discord.svg"></use>
+                                        </svg>
+                                        <span class="discord-username">НЕТ</span>
+                                    </a>
+                                `}
+                            </div>
+                            <div class="profile-info-row">
+                                <span class="profile-info-label">Telegram:</span>
                                 ${userData.telegramId ? `
-                                <a class="profile-link telegram">
-                                    <svg viewBox="0 0 48 48" fill="none">
-                                        <use href="./content/svg/link-telegram.svg"></use>
-                                    </svg>
-                                    <span>Telegram ID: ${window.ProfileData.escapeHtml(userData.telegramId)}</span>
-                                </a>
-                                ` : ''}
+                                    <a id="link_prof" class="discord-link telegram-link TG">
+                                        <svg viewBox="0 0 48 48" fill="none">
+                                            <use href="./content/svg/link-telegram.svg"></use>
+                                        </svg>
+                                        <span class="discord-username">ID: ${window.ProfileData.escapeHtml(userData.telegramId)}</span>
+                                    </a>
+                                ` : `
+                                    <a id="link_prof" class="discord-link telegram-link TG">
+                                        <svg viewBox="0 0 48 48" fill="none">
+                                            <use href="./content/svg/link-telegram.svg"></use>
+                                        </svg>
+                                        <span class="discord-username">НЕТ</span>
+                                    </a>
+                                `}
                             </div>
-                            ${!userData.discordId && !userData.telegramId ? `
-                            <div class="profile-no-data">
-                                Нет привязанных социальных сетей
-                            </div>
-                            ` : ''}
                         </div>
                     </div>
                 </div>

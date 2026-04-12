@@ -106,20 +106,20 @@
 
 /* Секции */
 .profile-section {
-    background: #0a0a0a;
-    border: 1px solid #303030;
-    border-radius: 6px;
+    border: 1px solid #1b1b1b;
+    background: #000000;
+    border-radius: 3px;
     /* margin-bottom: 12px; */
     overflow: hidden;
 }
 
 .profile-section-header {
-    background: #000000;
-    padding: 0px 5px;
+    background: #111111;
+    padding: 0px 10px;
     height: 25px;
     border-bottom: 1px solid #303030;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
     color: #d7fe7b;
     display: flex;
     align-items: center;
@@ -133,15 +133,16 @@
 }
 
 .profile-section-content {
-    padding: 5px 5px;
+    padding: 0px 3px;
 }
 
 /* Информационные строки */
 .profile-info-row {
     display: flex;
+    height: 30px;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 5px;
+    padding: 0px 5px;
     border-bottom: 1px solid #1a1a1a;
     font-size: 12px;
 }
@@ -155,6 +156,19 @@
     font-weight: 400;
 }
 
+.profile-info-value > span {
+    background: #171717;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 18px !important;
+    border-radius: 2px;
+    padding: 0px 8px !important;
+}
+.profile-info-value > div {
+    height: 18px !important;
+    padding: 0px 8px !important;
+}
 .profile-info-value {
     color: #e0e0e0;
     font-weight: 500;

@@ -108,7 +108,7 @@
                     </span>
                 </div>
                 <div>
-                    Статус подписки:
+                    Подписка:
                     <span class="profile-nav-badge ${statusClass}">
                         ${window.ProfileData.escapeHtml(statusText)}
                     </span>
