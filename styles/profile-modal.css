@@ -426,7 +426,7 @@
 
 /* Секция бана */
 .profile-ban-reason {
-    background: rgba(255, 50, 50, 0.1);
+    background: #1A0505;
     border-left: 3px solid #ff4444;
     padding: 6px 8px;
     border-radius: 2px;
@@ -449,7 +449,7 @@
 
 
 .profile-ban-reason2 {
-    background: rgba(255, 50, 50, 0.1);
+    background: #1A0505;
     border-left: 3px solid #ff4444;
     padding: 2px 8px;
     min-height: 35px;

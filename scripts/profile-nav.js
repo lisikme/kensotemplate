@@ -1,4 +1,4 @@
-// profile-nav.js - мини-профиль аккаунта в меню пользователя (Версия 4.1 - мгновенное обновление всех элементов)
+// profile-nav.js - мини-профиль аккаунта в меню пользователя (Версия 4.2 - причина бана)
 
 (function() {
     // Функция закрытия меню
@@ -13,7 +13,6 @@
     function getUserFromCacheSync(discordId) {
         if (!window.ProfileData || !discordId) return null;
         
-        // Пытаемся получить из кеша localStorage
         try {
             const cached = localStorage.getItem('users_list_cache_v5');
             if (cached) {
@@ -47,7 +46,6 @@
             navRole.className = `nav-bt-title-hwid role-${userInfo.roleClass}`;
         }
         
-        // Обновляем аватар в btn_logout если есть в кеше
         const avatarImg = btnLogout.querySelector('.avatar-account .avatar');
         if (avatarImg && userInfo.discordId && userInfo.avatarHash) {
             const cachedAvatar = window.ProfileData.getCachedAvatarUrl(userInfo.discordId);
@@ -68,7 +66,6 @@
         
         const subscription = window.ProfileData.getSubscriptionStatus(userInfo);
         
-        // Определяем класс и текст для статуса
         let statusClass = subscription.status;
         let statusText = subscription.text;
         
@@ -78,7 +75,7 @@
             statusText = 'Навсегда';
             statusClass = 'forever';
         } else if (userInfo.isBanned) {
-            statusText = 'Забанен';
+            statusText = `Заблокирована`;
             statusClass = 'banned';
         } else if (userInfo.isExpired) {
             statusText = 'Истекла';
@@ -88,7 +85,26 @@
             statusClass = 'nolicense';
         }
         
-        // Рендерим макет профиля
+        // Блок с причиной бана (как в profile-modal)
+        let banReasonHtml = '';
+        if (userInfo.isBanned) {
+            if (userInfo.banReason && userInfo.banReason.trim() !== '') {
+                banReasonHtml = `
+                    <div class="profile-ban-reason2">
+                        <div class="label">Причина бана:</div>
+                        <div class="reason">${window.ProfileData.escapeHtml(userInfo.banReason)}</div>
+                    </div>
+                `;
+            } else {
+                banReasonHtml = `
+                    <div class="profile-ban-reason2">
+                        <div class="label">Причина бана:</div>
+                        <div class="reason">Не указана администратором!</div>
+                    </div>
+                `;
+            }
+        }
+        
         profileSection.innerHTML = `
             <div class="profile-nav-header">
                 <div class="profile-nav-avatar">
@@ -122,24 +138,16 @@
                 <div class="profile-nav-progress-text">Осталось ${subscription.daysLeft} ${window.ProfileData.getDaysWord(subscription.daysLeft)}</div>
             </div>
             ` : ''}
-            ${userInfo.isBanned && userInfo.banReason ? `
-            <div class="profile-nav-ban-info">
-                <span style='font-weight: 500; font-size: 9px; color: #ff5d5d'>Причина:</span><br>
-                ${window.ProfileData.escapeHtml(userInfo.banReason.length > 60 ? userInfo.banReason.substring(0, 60) + '...' : userInfo.banReason)}
-            </div>
-            ` : ''}
+            ${userInfo.isBanned && banReasonHtml ? banReasonHtml : ''}
         `;
         
-        // Мгновенно обновляем btn_logout
         if (btnLogout) {
             updateBtnLogoutFromCache(userInfo, btnLogout);
         }
         
-        // Загружаем аватар асинхронно (не блокируем отображение)
         if (userInfo.discordId && userInfo.avatarHash) {
             const navProfileAvatar = profileSection.querySelector('#navProfileAvatar');
             if (navProfileAvatar) {
-                // Проверяем кеш аватара
                 const cachedAvatar = window.ProfileData.getCachedAvatarUrl(userInfo.discordId);
                 if (cachedAvatar) {
                     navProfileAvatar.src = cachedAvatar;
@@ -147,7 +155,6 @@
                     const letterDiv = profileSection.querySelector('.profile-nav-avatar-letter');
                     if (letterDiv) letterDiv.style.opacity = '0';
                 } else {
-                    // Асинхронная загрузка
                     window.ProfileData.getDiscordAvatarUrl(userInfo.discordId, userInfo.avatarHash).then(avatarUrl => {
                         if (avatarUrl && navProfileAvatar) {
                             navProfileAvatar.src = avatarUrl;
@@ -159,7 +166,6 @@
                 }
             }
             
-            // Также обновляем аватар в btn_logout
             if (btnLogout) {
                 const avatarImg = btnLogout.querySelector('.avatar-account .avatar');
                 if (avatarImg) {
@@ -182,17 +188,12 @@
         }
     }
 
-    // Фоновая проверка и обновление данных из API (без блокировки интерфейса)
     async function backgroundUpdate(discordId, profileSection, btnLogout) {
         try {
-            // Запрашиваем свежие данные из API (через ProfileData, который обновляет кеш)
             const freshUserInfo = await window.ProfileData.fetchUserByDiscordId(String(discordId));
             
             if (freshUserInfo) {
-                // Сохраняем HWID глобально
                 window.currentUserHwid = freshUserInfo.hwid;
-                
-                // Обновляем отображение с новыми данными
                 renderProfileFromData(freshUserInfo, profileSection, btnLogout);
             }
         } catch (error) {
@@ -200,7 +201,6 @@
         }
     }
 
-    // Предварительная загрузка профиля в btn_logout при загрузке страницы (из кеша)
     function preloadProfileFromCache() {
         const btnLogout = document.querySelector('.btn_logout');
         if (!btnLogout) return;
@@ -210,33 +210,28 @@
         
         const cachedUser = getUserFromCacheSync(String(discordUser.id));
         if (cachedUser) {
-            // Мгновенно обновляем btn_logout при загрузке страницы
             updateBtnLogoutFromCache(cachedUser, btnLogout);
             window.currentUserHwid = cachedUser.hwid;
             console.log('ProfileNav: btn_logout обновлён из кеша при загрузке');
             
-            // Фоновое обновление
             setTimeout(() => {
                 window.ProfileData.fetchUserByDiscordId(String(discordUser.id)).catch(() => {});
             }, 500);
         }
     }
 
-    // Обновление мини-профиля в меню (мгновенно из кеша + фоном из API)
     async function updateNavProfile() {
         const btnLogout = document.querySelector('.btn_logout');
         const contextMenu = document.querySelector('.context-menu');
         
         if (!btnLogout || !contextMenu) return;
         
-        // Получаем данные пользователя из Cookie
         const discordUser = CookieManager ? CookieManager.get('discord_user') : null;
         if (!discordUser || !discordUser.id) {
             console.log('ProfileNav: Нет данных пользователя');
             return;
         }
         
-        // Находим или создаём секцию профиля
         let profileSection = contextMenu.querySelector('.context-menu-hwid');
         if (!profileSection) {
             profileSection = document.createElement('div');
@@ -244,19 +239,14 @@
             contextMenu.insertBefore(profileSection, contextMenu.firstChild);
         }
         
-        // ========== ШАГ 1: МГНОВЕННОЕ ОТОБРАЖЕНИЕ ИЗ КЕША ==========
         const cachedUser = getUserFromCacheSync(String(discordUser.id));
         
         if (cachedUser) {
-            // Мгновенно показываем данные из кеша
             window.currentUserHwid = cachedUser.hwid;
             renderProfileFromData(cachedUser, profileSection, btnLogout);
             console.log('ProfileNav: Отображено из кеша мгновенно');
-            
-            // Запускаем фоновое обновление (без ожидания)
             backgroundUpdate(discordUser.id, profileSection, btnLogout);
         } else {
-            // Если кеша нет - показываем загрузку и грузим из API
             profileSection.innerHTML = `
                 <div class="profile-nav-loading">
                     <div class="profile-nav-spinner"></div>
@@ -296,7 +286,6 @@
         }
     }
 
-    // Открытие профиля текущего пользователя
     window.openFullProfile = function(event) {
         if (event) {
             event.preventDefault();
@@ -319,50 +308,6 @@
         }
     };
 
-    // Добавляем стили для загрузки и ошибки
-    function injectStyles() {
-        if (document.getElementById('profile-nav-styles')) return;
-        
-        const style = document.createElement('style');
-        style.id = 'profile-nav-styles';
-        style.textContent = `
-            .profile-nav-loading {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                padding: 15px;
-                text-align: center;
-                color: #888;
-                gap: 8px;
-            }
-            .profile-nav-spinner {
-                width: 24px;
-                height: 24px;
-                border: 2px solid #2a2a2a;
-                border-top-color: #ff6b6b;
-                border-radius: 50%;
-                animation: profileNavSpin 0.8s linear infinite;
-            }
-            @keyframes profileNavSpin {
-                to { transform: rotate(360deg); }
-            }
-            .profile-nav-error {
-                padding: 12px;
-                text-align: center;
-                color: #ff5d5d;
-                font-size: 12px;
-            }
-            .profile-nav-error svg {
-                width: 24px;
-                height: 24px;
-                margin-bottom: 6px;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    // Обновление при открытии меню
     function setupMenuOpenHandler() {
         const originalToggle = window.toggleContextMenu;
         
@@ -376,7 +321,6 @@
         };
     }
 
-    // Наблюдатель за изменениями DOM для btn_logout (на случай если он появляется позже)
     function observeBtnLogout() {
         const observer = new MutationObserver(() => {
             const btnLogout = document.querySelector('.btn_logout');
@@ -387,15 +331,10 @@
         });
         
         observer.observe(document.body, { childList: true, subtree: true });
-        
-        // Таймаут на всякий случай
         setTimeout(() => observer.disconnect(), 10000);
     }
 
-    // Инициализация
     async function initNavProfile() {
-        injectStyles();
-        
         if (!window.ProfileData) {
             console.log('ProfileNav: Ожидание загрузки ProfileData...');
             const checkInterval = setInterval(() => {
@@ -411,7 +350,6 @@
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
-                // Предварительная загрузка btn_logout из кеша
                 setTimeout(() => {
                     preloadProfileFromCache();
                 }, 100);

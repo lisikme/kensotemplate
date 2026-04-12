@@ -176,7 +176,7 @@
                                     </div>
                                 </div>
                             </div>                    
-                            ${isBanned && userData.banReason ? `
+                            ${isBanned ? `${userData.banReason ?` 
                                 <div class="profile-ban-reason">
                                 <div class="label">Причина бана:</div>
                                 <div class="reason">${window.ProfileData.escapeHtml(userData.banReason)}</div>
@@ -186,7 +186,7 @@
                                 <div class="label">Причина бана:</div>
                                 <div class="reason">Не указана администратором!</div>
                                 </div>
-                            `}
+                            `}` : ''}
                         </div>
                     </div>
 
