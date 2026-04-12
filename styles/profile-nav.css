@@ -394,3 +394,8 @@
     background: #111111;
     color: #b093ff;
 }
+.menu-row {
+    display: flex;
+    flex-direction: row;
+    gap: 3px;
+}

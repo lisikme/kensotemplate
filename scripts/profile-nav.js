@@ -1,5 +1,23 @@
 // profile-nav.js - мини-профиль аккаунта в меню пользователя (Версия 4.2 - причина бана)
 
+function openCenteredPopup() {
+  var url = 'https://docs.google.com/spreadsheets/d/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA/edit?gid=834339051#gid=834339051';
+  
+  // Используем screen.width и screen.height для полного экрана
+  var width = screen.width;
+  var height = screen.height;
+  
+  var left = 0;
+  var top = 0;
+  
+  var popup = window.open(url, 'popup', 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',toolbar=yes,scrollbars=yes,resizable=yes');
+  
+  // Дополнительно пытаемся перевести в полноэкранный режим
+  if (popup) {
+    popup.moveTo(0, 0);
+    popup.resizeTo(screen.width, screen.height);
+  }
+}
 (function() {
     // Функция закрытия меню
     function closeContextMenu() {
@@ -59,6 +77,9 @@
     // Рендер профиля из данных (синхронный, без задержек)
     function renderProfileFromData(userInfo, profileSection, btnLogout = null) {
         if (!profileSection) return;
+        const contextMenu = document.querySelector('.context-menu');
+        let profileSectionbtn = contextMenu.querySelector('.button-ctn');
+        let profileSectionbtnrow = profileSectionbtn.querySelector('.menu-row');
         
         const displayName = window.ProfileData.getDisplayName(userInfo);
         const shortHwid = window.ProfileData.getShortHwid(userInfo.hwid, 16);
@@ -105,6 +126,20 @@
             }
         }
         
+        profileSectionbtnrow.innerHTML = `
+            <div class="context-menu-item profile-item" onclick="openFullProfile(event)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <use href="./content/svg/ico-user.svg"></use>
+                </svg>
+                <span>Профиль</span>
+            </div>
+            <div class="context-menu-item profile-item" onclick="openCenteredPopup()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <use href="./content/svg/ico-app.svg"></use>
+                </svg>
+                <span>Менеджер</span>
+            </div>
+        `
         profileSection.innerHTML = `
             <div class="profile-nav-header">
                 <div class="profile-nav-avatar">
@@ -274,11 +309,6 @@
                 console.error('ProfileNav: Ошибка загрузки:', error);
                 profileSection.innerHTML = `
                     <div class="profile-nav-error">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="12" y1="8" x2="12" y2="12"/>
-                            <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/>
-                        </svg>
                         <div>Ошибка загрузки</div>
                     </div>
                 `;
