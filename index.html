@@ -2673,10 +2673,57 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="scroll-gradient bottom" id="gradientBottom" style="display: none;"></div>
                                 <div class="scroll-arrow up hidden" id="scrollUp" style="display: none;">Scroll up</div>
                                 <div class="adminlist_blocks" id="adminListBlocks">
-                                    <div style="display: flex; align-items: center; align-self: center; justify-content: center; flex-direction: column">
-                                        <div style="font-size: 12px;">Временно отключено!</div>
-                                        <div style="font-size: 8px;">Данная функция находится на обновлении!</div>
+                                    <div class="admin_card" id="item-player">
+                                        <div id="admins_card">
+                                            <div class="admin_term">
+                                                <div class="adminlist_button steam_button" id="tag-demo">
+                                                    <span>API</span>
+                                                </div>
+                                                <div class="admin_group" id="tag-hwid">
+                                                            <span class="admin_group_text">Profiles</span>
+                                                        </div>
+                                            </div>
+                                            <div class="adminlist_info">
+                                                <a href="#" onclick="ProfileModal.openByHwid('dimaka1111121'); return false;">
+                                                    <div class="avatar_block">
+                                                        <div class="avatar_letter" style="opacity: 1;">Nix</div>
+                                                    </div>
+                                                    <get-avatar></get-avatar>
+                                                </a>
+                                                <div class="adminlist_buttons">
+                                                    <div id="admins_info">
+                                                        <span class="admin_nickname">Nixware.cc API</span>
+                                                        <div class="admin_term_reason" style="justify-content: center">Загружаем информацию из аккаунтов HWID...</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <div class="admin_card" id="item-player">
+                                        <div id="admins_card">
+                                            <div class="admin_term">
+                                                <div class="adminlist_button steam_button" id="tag-demo">
+                                                    <span>API</span>
+                                                </div>
+                                                <div class="admin_group" id="tag-hwid">
+                                                            <span class="admin_group_text">LicenseDB</span>
+                                                        </div>
+                                            </div>
+                                            <div class="adminlist_info">
+                                                <a href="#" onclick="ProfileModal.openByHwid('dimaka1111121'); return false;">
+                                                    <div class="avatar_block">
+                                                        <div class="avatar_letter" style="opacity: 1;">KL</div>
+                                                    </div>
+                                                    <get-avatar></get-avatar>
+                                                </a>
+                                                <div class="adminlist_buttons">
+                                                    <div id="admins_info">
+                                                        <span class="admin_nickname">KensoService API</span>
+                                                        <div class="admin_term_reason" style="justify-content: center">Загружаем список лицензий...</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                 </div>
                                 <div class="scroll-arrow down" id="scrollDown" style="display: none;">Scroll down</div>
                             </div>
