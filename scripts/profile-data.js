@@ -1,28 +1,36 @@
 // profile-data.js - универсальный модуль для работы с данными профиля
-// Версия 5.0 - БЕСКОНЕЧНЫЙ КЕШ ТАБЛИЦЫ + обновление при каждом заходе
+// Версия 5.2 - добавлена поддержка Steam
 
 (function() {
     // ==================== КОНФИГУРАЦИЯ ====================
     const PROFILE_DATA_CONFIG = {
         // API для получения данных пользователей
         hwidApiUrl: 'https://hwid-api.fascord.workers.dev/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA?gid=834339051',
+        // API для получения истории запусков
+        launchesApiUrl: 'https://hwid-api.fascord.workers.dev/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/edit?gid=834339051',
         // Настройки кэширования
         tableCacheTTL: Infinity,        // Бесконечный кеш для таблицы (до обновления при заходе)
+        launchesCacheTTL: 5 * 60 * 1000, // 5 минут для истории запусков
         avatarCacheTTL: 60 * 60 * 1000, // 1 час для аватаров
+        steamCacheTTL: 60 * 60 * 1000,  // 1 час для Steam данных
         requestTimeout: 15000,
         avatarTimeout: 5000
     };
 
     // Ключи для localStorage
     const STORAGE_KEYS = {
-        USERS_CACHE_KEY: 'users_list_cache_v5',      // новая версия
-        AVATAR_CACHE_KEY: 'avatar_url_cache_v5',     // новая версия
-        LAST_UPDATE_KEY: 'last_table_update_time'    // время последнего обновления таблицы
+        USERS_CACHE_KEY: 'users_list_cache_v5',
+        AVATAR_CACHE_KEY: 'avatar_url_cache_v5',
+        LAUNCHES_CACHE_KEY: 'launches_cache_v1',
+        STEAM_CACHE_KEY: 'steam_data_cache_v1',  // Кэш Steam данных
+        LAST_UPDATE_KEY: 'last_table_update_time'
     };
 
     // ==================== КЭШ ====================
     const userDataCache = new Map();
     const avatarCache = new Map();
+    const launchesCache = new Map();
+    const steamCache = new Map(); // Кэш Steam: ключ - steamId
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     function escapeHtml(str) {
@@ -105,6 +113,7 @@
         const banReason = apiItem.Tab8 || null;
         const userName = apiItem.Tab9 || null;
         const avatarHash = apiItem.Tab10 || null;
+        const steamId = apiItem.Tab11 || null; // Добавляем Steam ID из таблицы
         
         const isBanned = role === 'Забанен';
         const hasLicense = licenseStatus === 'ЕСТЬ';
@@ -157,6 +166,7 @@
             hwid: hwid,
             discordId: discordId,
             telegramId: telegramId,
+            steamId: steamId,  // Добавляем Steam ID
             userName: userName,
             avatarHash: avatarHash,
             isBanned: isBanned,
@@ -201,6 +211,138 @@
         }
     }
 
+    // ==================== STEAM API ====================
+    
+    // Парсинг XML ответа Steam
+    function parseSteamXML(xmlText) {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+        
+        // Проверка на ошибку
+        const errorDiv = xmlDoc.querySelector('div');
+        if (errorDiv && errorDiv.textContent.includes('The profile is not public')) {
+            return { error: 'private', message: 'Профиль Steam скрыт' };
+        }
+        
+        const profile = xmlDoc.querySelector('profile');
+        if (!profile) {
+            return { error: 'not_found', message: 'Профиль не найден' };
+        }
+        
+        const steamId = profile.querySelector('steamID64')?.textContent || '';
+        const username = profile.querySelector('steamID')?.textContent || '';
+        const avatarIcon = profile.querySelector('avatarIcon')?.textContent || '';
+        const avatarMedium = profile.querySelector('avatarMedium')?.textContent || '';
+        const avatarFull = profile.querySelector('avatarFull')?.textContent || '';
+        const realName = profile.querySelector('realname')?.textContent || '';
+        const location = profile.querySelector('location')?.textContent || '';
+        const memberSince = profile.querySelector('memberSince')?.textContent || '';
+        
+        return {
+            steamId: steamId,
+            username: username,
+            avatarIcon: avatarIcon,
+            avatarMedium: avatarMedium,
+            avatarFull: avatarFull,
+            realName: realName,
+            location: location,
+            memberSince: memberSince,
+            profileUrl: `https://steamcommunity.com/profiles/${steamId}/`,
+            error: null
+        };
+    }
+    
+    // Загрузка данных Steam через XML API
+    async function fetchSteamData(steamId) {
+        if (!steamId) return null;
+        
+        // Проверяем кэш в памяти
+        if (steamCache.has(steamId)) {
+            const cached = steamCache.get(steamId);
+            if (Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.steamCacheTTL) {
+                console.log(`Steam данные для ${steamId} из кэша памяти`);
+                return cached.data;
+            }
+        }
+        
+        // Проверяем localStorage кэш
+        try {
+            const cachedData = localStorage.getItem(STORAGE_KEYS.STEAM_CACHE_KEY);
+            if (cachedData) {
+                const cache = JSON.parse(cachedData);
+                if (cache[steamId] && (Date.now() - cache[steamId].timestamp) < PROFILE_DATA_CONFIG.steamCacheTTL) {
+                    console.log(`Steam данные для ${steamId} из localStorage`);
+                    steamCache.set(steamId, { data: cache[steamId].data, timestamp: cache[steamId].timestamp });
+                    return cache[steamId].data;
+                }
+            }
+        } catch (e) {
+            console.warn('Ошибка чтения кэша Steam:', e);
+        }
+        
+        try {
+            const xmlUrl = `https://steamcommunity.com/profiles/${steamId}/?xml=1`;
+            console.log(`Загрузка Steam данных для ${steamId}...`);
+            
+            const response = await fetchWithTimeout(xmlUrl, 8000);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const xmlText = await response.text();
+            const parsed = parseSteamXML(xmlText);
+            
+            if (parsed.error) {
+                console.warn(`Steam ошибка для ${steamId}: ${parsed.message}`);
+                // Сохраняем ошибку в кэш, чтобы не запрашивать часто
+                const errorData = { error: parsed.error, message: parsed.message, timestamp: Date.now() };
+                steamCache.set(steamId, { data: errorData, timestamp: Date.now() });
+                saveSteamToCache(steamId, errorData);
+                return errorData;
+            }
+            
+            console.log(`Steam данные загружены для ${steamId}: ${parsed.username}`);
+            
+            // Сохраняем в кэш
+            steamCache.set(steamId, { data: parsed, timestamp: Date.now() });
+            saveSteamToCache(steamId, parsed);
+            
+            return parsed;
+        } catch (error) {
+            console.error(`Ошибка загрузки Steam данных для ${steamId}:`, error);
+            const errorData = { error: 'network', message: 'Ошибка сети', timestamp: Date.now() };
+            return errorData;
+        }
+    }
+    
+    // Сохранение Steam данных в localStorage
+    function saveSteamToCache(steamId, data) {
+        try {
+            const existingCache = localStorage.getItem(STORAGE_KEYS.STEAM_CACHE_KEY);
+            const newCache = existingCache ? JSON.parse(existingCache) : {};
+            newCache[steamId] = { data: data, timestamp: Date.now() };
+            localStorage.setItem(STORAGE_KEYS.STEAM_CACHE_KEY, JSON.stringify(newCache));
+        } catch (e) {
+            console.warn('Ошибка сохранения кэша Steam:', e);
+        }
+    }
+    
+    // Получение кэшированных Steam данных
+    function getCachedSteamData(steamId) {
+        try {
+            const cachedData = localStorage.getItem(STORAGE_KEYS.STEAM_CACHE_KEY);
+            if (cachedData) {
+                const cache = JSON.parse(cachedData);
+                if (cache[steamId] && (Date.now() - cache[steamId].timestamp) < PROFILE_DATA_CONFIG.steamCacheTTL) {
+                    return cache[steamId].data;
+                }
+            }
+        } catch (e) {
+            console.warn('Ошибка чтения кэша Steam:', e);
+        }
+        return null;
+    }
+
     // ==================== ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЕЙ ====================
     async function fetchAllUsers(retryCount = 0) {
         const maxRetries = 5;
@@ -241,13 +383,12 @@
         }
     }
 
-    // Загрузка кэша пользователей из localStorage (бесконечный, пока не обновится)
+    // Загрузка кэша пользователей из localStorage
     function loadUsersFromCache() {
         try {
             const cached = localStorage.getItem(STORAGE_KEYS.USERS_CACHE_KEY);
             if (cached) {
                 const cache = JSON.parse(cached);
-                // Бесконечный кеш - проверяем только наличие данных
                 if (cache.users && cache.users.length > 0) {
                     console.log(`Загружено ${cache.users.length} пользователей из бесконечного кэша`);
                     return cache.users;
@@ -259,12 +400,11 @@
         return null;
     }
 
-    // Сохранение кэша пользователей (бесконечный)
     function saveUsersToCache(users) {
         try {
             localStorage.setItem(STORAGE_KEYS.USERS_CACHE_KEY, JSON.stringify({
                 users: users,
-                timestamp: Date.now()  // сохраняем для информации, но не используем для TTL
+                timestamp: Date.now()
             }));
             localStorage.setItem(STORAGE_KEYS.LAST_UPDATE_KEY, Date.now().toString());
             console.log(`Сохранено ${users.length} пользователей в бесконечный кэш`);
@@ -273,16 +413,13 @@
         }
     }
 
-    // Основная функция: всегда обновляем кеш при заходе на сайт
     async function getUsersTable(forceRefresh = false) {
-        // Всегда пытаемся обновить данные при вызове (при заходе на сайт)
         try {
             console.log('Обновление таблицы пользователей при заходе на сайт...');
             const freshUsers = await fetchAllUsers();
             
             if (freshUsers && freshUsers.length > 0) {
                 saveUsersToCache(freshUsers);
-                // Обновляем Map кэш
                 freshUsers.forEach(user => {
                     if (user.hwid) {
                         userDataCache.set(user.hwid, {
@@ -293,7 +430,6 @@
                 });
                 return freshUsers;
             } else {
-                // Если API вернул пустой массив, пробуем взять из кэша
                 console.warn('API вернул пустой массив, использую кэш');
                 const cached = loadUsersFromCache();
                 if (cached) return cached;
@@ -301,7 +437,6 @@
             }
         } catch (error) {
             console.error('Ошибка обновления таблицы:', error);
-            // При ошибке сети используем кэш
             const cached = loadUsersFromCache();
             if (cached) {
                 console.log('Использую сохранённый кэш из-за ошибки сети');
@@ -314,13 +449,11 @@
     async function fetchUserByHwid(hwid) {
         if (!hwid) return null;
         
-        // Проверяем кэш в памяти
         const cached = userDataCache.get(hwid);
         if (cached && cached.data) {
             return cached.data;
         }
         
-        // Загружаем всю таблицу (с обновлением)
         const users = await getUsersTable();
         const user = users.find(u => u.hwid === hwid);
         
@@ -348,22 +481,86 @@
         return users.find(u => u.telegramId === telegramId) || null;
     }
 
-    // ==================== АВАТАРЫ (обновление не чаще 1 часа) ====================
+    // ==================== ЗАГРУЗКА ИСТОРИИ ЗАПУСКОВ ====================
+    async function fetchAllLaunches() {
+        try {
+            console.log('Загрузка истории запусков...');
+            const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.launchesApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                throw new Error('Ответ не является массивом');
+            }
+            console.log(`Загружено ${data.length} записей запусков`);
+            return data;
+        } catch (error) {
+            console.error('Ошибка загрузки истории запусков:', error);
+            return [];
+        }
+    }
+
+    async function fetchLaunchesByHwid(hwid) {
+        if (!hwid) return [];
+
+        if (launchesCache.has(hwid)) {
+            const cached = launchesCache.get(hwid);
+            if (Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.launchesCacheTTL) {
+                console.log(`Возвращаем ${cached.launches.length} запусков для ${hwid} из кэша`);
+                return cached.launches;
+            }
+        }
+
+        try {
+            const cachedData = localStorage.getItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY);
+            if (cachedData) {
+                const cache = JSON.parse(cachedData);
+                if (cache[hwid] && (Date.now() - cache[hwid].timestamp) < PROFILE_DATA_CONFIG.launchesCacheTTL) {
+                    console.log(`Возвращаем ${cache[hwid].launches.length} запусков для ${hwid} из localStorage`);
+                    launchesCache.set(hwid, { launches: cache[hwid].launches, timestamp: cache[hwid].timestamp });
+                    return cache[hwid].launches;
+                }
+            }
+        } catch (e) {
+            console.warn('Ошибка чтения кэша запусков:', e);
+        }
+
+        const allLaunches = await fetchAllLaunches();
+        const userLaunches = allLaunches
+            .filter(launch => launch.Tab1 === hwid)
+            .map(launch => ({
+                timestamp: launch.Tab0,
+                steamId: launch.Tab2,
+                version: launch.Tab3
+            }))
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        launchesCache.set(hwid, { launches: userLaunches, timestamp: Date.now() });
+        
+        try {
+            const existingCache = localStorage.getItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY);
+            const newCache = existingCache ? JSON.parse(existingCache) : {};
+            newCache[hwid] = { launches: userLaunches, timestamp: Date.now() };
+            localStorage.setItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY, JSON.stringify(newCache));
+        } catch (e) {
+            console.warn('Ошибка сохранения кэша запусков:', e);
+        }
+
+        console.log(`Найдено ${userLaunches.length} запусков для HWID: ${hwid}`);
+        return userLaunches;
+    }
+
+    // ==================== АВАТАРЫ ====================
     
-    // Загрузка кэша аватаров из localStorage
     function loadAvatarCache() {
         try {
             const cached = localStorage.getItem(STORAGE_KEYS.AVATAR_CACHE_KEY);
             if (cached) {
                 const cache = JSON.parse(cached);
                 const now = Date.now();
-                // Проверяем TTL для аватаров (1 час)
                 if (cache.timestamp && (now - cache.timestamp) < PROFILE_DATA_CONFIG.avatarCacheTTL) {
                     return cache.urls || {};
-                }
-                // Если кеш устарел, возвращаем пустой объект (будет обновлён)
-                if (cache.timestamp && (now - cache.timestamp) >= PROFILE_DATA_CONFIG.avatarCacheTTL) {
-                    console.log('Кеш аватаров устарел (>1 часа), будет обновлён');
                 }
             }
         } catch (e) {
@@ -372,7 +569,6 @@
         return {};
     }
     
-    // Сохранение URL аватара в кэш
     function saveAvatarToCache(discordId, avatarUrl) {
         try {
             const cache = loadAvatarCache();
@@ -386,13 +582,11 @@
         }
     }
     
-    // Получение кэшированного URL аватара
     function getCachedAvatarUrl(discordId) {
         const cache = loadAvatarCache();
         return cache[discordId] || null;
     }
 
-    // Загрузка аватара из CDN (без прокси)
     async function loadAvatarFromCdn(discordId, avatarHash) {
         return new Promise((resolve, reject) => {
             const img = new Image();
@@ -419,13 +613,11 @@
         
         const cacheKey = `avatar_${discordId}`;
         
-        // Проверяем кэш в памяти (с учётом TTL)
         const cached = avatarCache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.avatarCacheTTL) {
             return cached.url;
         }
         
-        // Проверяем localStorage кэш (с учётом TTL)
         const cachedUrl = getCachedAvatarUrl(discordId);
         if (cachedUrl) {
             avatarCache.set(cacheKey, { url: cachedUrl, timestamp: Date.now() });
@@ -536,23 +728,25 @@
     function clearAllCache() {
         userDataCache.clear();
         avatarCache.clear();
+        launchesCache.clear();
+        steamCache.clear();
         try {
             localStorage.removeItem(STORAGE_KEYS.USERS_CACHE_KEY);
             localStorage.removeItem(STORAGE_KEYS.AVATAR_CACHE_KEY);
+            localStorage.removeItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY);
+            localStorage.removeItem(STORAGE_KEYS.STEAM_CACHE_KEY);
             localStorage.removeItem(STORAGE_KEYS.LAST_UPDATE_KEY);
             console.log('Весь кэш очищен');
         } catch(e) {}
     }
 
     // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-    // Автоматически обновляем таблицу при загрузке модуля
     async function autoRefreshOnLoad() {
         console.log('ProfileData: Автоматическое обновление таблицы при загрузке страницы...');
         try {
             const users = await fetchAllUsers();
             if (users && users.length > 0) {
                 saveUsersToCache(users);
-                // Обновляем Map кэш
                 users.forEach(user => {
                     if (user.hwid) {
                         userDataCache.set(user.hwid, {
@@ -565,7 +759,6 @@
             }
         } catch (error) {
             console.error('ProfileData: Ошибка автообновления таблицы:', error);
-            // При ошибке используем существующий кэш
             const cached = loadUsersFromCache();
             if (cached) {
                 console.log(`ProfileData: Использую существующий кэш (${cached.length} записей)`);
@@ -574,11 +767,12 @@
     }
 
     function init() {
-        console.log('ProfileData модуль инициализирован (Версия 5.0 - бесконечный кеш таблицы)');
+        console.log('ProfileData модуль инициализирован (Версия 5.2 - добавлена поддержка Steam)');
         console.log('- Кеш таблицы: бесконечный, обновляется при каждом заходе на сайт');
         console.log('- Кеш аватаров: 1 час');
+        console.log('- Кеш запусков: 5 минут');
+        console.log('- Кеш Steam: 1 час');
         
-        // Запускаем автообновление
         autoRefreshOnLoad();
     }
     
@@ -589,10 +783,13 @@
         config: PROFILE_DATA_CONFIG,
         parseUserFromApiItem: parseUserFromApiItem,
         getSubscriptionStatus: getSubscriptionStatus,
-        fetchAllUsers: getUsersTable,           // Теперь возвращает обновлённые данные
+        fetchAllUsers: getUsersTable,
         fetchUserByHwid: fetchUserByHwid,
         fetchUserByDiscordId: fetchUserByDiscordId,
         fetchUserByTelegramId: fetchUserByTelegramId,
+        fetchLaunchesByHwid: fetchLaunchesByHwid,
+        fetchSteamData: fetchSteamData,           // Новая функция
+        getCachedSteamData: getCachedSteamData,   // Новая функция
         getDiscordAvatarUrl: getDiscordAvatarUrl,
         getDisplayName: getDisplayName,
         getShortHwid: getShortHwid,
@@ -607,8 +804,7 @@
         saveUsersToCache: saveUsersToCache,
         clearCache: clearAllCache,
         parseDateToTimestamp: parseDateToTimestamp,
-        // Дополнительные методы для управления кешем
-        forceRefreshTable: getUsersTable,       // Принудительное обновление таблицы
+        forceRefreshTable: getUsersTable,
         getLastUpdateTime: () => localStorage.getItem(STORAGE_KEYS.LAST_UPDATE_KEY)
     };
 })();
