@@ -778,6 +778,8 @@
     
     init();
 
+
+    
     // ==================== ЭКСПОРТ ====================
     window.ProfileData = {
         config: PROFILE_DATA_CONFIG,
