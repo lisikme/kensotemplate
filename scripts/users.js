@@ -1,5 +1,5 @@
 // users.js - полная версия с данными из таблицы (Tab9 = UserName, Tab10 = AvatarHash)
-// Версия 3.0 - без dis-api
+// Версия 3.1 - добавлена статистика убийств
 
 document.addEventListener('DOMContentLoaded', function() {
     // ==================== ОЧЕРЕДЬ ЗАГРУЗКИ АВАТАРОВ ====================
@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let draftUsers = [];
     const loadedAvatars = new Set();
     let updateInProgress = false;
+    const killsDataCache = new Map(); // Кэш убийств для отображения
     
     // Ключи для localStorage кэша
     const USERS_CACHE_KEY = 'users_list_cache_v2';
@@ -76,6 +77,65 @@ document.addEventListener('DOMContentLoaded', function() {
         if (user.licenseCategory === 'nolicense') return 500;
         if (user.licenseCategory === 'expired') return 400;
         return ROLE_PRIORITY[user.roleRaw] || 99;
+    }
+    
+    // Форматирование числа убийств (сокращение)
+    function formatKills(kills) {
+        if (!kills || kills === 0) return '0';
+        if (kills >= 1000000) return (kills / 1000000).toFixed(1) + 'M';
+        if (kills >= 1000) return (kills / 1000).toFixed(1) + 'K';
+        return kills.toString();
+    }
+
+    // Загрузка убийств для пользователя (использует кэш)
+    async function loadKillsForUser(hwid, killsElement) {
+        if (!hwid || !killsElement) return;
+        
+        // Сначала проверяем синхронный кэш
+        const cachedKills = window.ProfileData.getCachedKills(hwid);
+        if (cachedKills !== null) {
+            killsElement.style.display = 'flex'
+            killsElement.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                </svg>
+                <span>${formatKills(cachedKills)}</span>
+            `;
+            return;
+        }
+        
+        // Показываем заглушку
+        killsElement.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+            </svg>
+            <span style="opacity:0.7">...</span>
+        `;
+        
+        // Асинхронная загрузка (будет использовать кэш, если он уже есть)
+        window.ProfileData.fetchKillsByHwid(hwid).then(kills => {
+            const currentElement = document.getElementById(`user-${hwid}-kills`);
+            if (currentElement) {
+                currentElement.style.display = 'none'
+                currentElement.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                    </svg>
+                    <span>${formatKills(kills)}</span>
+                `;
+            }
+        }).catch(error => {
+            const currentElement = document.getElementById(`user-${hwid}-kills`);
+            if (currentElement) {
+                currentElement.style.display = 'none'
+                currentElement.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                    </svg>
+                    <span>0</span>
+                `;
+            }
+        });
     }
     
     /**
@@ -326,6 +386,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
+            // Создаем уникальный ID для элемента убийств
+            const killsElementId = `user-${user.hwid}-kills`;
+            
             userCard.innerHTML = `
             <div id="admins_card">
                 <div class="admin_term">
@@ -334,6 +397,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     ${statusHtml}
                     <span class="admin_term_text" id="${user.termId}">${window.ProfileData.escapeHtml(user.formattedEndDate)}</span>
+                    <div class="admin_kills" id="${killsElementId}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                        </svg>
+                        <span>...</span>
+                    </div>
                 </div>
                 <div class="adminlist_info">
                     <a href="#" onclick="ProfileModal.openByHwid('${user.hwid}'); return false;">
@@ -347,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </a>
                     <div class="adminlist_buttons">
                         <div id="admins_info">
-                            <span class="admin_nickname">${escapedHwid}</span>
+                                <span class="admin_nickname">${escapedHwid}</span>
                             ${!user.isBanned ? `
                                 <div id="link_block">${linksHtml}</div>
                                 ` : ''}
@@ -358,6 +427,14 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>`;
             
             adminListBlocks.appendChild(userCard);
+            
+            // Загружаем убийства для пользователя
+            if (user.hwid) {
+                const killsElement = document.getElementById(killsElementId);
+                if (killsElement) {
+                    loadKillsForUser(user.hwid, killsElement);
+                }
+            }
             
             // Загружаем аватар из таблицы (Tab10)
             if (user.discordId && user.avatarHash) {

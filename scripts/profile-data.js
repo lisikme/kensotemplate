@@ -1,36 +1,38 @@
 // profile-data.js - универсальный модуль для работы с данными профиля
-// Версия 5.2 - добавлена поддержка Steam
+// Версия 5.5 - фикс кэширования убийств (загрузка один раз)
 
 (function() {
     // ==================== КОНФИГУРАЦИЯ ====================
     const PROFILE_DATA_CONFIG = {
-        // API для получения данных пользователей
         hwidApiUrl: 'https://hwid-api.fascord.workers.dev/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA?gid=834339051',
-        // API для получения истории запусков
         launchesApiUrl: 'https://hwid-api.fascord.workers.dev/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/edit?gid=834339051',
-        // Настройки кэширования
-        tableCacheTTL: Infinity,        // Бесконечный кеш для таблицы (до обновления при заходе)
-        launchesCacheTTL: 5 * 60 * 1000, // 5 минут для истории запусков
-        avatarCacheTTL: 60 * 60 * 1000, // 1 час для аватаров
-        steamCacheTTL: 60 * 60 * 1000,  // 1 час для Steam данных
+        killsStatsApiUrl: 'https://hwid-api.fascord.workers.dev/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/edit?gid=1739800569',
+        tableCacheTTL: Infinity,
+        launchesCacheTTL: 5 * 60 * 1000,
+        avatarCacheTTL: 60 * 60 * 1000,
+        steamCacheTTL: 60 * 60 * 1000,
+        killsCacheTTL: 24 * 60 * 60 * 1000, // 24 часа для убийств
         requestTimeout: 15000,
         avatarTimeout: 5000
     };
 
-    // Ключи для localStorage
     const STORAGE_KEYS = {
         USERS_CACHE_KEY: 'users_list_cache_v5',
         AVATAR_CACHE_KEY: 'avatar_url_cache_v5',
         LAUNCHES_CACHE_KEY: 'launches_cache_v1',
-        STEAM_CACHE_KEY: 'steam_data_cache_v1',  // Кэш Steam данных
+        STEAM_CACHE_KEY: 'steam_data_cache_v1',
+        KILLS_CACHE_KEY: 'kills_stats_cache_v1',
+        KILLS_FETCHED_KEY: 'kills_fetched_flag', // Флаг что уже загружали
         LAST_UPDATE_KEY: 'last_table_update_time'
     };
 
-    // ==================== КЭШ ====================
     const userDataCache = new Map();
     const avatarCache = new Map();
     const launchesCache = new Map();
-    const steamCache = new Map(); // Кэш Steam: ключ - steamId
+    const steamCache = new Map();
+    let killsMap = new Map(); // Хранилище убийств
+    let killsLoaded = false; // Флаг загрузки убийств
+    let killsLoadPromise = null; // Promise для ожидания загрузки
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     function escapeHtml(str) {
@@ -66,10 +68,8 @@
 
     function parseDateToTimestamp(dateString) {
         if (!dateString) return 0;
-        
         try {
             if (typeof dateString === 'number') return dateString;
-            
             const dotPattern = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})/;
             const dotMatch = dateString.match(dotPattern);
             if (dotMatch) {
@@ -79,7 +79,6 @@
                 if (year < 100) year += 2000;
                 return Math.floor(new Date(year, month, day, 23, 59, 59).getTime() / 1000);
             }
-            
             const isoPattern = /(\d{4})-(\d{1,2})-(\d{1,2})/;
             const isoMatch = dateString.match(isoPattern);
             if (isoMatch) {
@@ -88,12 +87,10 @@
                 let day = parseInt(isoMatch[3]);
                 return Math.floor(new Date(year, month, day, 23, 59, 59).getTime() / 1000);
             }
-            
             const date = new Date(dateString);
             if (!isNaN(date.getTime())) {
                 return Math.floor(date.getTime() / 1000);
             }
-            
             return 0;
         } catch (e) {
             console.warn('Ошибка парсинга даты:', dateString, e);
@@ -113,7 +110,7 @@
         const banReason = apiItem.Tab8 || null;
         const userName = apiItem.Tab9 || null;
         const avatarHash = apiItem.Tab10 || null;
-        const steamId = apiItem.Tab11 || null; // Добавляем Steam ID из таблицы
+        const steamId = apiItem.Tab11 || null;
         
         const isBanned = role === 'Забанен';
         const hasLicense = licenseStatus === 'ЕСТЬ';
@@ -166,7 +163,7 @@
             hwid: hwid,
             discordId: discordId,
             telegramId: telegramId,
-            steamId: steamId,  // Добавляем Steam ID
+            steamId: steamId,
             userName: userName,
             avatarHash: avatarHash,
             isBanned: isBanned,
@@ -194,7 +191,6 @@
         };
     }
 
-    // ==================== HTTP ЗАПРОСЫ ====================
     async function fetchWithTimeout(url, timeoutMs = PROFILE_DATA_CONFIG.requestTimeout) {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -211,24 +207,139 @@
         }
     }
 
+    // ==================== ЗАГРУЗКА СТАТИСТИКИ УБИЙСТВ (ОДИН РАЗ) ====================
+    
+    async function loadAllKillsOnce() {
+        // Если уже загружаем, ждем завершения
+        if (killsLoadPromise) {
+            console.log('Ожидание завершения загрузки убийств...');
+            return killsLoadPromise;
+        }
+        
+        // Если уже загружено, возвращаем
+        if (killsLoaded && killsMap.size > 0) {
+            console.log(`Убийства уже загружены (${killsMap.size} записей)`);
+            return killsMap;
+        }
+        
+        // Проверяем localStorage кэш
+        try {
+            const cachedData = localStorage.getItem(STORAGE_KEYS.KILLS_CACHE_KEY);
+            if (cachedData) {
+                const cache = JSON.parse(cachedData);
+                if (cache.timestamp && (Date.now() - cache.timestamp) < PROFILE_DATA_CONFIG.killsCacheTTL) {
+                    console.log(`Загружено ${Object.keys(cache.data || {}).length} записей убийств из localStorage кэша`);
+                    killsMap = new Map(Object.entries(cache.data || {}));
+                    killsLoaded = true;
+                    return killsMap;
+                }
+            }
+        } catch (e) {
+            console.warn('Ошибка чтения кэша убийств:', e);
+        }
+        
+        // Загружаем из API
+        killsLoadPromise = (async () => {
+            try {
+                console.log('Загрузка статистики убийств из API...');
+                const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.killsStatsApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (!Array.isArray(data)) {
+                    console.error('Ответ не является массивом:', data);
+                    return killsMap;
+                }
+                
+                console.log(`Загружено ${data.length} записей статистики убийств`);
+                
+                // Строим Map: hwid -> kills
+                const newMap = new Map();
+                for (const item of data) {
+                    const hwid = item.Tab0 || item[0] || item.hwid || item.HWID;
+                    let kills = parseInt(item.Tab1) || parseInt(item[1]) || parseInt(item.kills) || parseInt(item.KILLS) || 0;
+                    
+                    if (hwid && !isNaN(kills)) {
+                        newMap.set(String(hwid).trim(), kills);
+                    }
+                }
+                
+                console.log(`Построен Map убийств: ${newMap.size} уникальных HWID`);
+                
+                // Сохраняем в кэш
+                try {
+                    const cacheData = {
+                        data: Object.fromEntries(newMap),
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem(STORAGE_KEYS.KILLS_CACHE_KEY, JSON.stringify(cacheData));
+                    localStorage.setItem(STORAGE_KEYS.KILLS_FETCHED_KEY, Date.now().toString());
+                } catch (e) {
+                    console.warn('Ошибка сохранения кэша убийств:', e);
+                }
+                
+                killsMap = newMap;
+                killsLoaded = true;
+                return killsMap;
+                
+            } catch (error) {
+                console.error('Ошибка загрузки статистики убийств:', error);
+                return killsMap;
+            } finally {
+                killsLoadPromise = null;
+            }
+        })();
+        
+        return killsLoadPromise;
+    }
+    
+    // Функция для получения убийств по HWID (синхронная, после загрузки)
+    async function fetchKillsByHwid(hwid) {
+        if (!hwid) return 0;
+        
+        // Ждем загрузки данных (если еще не загружены)
+        await loadAllKillsOnce();
+        
+        const kills = killsMap.get(String(hwid).trim()) || 0;
+        return kills;
+    }
+    
+    // Синхронное получение из кэша (для быстрого отображения)
+    function getCachedKills(hwid) {
+        if (!hwid) return null;
+        if (killsLoaded && killsMap.has(String(hwid).trim())) {
+            return killsMap.get(String(hwid).trim());
+        }
+        
+        // Пробуем из localStorage
+        try {
+            const cachedData = localStorage.getItem(STORAGE_KEYS.KILLS_CACHE_KEY);
+            if (cachedData) {
+                const cache = JSON.parse(cachedData);
+                if (cache.data && cache.data[hwid] !== undefined) {
+                    return cache.data[hwid];
+                }
+            }
+        } catch (e) {}
+        
+        return null;
+    }
+
     // ==================== STEAM API ====================
     
-    // Парсинг XML ответа Steam
     function parseSteamXML(xmlText) {
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-        
-        // Проверка на ошибку
         const errorDiv = xmlDoc.querySelector('div');
         if (errorDiv && errorDiv.textContent.includes('The profile is not public')) {
             return { error: 'private', message: 'Профиль Steam скрыт' };
         }
-        
         const profile = xmlDoc.querySelector('profile');
         if (!profile) {
             return { error: 'not_found', message: 'Профиль не найден' };
         }
-        
         const steamId = profile.querySelector('steamID64')?.textContent || '';
         const username = profile.querySelector('steamID')?.textContent || '';
         const avatarIcon = profile.querySelector('avatarIcon')?.textContent || '';
@@ -252,26 +363,19 @@
         };
     }
     
-    // Загрузка данных Steam через XML API
     async function fetchSteamData(steamId) {
         if (!steamId) return null;
-        
-        // Проверяем кэш в памяти
         if (steamCache.has(steamId)) {
             const cached = steamCache.get(steamId);
             if (Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.steamCacheTTL) {
-                console.log(`Steam данные для ${steamId} из кэша памяти`);
                 return cached.data;
             }
         }
-        
-        // Проверяем localStorage кэш
         try {
             const cachedData = localStorage.getItem(STORAGE_KEYS.STEAM_CACHE_KEY);
             if (cachedData) {
                 const cache = JSON.parse(cachedData);
                 if (cache[steamId] && (Date.now() - cache[steamId].timestamp) < PROFILE_DATA_CONFIG.steamCacheTTL) {
-                    console.log(`Steam данные для ${steamId} из localStorage`);
                     steamCache.set(steamId, { data: cache[steamId].data, timestamp: cache[steamId].timestamp });
                     return cache[steamId].data;
                 }
@@ -279,34 +383,20 @@
         } catch (e) {
             console.warn('Ошибка чтения кэша Steam:', e);
         }
-        
         try {
             const xmlUrl = `https://steamcommunity.com/profiles/${steamId}/?xml=1`;
-            console.log(`Загрузка Steam данных для ${steamId}...`);
-            
             const response = await fetchWithTimeout(xmlUrl, 8000);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const xmlText = await response.text();
             const parsed = parseSteamXML(xmlText);
-            
             if (parsed.error) {
-                console.warn(`Steam ошибка для ${steamId}: ${parsed.message}`);
-                // Сохраняем ошибку в кэш, чтобы не запрашивать часто
                 const errorData = { error: parsed.error, message: parsed.message, timestamp: Date.now() };
                 steamCache.set(steamId, { data: errorData, timestamp: Date.now() });
                 saveSteamToCache(steamId, errorData);
                 return errorData;
             }
-            
-            console.log(`Steam данные загружены для ${steamId}: ${parsed.username}`);
-            
-            // Сохраняем в кэш
             steamCache.set(steamId, { data: parsed, timestamp: Date.now() });
             saveSteamToCache(steamId, parsed);
-            
             return parsed;
         } catch (error) {
             console.error(`Ошибка загрузки Steam данных для ${steamId}:`, error);
@@ -315,7 +405,6 @@
         }
     }
     
-    // Сохранение Steam данных в localStorage
     function saveSteamToCache(steamId, data) {
         try {
             const existingCache = localStorage.getItem(STORAGE_KEYS.STEAM_CACHE_KEY);
@@ -327,7 +416,6 @@
         }
     }
     
-    // Получение кэшированных Steam данных
     function getCachedSteamData(steamId) {
         try {
             const cachedData = localStorage.getItem(STORAGE_KEYS.STEAM_CACHE_KEY);
@@ -351,46 +439,33 @@
         try {
             console.log(`Загрузка пользователей (попытка ${retryCount + 1}/${maxRetries})...`);
             const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.hwidApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            
-            if (!Array.isArray(data)) {
-                throw new Error('Ответ не является массивом');
-            }
-            
+            if (!Array.isArray(data)) throw new Error('Ответ не является массивом');
             if (data.length === 0 && retryCount < maxRetries) {
                 console.log('Получен пустой массив, повторная попытка...');
                 await new Promise(resolve => setTimeout(resolve, retryDelays[retryCount]));
                 return fetchAllUsers(retryCount + 1);
             }
-            
             console.log(`Успешно загружено ${data.length} записей`);
             return data.map(item => parseUserFromApiItem(item));
-            
         } catch (error) {
             console.error(`Ошибка загрузки (попытка ${retryCount + 1}):`, error);
-            
             if (retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, retryDelays[retryCount]));
                 return fetchAllUsers(retryCount + 1);
             }
-            
             return [];
         }
     }
 
-    // Загрузка кэша пользователей из localStorage
     function loadUsersFromCache() {
         try {
             const cached = localStorage.getItem(STORAGE_KEYS.USERS_CACHE_KEY);
             if (cached) {
                 const cache = JSON.parse(cached);
                 if (cache.users && cache.users.length > 0) {
-                    console.log(`Загружено ${cache.users.length} пользователей из бесконечного кэша`);
+                    console.log(`Загружено ${cache.users.length} пользователей из кэша`);
                     return cache.users;
                 }
             }
@@ -407,7 +482,6 @@
                 timestamp: Date.now()
             }));
             localStorage.setItem(STORAGE_KEYS.LAST_UPDATE_KEY, Date.now().toString());
-            console.log(`Сохранено ${users.length} пользователей в бесконечный кэш`);
         } catch (e) {
             console.warn('Ошибка сохранения кэша пользователей:', e);
         }
@@ -415,22 +489,16 @@
 
     async function getUsersTable(forceRefresh = false) {
         try {
-            console.log('Обновление таблицы пользователей при заходе на сайт...');
             const freshUsers = await fetchAllUsers();
-            
             if (freshUsers && freshUsers.length > 0) {
                 saveUsersToCache(freshUsers);
                 freshUsers.forEach(user => {
                     if (user.hwid) {
-                        userDataCache.set(user.hwid, {
-                            data: user,
-                            timestamp: Date.now()
-                        });
+                        userDataCache.set(user.hwid, { data: user, timestamp: Date.now() });
                     }
                 });
                 return freshUsers;
             } else {
-                console.warn('API вернул пустой массив, использую кэш');
                 const cached = loadUsersFromCache();
                 if (cached) return cached;
                 return [];
@@ -438,45 +506,29 @@
         } catch (error) {
             console.error('Ошибка обновления таблицы:', error);
             const cached = loadUsersFromCache();
-            if (cached) {
-                console.log('Использую сохранённый кэш из-за ошибки сети');
-                return cached;
-            }
+            if (cached) return cached;
             return [];
         }
     }
 
     async function fetchUserByHwid(hwid) {
         if (!hwid) return null;
-        
         const cached = userDataCache.get(hwid);
-        if (cached && cached.data) {
-            return cached.data;
-        }
-        
+        if (cached && cached.data) return cached.data;
         const users = await getUsersTable();
         const user = users.find(u => u.hwid === hwid);
-        
-        if (user) {
-            userDataCache.set(hwid, {
-                data: user,
-                timestamp: Date.now()
-            });
-        }
-        
+        if (user) userDataCache.set(hwid, { data: user, timestamp: Date.now() });
         return user || null;
     }
 
     async function fetchUserByDiscordId(discordId) {
         if (!discordId) return null;
-        
         const users = await getUsersTable();
         return users.find(u => u.discordId === discordId) || null;
     }
 
     async function fetchUserByTelegramId(telegramId) {
         if (!telegramId) return null;
-        
         const users = await getUsersTable();
         return users.find(u => u.telegramId === telegramId) || null;
     }
@@ -484,16 +536,10 @@
     // ==================== ЗАГРУЗКА ИСТОРИИ ЗАПУСКОВ ====================
     async function fetchAllLaunches() {
         try {
-            console.log('Загрузка истории запусков...');
             const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.launchesApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            if (!Array.isArray(data)) {
-                throw new Error('Ответ не является массивом');
-            }
-            console.log(`Загружено ${data.length} записей запусков`);
+            if (!Array.isArray(data)) throw new Error('Ответ не является массивом');
             return data;
         } catch (error) {
             console.error('Ошибка загрузки истории запусков:', error);
@@ -503,29 +549,22 @@
 
     async function fetchLaunchesByHwid(hwid) {
         if (!hwid) return [];
-
         if (launchesCache.has(hwid)) {
             const cached = launchesCache.get(hwid);
             if (Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.launchesCacheTTL) {
-                console.log(`Возвращаем ${cached.launches.length} запусков для ${hwid} из кэша`);
                 return cached.launches;
             }
         }
-
         try {
             const cachedData = localStorage.getItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY);
             if (cachedData) {
                 const cache = JSON.parse(cachedData);
                 if (cache[hwid] && (Date.now() - cache[hwid].timestamp) < PROFILE_DATA_CONFIG.launchesCacheTTL) {
-                    console.log(`Возвращаем ${cache[hwid].launches.length} запусков для ${hwid} из localStorage`);
                     launchesCache.set(hwid, { launches: cache[hwid].launches, timestamp: cache[hwid].timestamp });
                     return cache[hwid].launches;
                 }
             }
-        } catch (e) {
-            console.warn('Ошибка чтения кэша запусков:', e);
-        }
-
+        } catch (e) {}
         const allLaunches = await fetchAllLaunches();
         const userLaunches = allLaunches
             .filter(launch => launch.Tab1 === hwid)
@@ -535,19 +574,13 @@
                 version: launch.Tab3
             }))
             .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
         launchesCache.set(hwid, { launches: userLaunches, timestamp: Date.now() });
-        
         try {
             const existingCache = localStorage.getItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY);
             const newCache = existingCache ? JSON.parse(existingCache) : {};
             newCache[hwid] = { launches: userLaunches, timestamp: Date.now() };
             localStorage.setItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY, JSON.stringify(newCache));
-        } catch (e) {
-            console.warn('Ошибка сохранения кэша запусков:', e);
-        }
-
-        console.log(`Найдено ${userLaunches.length} запусков для HWID: ${hwid}`);
+        } catch (e) {}
         return userLaunches;
     }
 
@@ -563,9 +596,7 @@
                     return cache.urls || {};
                 }
             }
-        } catch (e) {
-            console.warn('Ошибка загрузки кэша аватаров:', e);
-        }
+        } catch (e) {}
         return {};
     }
     
@@ -577,9 +608,7 @@
                 urls: cache,
                 timestamp: Date.now()
             }));
-        } catch (e) {
-            console.warn('Ошибка сохранения кэша аватара:', e);
-        }
+        } catch (e) {}
     }
     
     function getCachedAvatarUrl(discordId) {
@@ -594,56 +623,46 @@
                 cleanup();
                 reject(new Error('Timeout'));
             }, PROFILE_DATA_CONFIG.avatarTimeout);
-            
             function cleanup() {
                 clearTimeout(timeout);
                 img.onload = null;
                 img.onerror = null;
             }
-            
             img.onload = () => { cleanup(); resolve(); };
             img.onerror = () => { cleanup(); reject(new Error('Load error')); };
-            
             img.src = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
         });
     }
 
     async function getDiscordAvatarUrl(discordId, avatarHash) {
         if (!discordId || !avatarHash) return null;
-        
         const cacheKey = `avatar_${discordId}`;
-        
         const cached = avatarCache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.avatarCacheTTL) {
             return cached.url;
         }
-        
         const cachedUrl = getCachedAvatarUrl(discordId);
         if (cachedUrl) {
             avatarCache.set(cacheKey, { url: cachedUrl, timestamp: Date.now() });
             return cachedUrl;
         }
-        
         const avatarUrl = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
-        
         try {
             await loadAvatarFromCdn(discordId, avatarHash);
             saveAvatarToCache(discordId, avatarUrl);
             avatarCache.set(cacheKey, { url: avatarUrl, timestamp: Date.now() });
             return avatarUrl;
         } catch (error) {
-            console.warn(`Не удалось загрузить аватар для ${discordId}:`, error);
             return null;
         }
     }
 
-    // ==================== ФОРМАТИРОВАНИЕ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ ====================
+    // ==================== ФОРМАТИРОВАНИЕ ====================
     
     function getDisplayName(userInfo, discordData = null) {
         if (userInfo && userInfo.userName && userInfo.userName.trim() !== '') {
             return userInfo.userName;
         }
-        
         if (discordData) {
             if (discordData.username) {
                 if (discordData.discriminator && discordData.discriminator !== '0') {
@@ -653,11 +672,9 @@
             }
             if (discordData.global_name) return discordData.global_name;
         }
-        
         if (userInfo && userInfo.hwid) {
             return userInfo.hwid.substring(0, 20) + (userInfo.hwid.length > 20 ? '...' : '');
         }
-        
         return 'Пользователь';
     }
 
@@ -671,26 +688,12 @@
         return name.charAt(0).toUpperCase();
     }
 
-    // ==================== СТАТУС ПОДПИСКИ ====================
     function getSubscriptionStatus(userInfo) {
         if (!userInfo) return { status: 'expired', text: 'Нет данных', daysLeft: null, formattedTime: null };
-        
-        if (userInfo.isBanned) {
-            return { status: 'banned', text: 'Блокировка', daysLeft: null, formattedTime: null };
-        }
-
-        if (userInfo.noLicense) {
-            return { status: 'nolicense', text: 'Нет лицензии', daysLeft: null, formattedTime: null };
-        }
-        
-        if (userInfo.isForever) {
-            return { status: 'forever', text: 'Навсегда', daysLeft: null, formattedTime: null };
-        }
-        
-        if (userInfo.isExpired) {
-            return { status: 'expired', text: 'Истёк', daysLeft: 0, formattedTime: null };
-        }
-        
+        if (userInfo.isBanned) return { status: 'banned', text: 'Блокировка', daysLeft: null, formattedTime: null };
+        if (userInfo.noLicense) return { status: 'nolicense', text: 'Нет лицензии', daysLeft: null, formattedTime: null };
+        if (userInfo.isForever) return { status: 'forever', text: 'Навсегда', daysLeft: null, formattedTime: null };
+        if (userInfo.isExpired) return { status: 'expired', text: 'Истёк', daysLeft: 0, formattedTime: null };
         if (userInfo.isActiveLicense && userInfo.endTimestamp > 0) {
             const now = Math.floor(Date.now() / 1000);
             if (userInfo.endTimestamp > now) {
@@ -700,15 +703,12 @@
                 const days = Math.floor(totalDays % 30);
                 const hours = Math.floor((diffSeconds % (60 * 60 * 24)) / (60 * 60));
                 const minutes = Math.floor((diffSeconds % (60 * 60)) / 60);
-
                 const parts = [];
                 if (months > 0) parts.push(`${months}мес.`);
                 if (days > 0) parts.push(`${days}д.`);
                 if (hours > 0) parts.push(`${hours}ч.`);
                 if (minutes > 0 && months === 0 && days === 0) parts.push(`${minutes}мин.`);
-                
                 const formattedTime = parts.join(' ') || '1мин';
-                
                 return { 
                     status: 'active', 
                     text: formattedTime, 
@@ -720,67 +720,46 @@
                 return { status: 'expired', text: 'Истекла', daysLeft: 0, formattedTime: null };
             }
         }
-        
         return { status: 'nolicense', text: 'Нет лицензии', daysLeft: null, formattedTime: null };
     }
 
-    // ==================== ОЧИСТКА КЭША ====================
     function clearAllCache() {
         userDataCache.clear();
         avatarCache.clear();
         launchesCache.clear();
         steamCache.clear();
+        killsMap.clear();
+        killsLoaded = false;
         try {
             localStorage.removeItem(STORAGE_KEYS.USERS_CACHE_KEY);
             localStorage.removeItem(STORAGE_KEYS.AVATAR_CACHE_KEY);
             localStorage.removeItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY);
             localStorage.removeItem(STORAGE_KEYS.STEAM_CACHE_KEY);
+            localStorage.removeItem(STORAGE_KEYS.KILLS_CACHE_KEY);
+            localStorage.removeItem(STORAGE_KEYS.KILLS_FETCHED_KEY);
             localStorage.removeItem(STORAGE_KEYS.LAST_UPDATE_KEY);
             console.log('Весь кэш очищен');
         } catch(e) {}
     }
 
-    // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-    async function autoRefreshOnLoad() {
-        console.log('ProfileData: Автоматическое обновление таблицы при загрузке страницы...');
-        try {
-            const users = await fetchAllUsers();
-            if (users && users.length > 0) {
-                saveUsersToCache(users);
-                users.forEach(user => {
-                    if (user.hwid) {
-                        userDataCache.set(user.hwid, {
-                            data: user,
-                            timestamp: Date.now()
-                        });
-                    }
-                });
-                console.log(`ProfileData: Таблица обновлена, сохранено ${users.length} записей в бесконечный кэш`);
-            }
-        } catch (error) {
-            console.error('ProfileData: Ошибка автообновления таблицы:', error);
-            const cached = loadUsersFromCache();
-            if (cached) {
-                console.log(`ProfileData: Использую существующий кэш (${cached.length} записей)`);
-            }
+    async function init() {
+        console.log('ProfileData модуль инициализирован (Версия 5.5 - кэш убийств 24 часа)');
+        // Загружаем убийства в фоне один раз
+        loadAllKillsOnce().catch(e => console.warn('Ошибка предзагрузки убийств:', e));
+        // Загружаем пользователей
+        const users = await fetchAllUsers();
+        if (users && users.length > 0) {
+            saveUsersToCache(users);
+            users.forEach(user => {
+                if (user.hwid) {
+                    userDataCache.set(user.hwid, { data: user, timestamp: Date.now() });
+                }
+            });
         }
-    }
-
-    function init() {
-        console.log('ProfileData модуль инициализирован (Версия 5.2 - добавлена поддержка Steam)');
-        console.log('- Кеш таблицы: бесконечный, обновляется при каждом заходе на сайт');
-        console.log('- Кеш аватаров: 1 час');
-        console.log('- Кеш запусков: 5 минут');
-        console.log('- Кеш Steam: 1 час');
-        
-        autoRefreshOnLoad();
     }
     
     init();
 
-
-    
-    // ==================== ЭКСПОРТ ====================
     window.ProfileData = {
         config: PROFILE_DATA_CONFIG,
         parseUserFromApiItem: parseUserFromApiItem,
@@ -790,8 +769,10 @@
         fetchUserByDiscordId: fetchUserByDiscordId,
         fetchUserByTelegramId: fetchUserByTelegramId,
         fetchLaunchesByHwid: fetchLaunchesByHwid,
-        fetchSteamData: fetchSteamData,           // Новая функция
-        getCachedSteamData: getCachedSteamData,   // Новая функция
+        fetchSteamData: fetchSteamData,
+        getCachedSteamData: getCachedSteamData,
+        fetchKillsByHwid: fetchKillsByHwid,
+        getCachedKills: getCachedKills,
         getDiscordAvatarUrl: getDiscordAvatarUrl,
         getDisplayName: getDisplayName,
         getShortHwid: getShortHwid,

@@ -3147,3 +3147,51 @@ a:link, a:visited, a:hover, a:active {
     font-size: 25px !important;
     opacity: 1;
 }
+
+
+
+/* Стили для блока убийств */
+.admin_kills {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    background: #171717;
+    padding: 1px 8px 2px 8px;
+    border-radius: 3px;
+    border-left: 3px solid #ff4d4d;
+    transition: all 0.2s ease;
+    height: 12px;
+}
+
+.admin_kills svg {
+    color: #ff4d4d;
+    width: 12px;
+    height: 12px;
+}
+
+/* .admin_kills:hover {
+    background: #1a1a1a;
+    border-left-color: #ff6b6b;
+} */
+
+/* Стили для убийств в мини-профиле */
+.profile-nav-kills {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    background: #212121;
+    padding: 0px 5px;
+    border-radius: 2px;
+    border-left: 3px solid #ff4d4d;
+    border-radius: 2px;
+    margin-left: auto;
+    height: 30px;
+}
+
+.profile-nav-kills svg {
+    color: #ff4d4d;
+    width: 10px;
+    height: 10px;
+}

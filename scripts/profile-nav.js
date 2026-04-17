@@ -1,4 +1,4 @@
-// profile-nav.js - мини-профиль аккаунта в меню пользователя (Версия 4.2 - причина бана)
+// profile-nav.js - мини-профиль аккаунта в меню пользователя (Версия 4.3 - добавлена статистика убийств)
 
 function openCenteredPopup() {
   var url = 'https://docs.google.com/spreadsheets/d/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA/edit?gid=834339051#gid=834339051';
@@ -18,6 +18,15 @@ function openCenteredPopup() {
     popup.resizeTo(screen.width, screen.height);
   }
 }
+
+// Форматирование числа убийств
+function formatKills(kills) {
+    if (!kills || kills === 0) return '0';
+    if (kills >= 1000000) return (kills / 1000000).toFixed(1) + 'M';
+    if (kills >= 1000) return (kills / 1000).toFixed(1) + 'K';
+    return kills.toString();
+}
+
 (function() {
     // Функция закрытия меню
     function closeContextMenu() {
@@ -74,6 +83,29 @@ function openCenteredPopup() {
         }
     }
 
+    // Загрузка убийств для мини-профиля
+    async function loadKillsForNavProfile(hwid, killsElement) {
+        if (!hwid || !killsElement) return;
+        
+        try {
+            const kills = await window.ProfileData.fetchKillsByHwid(hwid);
+            killsElement.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="10" height="10">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                </svg>
+                <span>${formatKills(kills)}</span>
+            `;
+        } catch (error) {
+            console.warn('Ошибка загрузки убийств для мини-профиля:', error);
+            killsElement.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="10" height="10">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                </svg>
+                <span>0</span>
+            `;
+        }
+    }
+
     // Рендер профиля из данных (синхронный, без задержек)
     function renderProfileFromData(userInfo, profileSection, btnLogout = null) {
         if (!profileSection) return;
@@ -126,6 +158,16 @@ function openCenteredPopup() {
             }
         }
         
+        // Создаем элемент для убийств
+        const killsHtml = `
+            <div class="profile-nav-kills" id="navProfileKills">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="10" height="10">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                </svg>
+                <span>...</span>
+            </div>
+        `;
+        
         profileSectionbtnrow.innerHTML = `
             <div class="context-menu-item profile-item" onclick="openFullProfile(event)">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
@@ -139,9 +181,10 @@ function openCenteredPopup() {
                 </svg>
                 <span>Менеджер</span>
             </div>
-        `
+        `;
+        
         profileSection.innerHTML = `
-            <div class="profile-nav-header">
+            <div class="profile-nav-header" onclick="openFullProfile(event)" style="cursor: pointer;">
                 <div class="profile-nav-avatar">
                     <img id="navProfileAvatar" src="" alt="" style="opacity: 0;">
                     <div class="profile-nav-avatar-letter">${window.ProfileData.escapeHtml(avatarLetter)}</div>
@@ -150,6 +193,7 @@ function openCenteredPopup() {
                     <div class="profile-nav-name">${window.ProfileData.escapeHtml(displayName)}</div>
                     <div class="profile-nav-hwid" title="${window.ProfileData.escapeHtml(userInfo.hwid || '')}">HWID: ${window.ProfileData.escapeHtml(shortHwid)}</div>
                 </div>
+                ${killsHtml}
             </div>
             <div class="profile-nav-status">
                 <div>
@@ -178,6 +222,12 @@ function openCenteredPopup() {
         
         if (btnLogout) {
             updateBtnLogoutFromCache(userInfo, btnLogout);
+        }
+        
+        // Загружаем убийства асинхронно
+        const killsElement = document.getElementById('navProfileKills');
+        if (killsElement && userInfo.hwid) {
+            loadKillsForNavProfile(userInfo.hwid, killsElement);
         }
         
         if (userInfo.discordId && userInfo.avatarHash) {
