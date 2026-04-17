@@ -1,5 +1,5 @@
 // profile-data.js - универсальный модуль для работы с данными профиля
-// Версия 5.5 - фикс кэширования убийств (загрузка один раз)
+// Версия 5.6 - TTL убийств 1 минута
 
 (function() {
     // ==================== КОНФИГУРАЦИЯ ====================
@@ -11,7 +11,7 @@
         launchesCacheTTL: 5 * 60 * 1000,
         avatarCacheTTL: 60 * 60 * 1000,
         steamCacheTTL: 60 * 60 * 1000,
-        killsCacheTTL: 24 * 60 * 60 * 1000, // 24 часа для убийств
+        killsCacheTTL: 60 * 1000, // <--- ИЗМЕНЕНО: 1 минута (было 24 часа)
         requestTimeout: 15000,
         avatarTimeout: 5000
     };
@@ -21,8 +21,8 @@
         AVATAR_CACHE_KEY: 'avatar_url_cache_v5',
         LAUNCHES_CACHE_KEY: 'launches_cache_v1',
         STEAM_CACHE_KEY: 'steam_data_cache_v1',
-        KILLS_CACHE_KEY: 'kills_stats_cache_v1',
-        KILLS_FETCHED_KEY: 'kills_fetched_flag', // Флаг что уже загружали
+        KILLS_CACHE_KEY: 'kills_stats_cache_v6', // <--- ИЗМЕНЕНО: новая версия кэша
+        KILLS_FETCHED_KEY: 'kills_fetched_flag',
         LAST_UPDATE_KEY: 'last_table_update_time'
     };
 
@@ -33,6 +33,7 @@
     let killsMap = new Map(); // Хранилище убийств
     let killsLoaded = false; // Флаг загрузки убийств
     let killsLoadPromise = null; // Promise для ожидания загрузки
+    let lastKillsFetchTime = 0; // <--- ДОБАВЛЕНО: время последней загрузки
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     function escapeHtml(str) {
@@ -207,31 +208,55 @@
         }
     }
 
-    // ==================== ЗАГРУЗКА СТАТИСТИКИ УБИЙСТВ (ОДИН РАЗ) ====================
+    // ==================== ЗАГРУЗКА СТАТИСТИКИ УБИЙСТВ ====================
     
-    async function loadAllKillsOnce() {
+    // Проверка, устарел ли кэш убийств
+    function isKillsCacheExpired() {
+        if (lastKillsFetchTime === 0) return true;
+        return (Date.now() - lastKillsFetchTime) >= PROFILE_DATA_CONFIG.killsCacheTTL;
+    }
+    
+    async function loadAllKillsOnce(forceRefresh = false) {
+        // Если принудительное обновление, сбрасываем флаги
+        if (forceRefresh) {
+            killsLoaded = false;
+            killsLoadPromise = null;
+            killsMap.clear();
+        }
+        
         // Если уже загружаем, ждем завершения
         if (killsLoadPromise) {
             console.log('Ожидание завершения загрузки убийств...');
             return killsLoadPromise;
         }
         
-        // Если уже загружено, возвращаем
-        if (killsLoaded && killsMap.size > 0) {
-            console.log(`Убийства уже загружены (${killsMap.size} записей)`);
+        // Если уже загружено и кэш не устарел, возвращаем
+        if (killsLoaded && !isKillsCacheExpired() && killsMap.size > 0) {
+            console.log(`Убийства уже загружены (${killsMap.size} записей, кэш актуален)`);
             return killsMap;
+        }
+        
+        // Если кэш устарел, очищаем его
+        if (isKillsCacheExpired() && killsMap.size > 0) {
+            console.log('Кэш убийств устарел (1 минута), обновляем...');
+            killsMap.clear();
+            killsLoaded = false;
         }
         
         // Проверяем localStorage кэш
         try {
             const cachedData = localStorage.getItem(STORAGE_KEYS.KILLS_CACHE_KEY);
-            if (cachedData) {
+            if (cachedData && !forceRefresh) {
                 const cache = JSON.parse(cachedData);
-                if (cache.timestamp && (Date.now() - cache.timestamp) < PROFILE_DATA_CONFIG.killsCacheTTL) {
-                    console.log(`Загружено ${Object.keys(cache.data || {}).length} записей убийств из localStorage кэша`);
+                const cacheAge = Date.now() - (cache.timestamp || 0);
+                if (cacheAge < PROFILE_DATA_CONFIG.killsCacheTTL) {
+                    console.log(`Загружено ${Object.keys(cache.data || {}).length} записей убийств из localStorage кэша (возраст: ${Math.round(cacheAge/1000)}с)`);
                     killsMap = new Map(Object.entries(cache.data || {}));
                     killsLoaded = true;
+                    lastKillsFetchTime = cache.timestamp || Date.now();
                     return killsMap;
+                } else {
+                    console.log(`LocalStorage кэш убийств устарел (${Math.round(cacheAge/1000)}с > ${PROFILE_DATA_CONFIG.killsCacheTTL/1000}с)`);
                 }
             }
         } catch (e) {
@@ -282,6 +307,7 @@
                 
                 killsMap = newMap;
                 killsLoaded = true;
+                lastKillsFetchTime = Date.now();
                 return killsMap;
                 
             } catch (error) {
@@ -295,12 +321,16 @@
         return killsLoadPromise;
     }
     
-    // Функция для получения убийств по HWID (синхронная, после загрузки)
-    async function fetchKillsByHwid(hwid) {
+    // Функция для получения убийств по HWID
+    async function fetchKillsByHwid(hwid, forceRefresh = false) {
         if (!hwid) return 0;
         
-        // Ждем загрузки данных (если еще не загружены)
-        await loadAllKillsOnce();
+        if (forceRefresh) {
+            console.log(`Принудительное обновление убийств для ${hwid}`);
+            await loadAllKillsOnce(true);
+        } else {
+            await loadAllKillsOnce();
+        }
         
         const kills = killsMap.get(String(hwid).trim()) || 0;
         return kills;
@@ -309,6 +339,12 @@
     // Синхронное получение из кэша (для быстрого отображения)
     function getCachedKills(hwid) {
         if (!hwid) return null;
+        
+        // Проверяем актуальность кэша
+        if (isKillsCacheExpired()) {
+            return null;
+        }
+        
         if (killsLoaded && killsMap.has(String(hwid).trim())) {
             return killsMap.get(String(hwid).trim());
         }
@@ -318,13 +354,20 @@
             const cachedData = localStorage.getItem(STORAGE_KEYS.KILLS_CACHE_KEY);
             if (cachedData) {
                 const cache = JSON.parse(cachedData);
-                if (cache.data && cache.data[hwid] !== undefined) {
+                const cacheAge = Date.now() - (cache.timestamp || 0);
+                if (cacheAge < PROFILE_DATA_CONFIG.killsCacheTTL && cache.data && cache.data[hwid] !== undefined) {
                     return cache.data[hwid];
                 }
             }
         } catch (e) {}
         
         return null;
+    }
+    
+    // Функция для принудительного обновления убийств (можно вызвать извне)
+    async function refreshKills() {
+        console.log('Принудительное обновление статистики убийств...');
+        await loadAllKillsOnce(true);
     }
 
     // ==================== STEAM API ====================
@@ -730,6 +773,8 @@
         steamCache.clear();
         killsMap.clear();
         killsLoaded = false;
+        lastKillsFetchTime = 0;
+        killsLoadPromise = null;
         try {
             localStorage.removeItem(STORAGE_KEYS.USERS_CACHE_KEY);
             localStorage.removeItem(STORAGE_KEYS.AVATAR_CACHE_KEY);
@@ -743,7 +788,7 @@
     }
 
     async function init() {
-        console.log('ProfileData модуль инициализирован (Версия 5.5 - кэш убийств 24 часа)');
+        console.log('ProfileData модуль инициализирован (Версия 5.6 - TTL убийств 1 минута)');
         // Загружаем убийства в фоне один раз
         loadAllKillsOnce().catch(e => console.warn('Ошибка предзагрузки убийств:', e));
         // Загружаем пользователей
@@ -773,6 +818,7 @@
         getCachedSteamData: getCachedSteamData,
         fetchKillsByHwid: fetchKillsByHwid,
         getCachedKills: getCachedKills,
+        refreshKills: refreshKills, // <--- ДОБАВЛЕНО: функция принудительного обновления
         getDiscordAvatarUrl: getDiscordAvatarUrl,
         getDisplayName: getDisplayName,
         getShortHwid: getShortHwid,
