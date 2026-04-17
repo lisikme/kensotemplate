@@ -22,8 +22,8 @@ function openCenteredPopup() {
 // Форматирование числа убийств
 function formatKills(kills) {
     if (!kills || kills === 0) return '0';
-    if (kills >= 1000000) return (kills / 1000000).toFixed(1) + 'M';
-    if (kills >= 1000) return (kills / 1000).toFixed(1) + 'K';
+    if (kills >= 1000000) return (kills / 1000000).toFixed(1) + 'm';
+    if (kills >= 1000) return (kills / 1000).toFixed(1) + 'k';
     return kills.toString();
 }
 
