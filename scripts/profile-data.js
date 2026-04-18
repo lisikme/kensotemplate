@@ -1,5 +1,5 @@
 // profile-data.js - универсальный модуль для работы с данными профиля
-// Версия 5.6 - TTL убийств 1 минута
+// Версия 5.7 - TTL убийств и логов 1 минута
 
 (function() {
     // ==================== КОНФИГУРАЦИЯ ====================
@@ -8,10 +8,10 @@
         launchesApiUrl: 'https://hwid-api.fascord.workers.dev/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/edit?gid=834339051',
         killsStatsApiUrl: 'https://hwid-api.fascord.workers.dev/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/edit?gid=1739800569',
         tableCacheTTL: Infinity,
-        launchesCacheTTL: 5 * 60 * 1000,
+        launchesCacheTTL: 60 * 1000, // <--- ИЗМЕНЕНО: 1 минута (было 5 минут)
         avatarCacheTTL: 60 * 60 * 1000,
         steamCacheTTL: 60 * 60 * 1000,
-        killsCacheTTL: 60 * 1000, // <--- ИЗМЕНЕНО: 1 минута (было 24 часа)
+        killsCacheTTL: 60 * 1000, // 1 минута
         requestTimeout: 15000,
         avatarTimeout: 5000
     };
@@ -19,9 +19,9 @@
     const STORAGE_KEYS = {
         USERS_CACHE_KEY: 'users_list_cache_v5',
         AVATAR_CACHE_KEY: 'avatar_url_cache_v5',
-        LAUNCHES_CACHE_KEY: 'launches_cache_v1',
+        LAUNCHES_CACHE_KEY: 'launches_cache_v2', // <--- ИЗМЕНЕНО: новая версия кэша логов
         STEAM_CACHE_KEY: 'steam_data_cache_v1',
-        KILLS_CACHE_KEY: 'kills_stats_cache_v6', // <--- ИЗМЕНЕНО: новая версия кэша
+        KILLS_CACHE_KEY: 'kills_stats_cache_v6',
         KILLS_FETCHED_KEY: 'kills_fetched_flag',
         LAST_UPDATE_KEY: 'last_table_update_time'
     };
@@ -30,10 +30,12 @@
     const avatarCache = new Map();
     const launchesCache = new Map();
     const steamCache = new Map();
-    let killsMap = new Map(); // Хранилище убийств
-    let killsLoaded = false; // Флаг загрузки убийств
-    let killsLoadPromise = null; // Promise для ожидания загрузки
-    let lastKillsFetchTime = 0; // <--- ДОБАВЛЕНО: время последней загрузки
+    let killsMap = new Map();
+    let killsLoaded = false;
+    let killsLoadPromise = null;
+    let lastKillsFetchTime = 0;
+    let lastLaunchesFetchTime = 0; // <--- ДОБАВЛЕНО: время последней загрузки логов
+    let launchesLoadPromise = null; // <--- ДОБАВЛЕНО: Promise для ожидания загрузки логов
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     function escapeHtml(str) {
@@ -210,40 +212,34 @@
 
     // ==================== ЗАГРУЗКА СТАТИСТИКИ УБИЙСТВ ====================
     
-    // Проверка, устарел ли кэш убийств
     function isKillsCacheExpired() {
         if (lastKillsFetchTime === 0) return true;
         return (Date.now() - lastKillsFetchTime) >= PROFILE_DATA_CONFIG.killsCacheTTL;
     }
     
     async function loadAllKillsOnce(forceRefresh = false) {
-        // Если принудительное обновление, сбрасываем флаги
         if (forceRefresh) {
             killsLoaded = false;
             killsLoadPromise = null;
             killsMap.clear();
         }
         
-        // Если уже загружаем, ждем завершения
         if (killsLoadPromise) {
             console.log('Ожидание завершения загрузки убийств...');
             return killsLoadPromise;
         }
         
-        // Если уже загружено и кэш не устарел, возвращаем
         if (killsLoaded && !isKillsCacheExpired() && killsMap.size > 0) {
             console.log(`Убийства уже загружены (${killsMap.size} записей, кэш актуален)`);
             return killsMap;
         }
         
-        // Если кэш устарел, очищаем его
         if (isKillsCacheExpired() && killsMap.size > 0) {
             console.log('Кэш убийств устарел (1 минута), обновляем...');
             killsMap.clear();
             killsLoaded = false;
         }
         
-        // Проверяем localStorage кэш
         try {
             const cachedData = localStorage.getItem(STORAGE_KEYS.KILLS_CACHE_KEY);
             if (cachedData && !forceRefresh) {
@@ -263,7 +259,6 @@
             console.warn('Ошибка чтения кэша убийств:', e);
         }
         
-        // Загружаем из API
         killsLoadPromise = (async () => {
             try {
                 console.log('Загрузка статистики убийств из API...');
@@ -280,7 +275,6 @@
                 
                 console.log(`Загружено ${data.length} записей статистики убийств`);
                 
-                // Строим Map: hwid -> kills
                 const newMap = new Map();
                 for (const item of data) {
                     const hwid = item.Tab0 || item[0] || item.hwid || item.HWID;
@@ -293,7 +287,6 @@
                 
                 console.log(`Построен Map убийств: ${newMap.size} уникальных HWID`);
                 
-                // Сохраняем в кэш
                 try {
                     const cacheData = {
                         data: Object.fromEntries(newMap),
@@ -321,35 +314,23 @@
         return killsLoadPromise;
     }
     
-    // Функция для получения убийств по HWID
     async function fetchKillsByHwid(hwid, forceRefresh = false) {
         if (!hwid) return 0;
-        
         if (forceRefresh) {
-            console.log(`Принудительное обновление убийств для ${hwid}`);
             await loadAllKillsOnce(true);
         } else {
             await loadAllKillsOnce();
         }
-        
         const kills = killsMap.get(String(hwid).trim()) || 0;
         return kills;
     }
     
-    // Синхронное получение из кэша (для быстрого отображения)
     function getCachedKills(hwid) {
         if (!hwid) return null;
-        
-        // Проверяем актуальность кэша
-        if (isKillsCacheExpired()) {
-            return null;
-        }
-        
+        if (isKillsCacheExpired()) return null;
         if (killsLoaded && killsMap.has(String(hwid).trim())) {
             return killsMap.get(String(hwid).trim());
         }
-        
-        // Пробуем из localStorage
         try {
             const cachedData = localStorage.getItem(STORAGE_KEYS.KILLS_CACHE_KEY);
             if (cachedData) {
@@ -360,14 +341,154 @@
                 }
             }
         } catch (e) {}
-        
         return null;
     }
     
-    // Функция для принудительного обновления убийств (можно вызвать извне)
     async function refreshKills() {
         console.log('Принудительное обновление статистики убийств...');
         await loadAllKillsOnce(true);
+    }
+
+    // ==================== ЗАГРУЗКА ИСТОРИИ ЗАПУСКОВ (ЛОГОВ) ====================
+    
+    function isLaunchesCacheExpired() {
+        if (lastLaunchesFetchTime === 0) return true;
+        return (Date.now() - lastLaunchesFetchTime) >= PROFILE_DATA_CONFIG.launchesCacheTTL;
+    }
+    
+    async function loadAllLaunchesOnce(forceRefresh = false) {
+        if (forceRefresh) {
+            launchesCache.clear();
+            launchesLoadPromise = null;
+            lastLaunchesFetchTime = 0;
+        }
+        
+        if (launchesLoadPromise) {
+            console.log('Ожидание завершения загрузки логов...');
+            return launchesLoadPromise;
+        }
+        
+        if (!isLaunchesCacheExpired() && launchesCache.size > 0) {
+            console.log(`Логи уже загружены (${launchesCache.size} пользователей, кэш актуален)`);
+            return launchesCache;
+        }
+        
+        if (isLaunchesCacheExpired() && launchesCache.size > 0) {
+            console.log('Кэш логов устарел (1 минута), обновляем...');
+            launchesCache.clear();
+        }
+        
+        try {
+            const cachedData = localStorage.getItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY);
+            if (cachedData && !forceRefresh) {
+                const cache = JSON.parse(cachedData);
+                const cacheAge = Date.now() - (cache.timestamp || 0);
+                if (cacheAge < PROFILE_DATA_CONFIG.launchesCacheTTL) {
+                    console.log(`Загружено ${Object.keys(cache.data || {}).length} записей логов из localStorage кэша (возраст: ${Math.round(cacheAge/1000)}с)`);
+                    for (const [hwid, launches] of Object.entries(cache.data || {})) {
+                        launchesCache.set(hwid, { launches: launches, timestamp: cache.timestamp });
+                    }
+                    lastLaunchesFetchTime = cache.timestamp || Date.now();
+                    return launchesCache;
+                } else {
+                    console.log(`LocalStorage кэш логов устарел (${Math.round(cacheAge/1000)}с > ${PROFILE_DATA_CONFIG.launchesCacheTTL/1000}с)`);
+                }
+            }
+        } catch (e) {
+            console.warn('Ошибка чтения кэша логов:', e);
+        }
+        
+        launchesLoadPromise = (async () => {
+            try {
+                console.log('Загрузка истории запусков из API...');
+                const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.launchesApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (!Array.isArray(data)) {
+                    console.error('Ответ не является массивом:', data);
+                    return launchesCache;
+                }
+                
+                console.log(`Загружено ${data.length} записей истории запусков`);
+                
+                // Группируем по HWID
+                const groupedByHwid = new Map();
+                for (const item of data) {
+                    const hwid = item.Tab1;
+                    if (!hwid) continue;
+                    
+                    if (!groupedByHwid.has(hwid)) {
+                        groupedByHwid.set(hwid, []);
+                    }
+                    groupedByHwid.get(hwid).push({
+                        timestamp: item.Tab0,
+                        steamId: item.Tab2,
+                        version: item.Tab3
+                    });
+                }
+                
+                // Сортируем и сохраняем
+                const newCache = new Map();
+                for (const [hwid, launches] of groupedByHwid) {
+                    launches.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    newCache.set(hwid, { launches: launches, timestamp: Date.now() });
+                }
+                
+                console.log(`Построен кэш логов: ${newCache.size} уникальных HWID`);
+                
+                // Сохраняем в localStorage
+                try {
+                    const cacheData = {
+                        data: Object.fromEntries(
+                            Array.from(newCache.entries()).map(([hwid, value]) => [hwid, value.launches])
+                        ),
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY, JSON.stringify(cacheData));
+                } catch (e) {
+                    console.warn('Ошибка сохранения кэша логов:', e);
+                }
+                
+                // Обновляем launchesCache
+                for (const [hwid, value] of newCache) {
+                    launchesCache.set(hwid, value);
+                }
+                lastLaunchesFetchTime = Date.now();
+                return launchesCache;
+                
+            } catch (error) {
+                console.error('Ошибка загрузки истории запусков:', error);
+                return launchesCache;
+            } finally {
+                launchesLoadPromise = null;
+            }
+        })();
+        
+        return launchesLoadPromise;
+    }
+    
+    async function fetchLaunchesByHwid(hwid, forceRefresh = false) {
+        if (!hwid) return [];
+        
+        if (forceRefresh) {
+            await loadAllLaunchesOnce(true);
+        } else {
+            await loadAllLaunchesOnce();
+        }
+        
+        const cached = launchesCache.get(hwid);
+        if (cached && cached.launches) {
+            return cached.launches;
+        }
+        return [];
+    }
+    
+    async function refreshLaunches() {
+        console.log('Принудительное обновление истории запусков...');
+        await loadAllLaunchesOnce(true);
     }
 
     // ==================== STEAM API ====================
@@ -576,57 +697,6 @@
         return users.find(u => u.telegramId === telegramId) || null;
     }
 
-    // ==================== ЗАГРУЗКА ИСТОРИИ ЗАПУСКОВ ====================
-    async function fetchAllLaunches() {
-        try {
-            const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.launchesApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            if (!Array.isArray(data)) throw new Error('Ответ не является массивом');
-            return data;
-        } catch (error) {
-            console.error('Ошибка загрузки истории запусков:', error);
-            return [];
-        }
-    }
-
-    async function fetchLaunchesByHwid(hwid) {
-        if (!hwid) return [];
-        if (launchesCache.has(hwid)) {
-            const cached = launchesCache.get(hwid);
-            if (Date.now() - cached.timestamp < PROFILE_DATA_CONFIG.launchesCacheTTL) {
-                return cached.launches;
-            }
-        }
-        try {
-            const cachedData = localStorage.getItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY);
-            if (cachedData) {
-                const cache = JSON.parse(cachedData);
-                if (cache[hwid] && (Date.now() - cache[hwid].timestamp) < PROFILE_DATA_CONFIG.launchesCacheTTL) {
-                    launchesCache.set(hwid, { launches: cache[hwid].launches, timestamp: cache[hwid].timestamp });
-                    return cache[hwid].launches;
-                }
-            }
-        } catch (e) {}
-        const allLaunches = await fetchAllLaunches();
-        const userLaunches = allLaunches
-            .filter(launch => launch.Tab1 === hwid)
-            .map(launch => ({
-                timestamp: launch.Tab0,
-                steamId: launch.Tab2,
-                version: launch.Tab3
-            }))
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        launchesCache.set(hwid, { launches: userLaunches, timestamp: Date.now() });
-        try {
-            const existingCache = localStorage.getItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY);
-            const newCache = existingCache ? JSON.parse(existingCache) : {};
-            newCache[hwid] = { launches: userLaunches, timestamp: Date.now() };
-            localStorage.setItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY, JSON.stringify(newCache));
-        } catch (e) {}
-        return userLaunches;
-    }
-
     // ==================== АВАТАРЫ ====================
     
     function loadAvatarCache() {
@@ -775,6 +845,8 @@
         killsLoaded = false;
         lastKillsFetchTime = 0;
         killsLoadPromise = null;
+        lastLaunchesFetchTime = 0;
+        launchesLoadPromise = null;
         try {
             localStorage.removeItem(STORAGE_KEYS.USERS_CACHE_KEY);
             localStorage.removeItem(STORAGE_KEYS.AVATAR_CACHE_KEY);
@@ -788,9 +860,11 @@
     }
 
     async function init() {
-        console.log('ProfileData модуль инициализирован (Версия 5.6 - TTL убийств 1 минута)');
-        // Загружаем убийства в фоне один раз
+        console.log('ProfileData модуль инициализирован (Версия 5.7 - TTL убийств и логов 1 минута)');
+        // Загружаем убийства в фоне
         loadAllKillsOnce().catch(e => console.warn('Ошибка предзагрузки убийств:', e));
+        // Загружаем логи в фоне
+        loadAllLaunchesOnce().catch(e => console.warn('Ошибка предзагрузки логов:', e));
         // Загружаем пользователей
         const users = await fetchAllUsers();
         if (users && users.length > 0) {
@@ -814,11 +888,12 @@
         fetchUserByDiscordId: fetchUserByDiscordId,
         fetchUserByTelegramId: fetchUserByTelegramId,
         fetchLaunchesByHwid: fetchLaunchesByHwid,
+        refreshLaunches: refreshLaunches, // <--- ДОБАВЛЕНО
         fetchSteamData: fetchSteamData,
         getCachedSteamData: getCachedSteamData,
         fetchKillsByHwid: fetchKillsByHwid,
         getCachedKills: getCachedKills,
-        refreshKills: refreshKills, // <--- ДОБАВЛЕНО: функция принудительного обновления
+        refreshKills: refreshKills,
         getDiscordAvatarUrl: getDiscordAvatarUrl,
         getDisplayName: getDisplayName,
         getShortHwid: getShortHwid,
