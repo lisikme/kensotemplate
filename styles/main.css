@@ -2060,7 +2060,6 @@ a:link, a:visited, a:hover, a:active {
 }
 .pricing-table {
     font-size: 12px;
-    max-width: 398px;
     margin: 0 auto;
     margin-top: 5px;
     background: #0D0D0D;
@@ -2569,7 +2568,7 @@ a:link, a:visited, a:hover, a:active {
     .review-card {
         background: #080808;
         border: 1px solid #303030;
-        border-radius: 5px;
+        border-radius: 3px;
         overflow: hidden;
         transition: all 0.2s;
     }

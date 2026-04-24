@@ -528,3 +528,30 @@
         font-size: 11px;
     }
 }
+
+
+
+
+@media (min-width: 900px) {
+    .profile-modal-content {
+        display: flex;
+        flex-direction: row;
+    }
+    .profile-modal-container {
+        max-width: 800px !important;
+    }
+    #profile-launches-section {
+        width: 100%;
+    }
+    .infmod {
+        width: 100%;
+    }
+    .profile-section {
+        height: 100%;
+    }
+    .profile-launches-list, 
+    .profile-launches-loading, .profile-launches-empty, .profile-launches-error{
+        min-height: 300px !important;
+        max-height: 50vh !important;
+    }
+}

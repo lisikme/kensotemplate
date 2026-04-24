@@ -1,41 +1,48 @@
 pricelist = [
     {
+        item_id: 'kensolua-14d',
         item_discount: 28,
         item_price: '70 Руб',
         item_term: '2 нед. (14д)',
         pay_link: 'https://pay.cloudtips.ru/p/d97e09bd',
     },
     {
+        item_id: 'kensolua-30d',
         item_discount: 50,
         item_price: '130 Руб',
         item_term: '1 мес. (30д)',
         pay_link: 'https://pay.cloudtips.ru/p/5805d96d',
     },
     {
+        item_id: 'kensolua-90d',
         item_discount: 50,
         item_price: '170 Руб',
         item_term: '3 мес. (90д)',
         pay_link: 'https://pay.cloudtips.ru/p/039e249a',
     },
     {
+        item_id: 'kensolua-180d',
         item_discount: 50,
         item_price: '250 Руб',
         item_term: '6 мес. (180д)',
         pay_link: 'https://pay.cloudtips.ru/p/1a5bda74',
     },
     {
+        item_id: 'kensolua-365d',
         item_discount: 40,
         item_price: '500 Руб',
         item_term: '1 год. (365д)',
         pay_link: 'https://pay.cloudtips.ru/p/034c84f9',
     },
     {   
+        item_id: 'kensolua-pro',
         item_discount: 75,
         item_price: '2000 Руб',
         item_term: 'Навсегда',
         pay_link: 'https://pay.cloudtips.ru/p/8c833222',
     },
     {   
+        item_id: 'donate',
         item_discount: -1,
         item_price: 'Пожертвование',
         item_term: 'На развитие проекта',
