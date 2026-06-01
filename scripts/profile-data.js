@@ -820,7 +820,7 @@
             }
             img.onload = () => { cleanup(); resolve(); };
             img.onerror = () => { cleanup(); reject(new Error('Load error')); };
-            img.src = `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
+            img.src = `https://proxy-v2.fascord.workers.dev/api/proxy?url=https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
         });
     }
 
