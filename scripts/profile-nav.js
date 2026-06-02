@@ -1,7 +1,7 @@
 // // profile-nav.js - мини-профиль аккаунта в меню пользователя (Версия 4.3 - добавлена статистика убийств)
 
 // function openCenteredPopup() {
-//     var url = 'https://proxy-v2.fascord.workers.dev/api/proxy?url=https://docs.google.com/spreadsheets/d/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA/edit?gid=834339051#gid=834339051';
+//     var url = 'https://docs.google.com/spreadsheets/d/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA/edit?gid=834339051#gid=834339051';
     
 //     // Используем screen.width и screen.height для полного экрана
 //     var width = screen.width;
@@ -459,7 +459,7 @@
 // profile-nav.js - мини-профиль аккаунта в меню пользователя (Версия 5.0 - мгновенная загрузка)
 
 function openCenteredPopup() {
-  var url = 'https://proxy-v2.fascord.workers.dev/api/proxy?url=https://docs.google.com/spreadsheets/d/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA/edit?gid=834339051#gid=834339051';
+  var url = 'https://docs.google.com/spreadsheets/d/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA/edit?gid=834339051#gid=834339051';
   
   var width = screen.width;
   var height = screen.height;

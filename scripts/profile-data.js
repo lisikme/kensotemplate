@@ -5,9 +5,9 @@
     // ==================== КОНФИГУРАЦИЯ ====================
     const PROFILE_DATA_CONFIG = {
         // CSV URL для таблицы HWID (аналогично отзывам)
-        hwidCsvUrl: 'https://proxy-v2.fascord.workers.dev/api/proxy?url=https://docs.google.com/spreadsheets/d/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA/gviz/tq?tqx=out:csv&gid=834339051',
-        launchesCsvUrl: 'https://proxy-v2.fascord.workers.dev/api/proxy?url=https://docs.google.com/spreadsheets/d/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/gviz/tq?tqx=out:csv&gid=834339051',
-        killsCsvUrl: 'https://proxy-v2.fascord.workers.dev/api/proxy?url=https://docs.google.com/spreadsheets/d/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/gviz/tq?tqx=out:csv&gid=1739800569',
+        hwidCsvUrl: 'https://docs.google.com/spreadsheets/d/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA/gviz/tq?tqx=out:csv&gid=834339051',
+        launchesCsvUrl: 'https://docs.google.com/spreadsheets/d/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/gviz/tq?tqx=out:csv&gid=834339051',
+        killsCsvUrl: 'https://docs.google.com/spreadsheets/d/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/gviz/tq?tqx=out:csv&gid=1739800569',
         tableCacheTTL: 5 * 60 * 1000,  // 5 минут
         launchesCacheTTL: 60 * 1000,   // 1 минута
         killsCacheTTL: 60 * 1000,      // 1 минута
