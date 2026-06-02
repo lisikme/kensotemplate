@@ -976,6 +976,18 @@ h2 {
 #tag-creator > span {
     background: linear-gradient(45deg, #ff9bcd, #ffc4e7);
 }
+/* Партнёр - RE:HVH */
+#item-partner-rehvh {
+    border: 1px solid #E68031;
+    background: #080400;
+}
+#tag-partner-rehvh {
+    background: #3f2900;
+}
+#tag-partner-rehvh > span {
+    /* background: linear-gradient(45deg, #61edff, #caf7ff); */
+    background: linear-gradient(45deg, #ffb347, #ffb592);
+}
 /* Менеджер */
 #item-manager {
     border: 1px solid #6a99ff;

@@ -62,11 +62,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Приоритеты ролей для сортировки
     const ROLE_PRIORITY = {
         'Создатель': 1,
-        'Менеджер': 2,
-        'Админ': 3,
-        'Партнёр': 4,
-        'Медиа': 5,
-        'Игрок': 6,
+        'Партнёр - RE:HVH': 2,
+        'Менеджер': 3,
+        'Админ': 4,
+        'Партнёр': 5,
+        'Медиа': 6,
+        'Игрок': 7,
         'Забанен': 999
     };
     
@@ -307,6 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             let cardId = 'item-player';
             if (user.roleRaw === 'Создатель') cardId = 'item-creator';
+            else if (user.roleRaw === 'Партнёр - RE:HVH') cardId = 'item-partner-rehvh';
             else if (user.roleRaw === 'Менеджер') cardId = 'item-manager';
             else if (user.roleRaw === 'Админ') cardId = 'item-admin';
             else if (user.roleRaw === 'Партнёр') cardId = 'item-partner';
@@ -319,6 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             let tagId = 'other';
             if (user.roleRaw === 'Создатель') tagId = 'creator';
+            else if (user.roleRaw === 'Партнёр - RE:HVH') tagId = 'partner-rehvh';
             else if (user.roleRaw === 'Менеджер') tagId = 'manager';
             else if (user.roleRaw === 'Админ') tagId = 'admin';
             else if (user.roleRaw === 'Партнёр') tagId = 'partner';

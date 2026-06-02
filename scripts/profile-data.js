@@ -156,6 +156,7 @@
         let roleClass = 'other';
         if (isBanned) roleClass = 'banned';
         else if (role === 'Создатель') roleClass = 'creator';
+        else if (role === 'Партнёр - RE:HVH') roleClass = 'partner-rehvh';
         else if (role === 'Менеджер') roleClass = 'manager';
         else if (role === 'Админ') roleClass = 'admin';
         else if (role === 'Партнёр') roleClass = 'partner';

@@ -200,12 +200,19 @@
     background: linear-gradient(45deg, #ffd000, #faffb0);
 }
 
+.profile-nav-role.partner-rehvh {
+    background: #e67f3128;
+    color: #E68031;
+}
 .profile-nav-role.manager {
     background: rgba(100, 200, 255, 0.15);
     color: #61edff;
 }
 .nav-bt-title-hwid.role-manager {
     background: linear-gradient(45deg, #61edff, #caf7ff);
+}
+.nav-bt-title-hwid.role-partner-rehvh {
+    background: linear-gradient(45deg, #ffb347, #ffecd2);
 }
 
 .profile-nav-role.partner {
@@ -214,8 +221,7 @@
 }
 .nav-bt-title-hwid.role-partner {
     background: linear-gradient(45deg, #be78ff, #efceff);
-}
-
+} 
 .profile-nav-role.media {
     background: rgba(255, 100, 100, 0.15);
     color: #ff8888;
