@@ -1793,7 +1793,7 @@ a:link, a:visited, a:hover, a:active {
     padding: 0px;
     display: grid;
     /* grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); */
-    grid-template-columns: 1fr;
+    /* grid-template-columns: 1fr; */
     gap: 2px;
 }
 .feature-category {
@@ -1834,7 +1834,7 @@ a:link, a:visited, a:hover, a:active {
     background: #143663;
     padding: 3px 5px;
     border-radius: 3px;
-    font-size: 9px;
+    font-size: 10px;
     margin-bottom: 3px;
 }
 .info-box2{
@@ -1842,7 +1842,7 @@ a:link, a:visited, a:hover, a:active {
     background: #63142e;
     padding: 3px 5px;
     border-radius: 3px;
-    font-size: 9px;
+    font-size: 10px;
     margin-bottom: 3px;
 }
 .info-box3{
@@ -1850,7 +1850,7 @@ a:link, a:visited, a:hover, a:active {
     background: #5e0909;
     padding: 3px 5px;
     border-radius: 3px;
-    font-size: 9px;
+    font-size: 10px;
     margin-bottom: 3px;
 }
 
@@ -1903,18 +1903,21 @@ a:link, a:visited, a:hover, a:active {
     opacity: 0;
     overflow: hidden;
     background: #1a1a1a;
-    border: 1px solid transparent;
+    border: 0px solid transparent;
     border-radius: 5px;
-    margin-bottom: 3px;
+    /* position: absolute; */
+    /* margin-bottom: 3px; */
     max-width: 400px;
     width: 100%;
 }
 
 /* Когда меню активно */
 .dropdown-wrapper2.active {
+    position: relative;
+    border: 1px solid transparent;
     grid-template-rows: 1fr; /* Плавно раскрывается до размера контента */
     opacity: 1;
-    margin-top: 5px;
+    /* margin-top: 5px; */
     margin-bottom: 5px;
     border-color: #303030;
 }
@@ -1968,6 +1971,7 @@ a:link, a:visited, a:hover, a:active {
     position: relative;
     margin: 0 auto !important;
     /* margin-top: 5px !important; */
+    margin-bottom: 5px !important;
     /* margin: 20px 0 !important; */
 }
 .toggle-features-btn {
@@ -2239,9 +2243,6 @@ a:link, a:visited, a:hover, a:active {
     height: fit-content;
 }
 
-.dropdown-wrapper2.active{
-    margin: 6px 0;
-}
 .product-table{
     padding: 10px;
 }
@@ -2845,29 +2846,6 @@ a:link, a:visited, a:hover, a:active {
         background: #ffffff;
         border: none;
         display: block;
-    }
-    
-    /* Адаптация для мобильных устройств */
-    @media (max-width: 768px) {
-        .x7k9m2p4_modal_container {
-            width: 92%;
-            max-width: 92%;
-            height: 90vh;
-            border-radius: 16px;
-        }
-        .x7k9m2p4_modal_header {
-            padding: 14px 20px;
-        }
-        .x7k9m2p4_modal_title {
-            font-size: 16px;
-        }
-        .x7k9m2p4_modal_close_btn {
-            padding: 6px 10px;
-        }
-        .x7k9m2p4_modal_close_btn svg {
-            width: 18px;
-            height: 18px;
-        }
     }
     
     /* Адаптация для очень больших экранов */
