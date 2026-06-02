@@ -1,28 +1,27 @@
 // profile-data.js - универсальный модуль для работы с данными профиля
-// Версия 6.0 - переход на CSV вместо API
+// Версия 5.7 - TTL убийств и логов 1 минута
 
 (function() {
     // ==================== КОНФИГУРАЦИЯ ====================
     const PROFILE_DATA_CONFIG = {
-        // CSV URL для таблицы HWID (аналогично отзывам)
-        hwidCsvUrl: 'https://docs.google.com/spreadsheets/d/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA/gviz/tq?tqx=out:csv&gid=834339051',
-        launchesCsvUrl: 'https://docs.google.com/spreadsheets/d/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/gviz/tq?tqx=out:csv&gid=834339051',
-        killsCsvUrl: 'https://docs.google.com/spreadsheets/d/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/gviz/tq?tqx=out:csv&gid=1739800569',
-        tableCacheTTL: 5 * 60 * 1000,  // 5 минут
-        launchesCacheTTL: 60 * 1000,   // 1 минута
-        killsCacheTTL: 60 * 1000,      // 1 минута
+        hwidApiUrl: 'https://hwid-api.fascord.workers.dev/1hYhAb_3EVcHmj7c8cgAjXMoF6HCqqjUeb9SSKXHs8TA?gid=834339051',
+        launchesApiUrl: 'https://hwid-api.fascord.workers.dev/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/edit?gid=834339051',
+        killsStatsApiUrl: 'https://hwid-api.fascord.workers.dev/1QkxxCV3wXIJ4erRZykyIn7Se9qhqOD2k-5H3WD4waFY/edit?gid=1739800569',
+        tableCacheTTL: Infinity,
+        launchesCacheTTL: 60 * 1000, // <--- ИЗМЕНЕНО: 1 минута (было 5 минут)
         avatarCacheTTL: 60 * 60 * 1000,
         steamCacheTTL: 60 * 60 * 1000,
+        killsCacheTTL: 60 * 1000, // 1 минута
         requestTimeout: 15000,
         avatarTimeout: 5000
     };
 
     const STORAGE_KEYS = {
-        USERS_CACHE_KEY: 'users_list_cache_v6',
+        USERS_CACHE_KEY: 'users_list_cache_v5',
         AVATAR_CACHE_KEY: 'avatar_url_cache_v5',
-        LAUNCHES_CACHE_KEY: 'launches_cache_v3',
+        LAUNCHES_CACHE_KEY: 'launches_cache_v2', // <--- ИЗМЕНЕНО: новая версия кэша логов
         STEAM_CACHE_KEY: 'steam_data_cache_v1',
-        KILLS_CACHE_KEY: 'kills_stats_cache_v7',
+        KILLS_CACHE_KEY: 'kills_stats_cache_v6',
         KILLS_FETCHED_KEY: 'kills_fetched_flag',
         LAST_UPDATE_KEY: 'last_table_update_time'
     };
@@ -35,72 +34,8 @@
     let killsLoaded = false;
     let killsLoadPromise = null;
     let lastKillsFetchTime = 0;
-    let lastLaunchesFetchTime = 0;
-    let launchesLoadPromise = null;
-
-    // ==================== ПАРСИНГ CSV ====================
-    function parseCSV(text) {
-        const rows = [];
-        let currentRow = [];
-        let currentField = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            const nextChar = text[i+1];
-            
-            if (char === '"') {
-                if (inQuotes && nextChar === '"') {
-                    currentField += '"';
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (char === ',' && !inQuotes) {
-                currentRow.push(currentField);
-                currentField = '';
-            } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
-                currentRow.push(currentField);
-                rows.push(currentRow);
-                currentRow = [];
-                currentField = '';
-                if (char === '\r') i++;
-            } else if (char === '\r' && !inQuotes) {
-                currentRow.push(currentField);
-                rows.push(currentRow);
-                currentRow = [];
-                currentField = '';
-            } else {
-                currentField += char;
-            }
-        }
-        if (currentField !== '' || currentRow.length > 0) {
-            currentRow.push(currentField);
-            rows.push(currentRow);
-        }
-        
-        while (rows.length > 0 && rows[rows.length-1].length === 1 && rows[rows.length-1][0] === '') {
-            rows.pop();
-        }
-        
-        return rows;
-    }
-
-    async function fetchCSVWithTimeout(url, timeoutMs = PROFILE_DATA_CONFIG.requestTimeout) {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeout);
-            return response;
-        } catch (error) {
-            clearTimeout(timeout);
-            if (error.name === 'AbortError') {
-                throw new Error(`Request timeout after ${timeoutMs}ms`);
-            }
-            throw error;
-        }
-    }
+    let lastLaunchesFetchTime = 0; // <--- ДОБАВЛЕНО: время последней загрузки логов
+    let launchesLoadPromise = null; // <--- ДОБАВЛЕНО: Promise для ожидания загрузки логов
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     function escapeHtml(str) {
@@ -166,41 +101,21 @@
         }
     }
 
-    function parseUserFromCsvRow(row, headers) {
-        // Определяем индексы колонок по заголовкам
-        let hwid = row[0] || '';
-        let licenseStatus = row[1] || '';
-        let role = row[2] || 'Игрок';
-        let limitType = row[3] || '';
-        let remainingTime = row[4] || '';
-        let endDateRaw = row[5] || '';
-        let discordId = row[6] || null;
-        let telegramId = row[7] || null;
-        let banReason = row[8] || null;
-        let userName = row[9] || null;
-        let avatarHash = row[10] || null;
-        let steamId = row[11] || null;
+    function parseUserFromApiItem(apiItem) {
+        const hwid = apiItem.Tab0 || '';
+        const licenseStatus = apiItem.Tab1 || '';
+        const role = apiItem.Tab2 || 'Игрок';
+        const limitType = apiItem.Tab3 || '';
+        const remainingTime = apiItem.Tab4 || '';
+        const endDateRaw = apiItem.Tab5 || '';
+        const discordId = apiItem.Tab6 || null;
+        const telegramId = apiItem.Tab7 || null;
+        const banReason = apiItem.Tab8 || null;
+        const userName = apiItem.Tab9 || null;
+        const avatarHash = apiItem.Tab10 || null;
+        const steamId = apiItem.Tab11 || null;
         
-        // Ищем по заголовкам если есть
-        if (headers && headers.length > 0) {
-            for (let i = 0; i < headers.length; i++) {
-                const header = (headers[i] || '').toLowerCase();
-                if (header.includes('hwid') || header === 'tab0') hwid = row[i] || hwid;
-                if (header.includes('статус') || header === 'tab1') licenseStatus = row[i] || licenseStatus;
-                if (header.includes('роль') || header === 'tab2') role = row[i] || role;
-                if (header.includes('лимит') || header === 'tab3') limitType = row[i] || limitType;
-                if (header.includes('осталось') || header === 'tab4') remainingTime = row[i] || remainingTime;
-                if (header.includes('дата') || header === 'tab5') endDateRaw = row[i] || endDateRaw;
-                if (header.includes('discord') || header === 'tab6') discordId = row[i] || discordId;
-                if (header.includes('telegram') || header === 'tab7') telegramId = row[i] || telegramId;
-                if (header.includes('бан') || header === 'tab8') banReason = row[i] || banReason;
-                if (header.includes('имя') || header === 'tab9') userName = row[i] || userName;
-                if (header.includes('аватар') || header === 'tab10') avatarHash = row[i] || avatarHash;
-                if (header.includes('steam') || header === 'tab11') steamId = row[i] || steamId;
-            }
-        }
-        
-        const isBanned = role === 'Забанен' || (banReason && banReason !== '');
+        const isBanned = role === 'Забанен';
         const hasLicense = licenseStatus === 'ЕСТЬ';
         const isExpired = remainingTime === 'Истёк';
         const noLicense = licenseStatus === 'НЕТ';
@@ -279,47 +194,23 @@
         };
     }
 
-    // ==================== ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЕЙ ИЗ CSV ====================
-    async function fetchUsersFromCSV() {
+    async function fetchWithTimeout(url, timeoutMs = PROFILE_DATA_CONFIG.requestTimeout) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
         try {
-            console.log('Загрузка пользователей из CSV...');
-            const response = await fetchCSVWithTimeout(PROFILE_DATA_CONFIG.hwidCsvUrl);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
-            const csvText = await response.text();
-            const rows = parseCSV(csvText);
-            
-            if (rows.length < 2) {
-                console.warn('CSV не содержит данных');
-                return [];
-            }
-            
-            const headers = rows[0].map(h => String(h || '').toLowerCase().trim());
-            const users = [];
-            
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                if (!row || row.length === 0) continue;
-                
-                // Пропускаем пустые строки
-                if (row.length === 1 && (!row[0] || row[0].trim() === '')) continue;
-                
-                const user = parseUserFromCsvRow(row, headers);
-                if (user.hwid && user.hwid.trim() !== '') {
-                    users.push(user);
-                }
-            }
-            
-            console.log(`Загружено ${users.length} пользователей из CSV`);
-            return users;
-            
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeout);
+            return response;
         } catch (error) {
-            console.error('Ошибка загрузки CSV:', error);
-            return [];
+            clearTimeout(timeout);
+            if (error.name === 'AbortError') {
+                throw new Error(`Request timeout after ${timeoutMs}ms`);
+            }
+            throw error;
         }
     }
 
-    // ==================== ЗАГРУЗКА СТАТИСТИКИ УБИЙСТВ ИЗ CSV ====================
+    // ==================== ЗАГРУЗКА СТАТИСТИКИ УБИЙСТВ ====================
     
     function isKillsCacheExpired() {
         if (lastKillsFetchTime === 0) return true;
@@ -343,6 +234,12 @@
             return killsMap;
         }
         
+        if (isKillsCacheExpired() && killsMap.size > 0) {
+            console.log('Кэш убийств устарел (1 минута), обновляем...');
+            killsMap.clear();
+            killsLoaded = false;
+        }
+        
         try {
             const cachedData = localStorage.getItem(STORAGE_KEYS.KILLS_CACHE_KEY);
             if (cachedData && !forceRefresh) {
@@ -354,6 +251,8 @@
                     killsLoaded = true;
                     lastKillsFetchTime = cache.timestamp || Date.now();
                     return killsMap;
+                } else {
+                    console.log(`LocalStorage кэш убийств устарел (${Math.round(cacheAge/1000)}с > ${PROFILE_DATA_CONFIG.killsCacheTTL/1000}с)`);
                 }
             }
         } catch (e) {
@@ -362,28 +261,24 @@
         
         killsLoadPromise = (async () => {
             try {
-                console.log('Загрузка статистики убийств из CSV...');
-                const response = await fetchCSVWithTimeout(PROFILE_DATA_CONFIG.killsCsvUrl);
+                console.log('Загрузка статистики убийств из API...');
+                const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.killsStatsApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
-                const csvText = await response.text();
-                const rows = parseCSV(csvText);
+                const data = await response.json();
                 
-                if (rows.length < 2) {
-                    console.warn('CSV убийств не содержит данных');
+                if (!Array.isArray(data)) {
+                    console.error('Ответ не является массивом:', data);
                     return killsMap;
                 }
                 
-                console.log(`Загружено ${rows.length - 1} записей статистики убийств`);
+                console.log(`Загружено ${data.length} записей статистики убийств`);
                 
                 const newMap = new Map();
-                for (let i = 1; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (!row || row.length === 0) continue;
-                    
-                    const hwid = row[0] || '';
-                    const kills = parseInt(row[1]) || 0;
+                for (const item of data) {
+                    const hwid = item.Tab0 || item[0] || item.hwid || item.HWID;
+                    let kills = parseInt(item.Tab1) || parseInt(item[1]) || parseInt(item.kills) || parseInt(item.KILLS) || 0;
                     
                     if (hwid && !isNaN(kills)) {
                         newMap.set(String(hwid).trim(), kills);
@@ -454,7 +349,7 @@
         await loadAllKillsOnce(true);
     }
 
-    // ==================== ЗАГРУЗКА ИСТОРИИ ЗАПУСКОВ (ЛОГОВ) ИЗ CSV ====================
+    // ==================== ЗАГРУЗКА ИСТОРИИ ЗАПУСКОВ (ЛОГОВ) ====================
     
     function isLaunchesCacheExpired() {
         if (lastLaunchesFetchTime === 0) return true;
@@ -478,6 +373,11 @@
             return launchesCache;
         }
         
+        if (isLaunchesCacheExpired() && launchesCache.size > 0) {
+            console.log('Кэш логов устарел (1 минута), обновляем...');
+            launchesCache.clear();
+        }
+        
         try {
             const cachedData = localStorage.getItem(STORAGE_KEYS.LAUNCHES_CACHE_KEY);
             if (cachedData && !forceRefresh) {
@@ -490,6 +390,8 @@
                     }
                     lastLaunchesFetchTime = cache.timestamp || Date.now();
                     return launchesCache;
+                } else {
+                    console.log(`LocalStorage кэш логов устарел (${Math.round(cacheAge/1000)}с > ${PROFILE_DATA_CONFIG.launchesCacheTTL/1000}с)`);
                 }
             }
         } catch (e) {
@@ -498,37 +400,33 @@
         
         launchesLoadPromise = (async () => {
             try {
-                console.log('Загрузка истории запусков из CSV...');
-                const response = await fetchCSVWithTimeout(PROFILE_DATA_CONFIG.launchesCsvUrl);
+                console.log('Загрузка истории запусков из API...');
+                const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.launchesApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
-                const csvText = await response.text();
-                const rows = parseCSV(csvText);
+                const data = await response.json();
                 
-                if (rows.length < 2) {
-                    console.warn('CSV логов не содержит данных');
+                if (!Array.isArray(data)) {
+                    console.error('Ответ не является массивом:', data);
                     return launchesCache;
                 }
                 
-                console.log(`Загружено ${rows.length - 1} записей истории запусков`);
+                console.log(`Загружено ${data.length} записей истории запусков`);
                 
-                // Группируем по HWID (колонка 1 - HWID)
+                // Группируем по HWID
                 const groupedByHwid = new Map();
-                for (let i = 1; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (!row || row.length === 0) continue;
-                    
-                    const hwid = row[1];
+                for (const item of data) {
+                    const hwid = item.Tab1;
                     if (!hwid) continue;
                     
                     if (!groupedByHwid.has(hwid)) {
                         groupedByHwid.set(hwid, []);
                     }
                     groupedByHwid.get(hwid).push({
-                        timestamp: row[0] || '',
-                        steamId: row[2] || '',
-                        version: row[3] || ''
+                        timestamp: item.Tab0,
+                        steamId: item.Tab2,
+                        version: item.Tab3
                     });
                 }
                 
@@ -651,7 +549,7 @@
         }
         try {
             const xmlUrl = `https://steamcommunity.com/profiles/${steamId}/?xml=1`;
-            const response = await fetchCSVWithTimeout(xmlUrl, 8000);
+            const response = await fetchWithTimeout(xmlUrl, 8000);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const xmlText = await response.text();
             const parsed = parseSteamXML(xmlText);
@@ -698,14 +596,39 @@
     }
 
     // ==================== ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЕЙ ====================
-    
+    async function fetchAllUsers(retryCount = 0) {
+        const maxRetries = 5;
+        const retryDelays = [1000, 2000, 3000, 5000, 10000];
+        
+        try {
+            console.log(`Загрузка пользователей (попытка ${retryCount + 1}/${maxRetries})...`);
+            const response = await fetchWithTimeout(PROFILE_DATA_CONFIG.hwidApiUrl, PROFILE_DATA_CONFIG.requestTimeout);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (!Array.isArray(data)) throw new Error('Ответ не является массивом');
+            if (data.length === 0 && retryCount < maxRetries) {
+                console.log('Получен пустой массив, повторная попытка...');
+                await new Promise(resolve => setTimeout(resolve, retryDelays[retryCount]));
+                return fetchAllUsers(retryCount + 1);
+            }
+            console.log(`Успешно загружено ${data.length} записей`);
+            return data.map(item => parseUserFromApiItem(item));
+        } catch (error) {
+            console.error(`Ошибка загрузки (попытка ${retryCount + 1}):`, error);
+            if (retryCount < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, retryDelays[retryCount]));
+                return fetchAllUsers(retryCount + 1);
+            }
+            return [];
+        }
+    }
+
     function loadUsersFromCache() {
         try {
             const cached = localStorage.getItem(STORAGE_KEYS.USERS_CACHE_KEY);
             if (cached) {
                 const cache = JSON.parse(cached);
-                const cacheAge = Date.now() - (cache.timestamp || 0);
-                if (cacheAge < PROFILE_DATA_CONFIG.tableCacheTTL && cache.users && cache.users.length > 0) {
+                if (cache.users && cache.users.length > 0) {
                     console.log(`Загружено ${cache.users.length} пользователей из кэша`);
                     return cache.users;
                 }
@@ -730,7 +653,7 @@
 
     async function getUsersTable(forceRefresh = false) {
         try {
-            const freshUsers = await fetchUsersFromCSV();
+            const freshUsers = await fetchAllUsers();
             if (freshUsers && freshUsers.length > 0) {
                 saveUsersToCache(freshUsers);
                 freshUsers.forEach(user => {
@@ -937,10 +860,13 @@
     }
 
     async function init() {
-        console.log('ProfileData модуль инициализирован (Версия 6.0 - CSV вместо API)');
+        console.log('ProfileData модуль инициализирован (Версия 5.7 - TTL убийств и логов 1 минута)');
+        // Загружаем убийства в фоне
         loadAllKillsOnce().catch(e => console.warn('Ошибка предзагрузки убийств:', e));
+        // Загружаем логи в фоне
         loadAllLaunchesOnce().catch(e => console.warn('Ошибка предзагрузки логов:', e));
-        const users = await fetchUsersFromCSV();
+        // Загружаем пользователей
+        const users = await fetchAllUsers();
         if (users && users.length > 0) {
             saveUsersToCache(users);
             users.forEach(user => {
@@ -955,14 +881,14 @@
 
     window.ProfileData = {
         config: PROFILE_DATA_CONFIG,
-        parseUserFromCsvRow: parseUserFromCsvRow,
+        parseUserFromApiItem: parseUserFromApiItem,
         getSubscriptionStatus: getSubscriptionStatus,
         fetchAllUsers: getUsersTable,
         fetchUserByHwid: fetchUserByHwid,
         fetchUserByDiscordId: fetchUserByDiscordId,
         fetchUserByTelegramId: fetchUserByTelegramId,
         fetchLaunchesByHwid: fetchLaunchesByHwid,
-        refreshLaunches: refreshLaunches,
+        refreshLaunches: refreshLaunches, // <--- ДОБАВЛЕНО
         fetchSteamData: fetchSteamData,
         getCachedSteamData: getCachedSteamData,
         fetchKillsByHwid: fetchKillsByHwid,
@@ -975,7 +901,7 @@
         getDaysWord: getDaysWord,
         formatDate: formatDate,
         escapeHtml: escapeHtml,
-        fetchWithTimeout: fetchCSVWithTimeout,
+        fetchWithTimeout: fetchWithTimeout,
         getCachedAvatarUrl: getCachedAvatarUrl,
         saveAvatarToCache: saveAvatarToCache,
         loadUsersFromCache: loadUsersFromCache,
