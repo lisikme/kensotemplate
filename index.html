@@ -591,7 +591,7 @@
                                 } else {
                                     btn_login.classList.remove('active');
                                     btn_logout.classList.add('active');
-                                    avatar.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+                                    avatar.src = `https://proxy-v2.fascord.workers.dev/api/proxy?url=https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
                                     username.innerHTML = `${user.username}`;
                                 }
                             }
@@ -1525,7 +1525,7 @@
 // === НАСТРОЙКИ GOOGLE TABLES ===
 const SPREADSHEET_ID = '1R0YGWtAvT6t_fuyu5wpe9H6oVagBZgVkdQel8CLzhOM';
 const SHEET_GID = '547215109';
-const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
+const CSV_URL = `https://proxy-v2.fascord.workers.dev/api/proxy?url=https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
 
 // === НАСТРОЙКИ GOOGLE APPS SCRIPT (для отправки формы) ===
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwtqN33z1dYGwY5cCi-CtUTR3gzUuWKKfWQI_fNleHh-kbThTwJzW1WMNM8t1F_urN2/exec';
@@ -2220,7 +2220,7 @@ async function forceReloadReviews() {
     
     if (!container) return;
     
-    container.innerHTML = '<div class="empty-reviews"><p>Обновление отзывов...</p></div>';
+    // container.innerHTML = '<div class="empty-reviews"><p>Обновление отзывов...</p></div>';
     
     try {
         const cacheBuster = `&_nocache=${Date.now()}`;
@@ -2270,6 +2270,8 @@ async function forceReloadReviews() {
                 dateIndex = i;
             } else if (header.includes('ваш комментарий')) {
                 textIndex = i;
+            } else if (header.includes('категория')) {
+                importIndex = i;
             }
         }
         
@@ -2277,6 +2279,7 @@ async function forceReloadReviews() {
         if (ratingIndex === -1) ratingIndex = 1;
         if (dateIndex === -1) dateIndex = 2;
         if (textIndex === -1) textIndex = 3;
+        if (importIndex === -1) importIndex = 4;
         
         const reviewsData = [];
         for (let i = 1; i < rows.length; i++) {
@@ -2307,11 +2310,20 @@ async function forceReloadReviews() {
             let text = textIndex < row.length ? (row[textIndex] || '') : '';
             if (text === '') text = '*Без комментария*';
             
+            let importtext = importIndex < row.length ? (row[importIndex] || '') : '';
+            if (importtext === '') {
+                importtext = '';
+            } else if (importtext === '-') {
+                importtext = '';
+            } else {
+                importtext = `${importtext} - `
+            }
+
             reviewsData.push({
-                name: name,
+                name: `${name}`,
                 rating: rating,
                 rawDate: rawDate,
-                displayDate: formattedDate,
+                displayDate: `${importtext}${formattedDate}`,
                 timestamp: timestamp,
                 text: text
             });
