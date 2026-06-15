@@ -1,24 +1,26 @@
-// profile-modal.js - модальное окно профиля (Версия 3.2 - добавлена статистика убийств)
+// profile-modal.js - модальное окно профиля
+// Версия 3.3 - исправлена загрузка убийств
 
 (function() {
-    // Текущие параметры URL
     let currentParams = {
         'profile-hwid': null,
         'search-discord': null,
         'search-telegram': null
     };
     
-    // Состояние модального окна
     let isModalOpen = false;
     let currentProfileData = null;
-    
-    // DOM элементы
     let modalOverlay = null;
     
-    // Функции для работы с параметрами URL
+    function formatKills(kills) {
+        if (!kills || kills === 0) return '0';
+        if (kills >= 1000000) return (kills / 1000000).toFixed(1) + 'm';
+        if (kills >= 1000) return (kills / 1000).toFixed(1) + 'k';
+        return kills.toString();
+    }
+    
     function updateURLParams(params) {
         const url = new URL(window.location.href);
-        
         Object.keys(params).forEach(key => {
             const value = params[key];
             if (value && value !== 'null' && value !== 'undefined' && value !== '') {
@@ -27,7 +29,6 @@
                 url.searchParams.delete(key);
             }
         });
-        
         window.history.pushState({}, '', url.toString());
     }
     
@@ -48,33 +49,8 @@
         window.history.pushState({}, '', url.toString());
     }
     
-    // Обработчик popstate
-    window.addEventListener('popstate', function() {
-        const params = getURLParams();
-        
-        if (params['profile-hwid']) {
-            openProfileModalByHwid(params['profile-hwid']);
-        } else if (params['search-discord']) {
-            searchAndOpenProfileByDiscord(params['search-discord']);
-        } else if (params['search-telegram']) {
-            searchAndOpenProfileByTelegram(params['search-telegram']);
-        } else if (isModalOpen) {
-            closeProfileModal();
-        }
-    });
-    
-    // Форматирование числа убийств
-    function formatKills(kills) {
-        if (!kills || kills === 0) return '0';
-        if (kills >= 1000000) return (kills / 1000000).toFixed(1) + 'm';
-        if (kills >= 1000) return (kills / 1000).toFixed(1) + 'k';
-        return kills.toString();
-    }
-    
-    // Загрузка аватара Discord
     async function loadDiscordAvatarToElement(discordId, avatarHash, imgElement) {
         if (!discordId || !avatarHash || !imgElement) return;
-        
         const avatarUrl = await window.ProfileData.getDiscordAvatarUrl(discordId, avatarHash);
         if (avatarUrl) {
             imgElement.src = avatarUrl;
@@ -84,27 +60,30 @@
         }
     }
     
-    // Рендер модального окна
     async function renderProfileModal(userData) {
         if (!modalOverlay) return;
         
         const subscription = window.ProfileData.getSubscriptionStatus(userData);
         const isBanned = userData.isBanned;
         
-        // Загружаем убийства
+        // Улучшенная загрузка убийств - сначала проверяем кэш
         let kills = 0;
+        let killsLoadedFromCache = false;
+        
         try {
-            kills = await window.ProfileData.fetchKillsByHwid(userData.hwid);
+            const cachedKills = window.ProfileData.getCachedKills(userData.hwid);
+            if (cachedKills !== null) {
+                kills = cachedKills;
+                killsLoadedFromCache = true;
+            }
         } catch (e) {
-            console.warn('Ошибка загрузки убийств:', e);
+            console.warn('Ошибка получения убийств из кэша:', e);
         }
         
-        // Используем имя из таблицы (Tab9)
         const displayName = window.ProfileData.getDisplayName(userData);
         const avatarLetter = window.ProfileData.getAvatarLetter(displayName);
         const shortHwid = window.ProfileData.getShortHwid(userData.hwid, 16);
         
-        // Определяем текст статуса
         let statusText = '';
         let statusText2 = '';
         let statusClass = subscription.status;
@@ -140,9 +119,7 @@
         modalOverlay.innerHTML = `
             <div class="profile-modal-container">
                 <div class="profile-modal-header">
-                    <div class="profile-modal-title">
-                        Профиль пользователя
-                    </div>
+                    <div class="profile-modal-title">Профиль пользователя</div>
                     <button class="profile-modal-close" id="profileModalClose">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M18 6L6 18M6 6l12 12"/>
@@ -157,11 +134,11 @@
                                     <span>${window.ProfileData.escapeHtml(userData.roleText)}</span>
                                 </div>
                                 <span class="admin_term_text" id="term-${statusClass}">${window.ProfileData.escapeHtml(statusText2)}</span>
-                                <div class="admin_kills">
+                                <div class="admin_kills" id="profile-kills-display">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
                                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
                                     </svg>
-                                    <span>${formatKills(kills)}</span>
+                                    <span>${killsLoadedFromCache ? formatKills(kills) : '...'}</span>
                                 </div>
                             </div>
                             <div id="admins_card">
@@ -173,7 +150,6 @@
                                                 <img id="profileAvatarImg" src="" alt="" style="opacity: 0;">
                                             </div>
                                         </div>
-                                        <get-avatar></get-avatar>
                                     </a>
                                     <div class="adminlist_buttons">
                                         <div id="admins_info">
@@ -199,21 +175,20 @@
                                         </div>
                                     </div>
                                 </div>                    
-                                ${isBanned ? `${userData.banReason ?` 
+                                ${isBanned ? (userData.banReason ? ` 
                                     <div class="profile-ban-reason">
-                                    <div class="label">Причина бана:</div>
-                                    <div class="reason">${window.ProfileData.escapeHtml(userData.banReason)}</div>
+                                        <div class="label">Причина бана:</div>
+                                        <div class="reason">${window.ProfileData.escapeHtml(userData.banReason)}</div>
                                     </div>
                                 ` : `
                                     <div class="profile-ban-reason">
-                                    <div class="label">Причина бана:</div>
-                                    <div class="reason">Не указана администратором!</div>
+                                        <div class="label">Причина бана:</div>
+                                        <div class="reason">Не указана администратором!</div>
                                     </div>
-                                `}` : ''}
+                                `) : ''}
                             </div>
                         </div>
 
-                        <!-- Блок с информацией -->
                         <div class="profile-section">
                             <div class="profile-section-header">Информация</div>
                             <div class="profile-section-content">
@@ -238,7 +213,7 @@
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
                                                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
                                             </svg>
-                                            <span>${kills}</span>
+                                            <span id="profile-kills-secondary">${killsLoadedFromCache ? kills : '...'}</span>
                                         </div>
                                     </span>
                                 </div>
@@ -282,24 +257,30 @@
                         </div>
                     </div>
 
-                    <!-- Блок с историей запусков -->
                     <div class="profile-section" id="profile-launches-section">
                         <div class="profile-section-header">История запусков</div>
-                        <div class="profile-section-content" id="profile-launches-container">
-                            <!-- Сюда будет загружена история запусков -->
-                        </div>
+                        <div class="profile-section-content" id="profile-launches-container"></div>
                     </div>
                 </div>
             </div>
         `;
         
-        // Добавляем обработчики
+        // Если убийства не были загружены из кэша, загружаем асинхронно
+        if (!killsLoadedFromCache) {
+            window.ProfileData.fetchKillsByHwid(userData.hwid).then(loadedKills => {
+                const killsSpan = document.querySelector('#profile-kills-display span');
+                const killsSpanSecondary = document.querySelector('#profile-kills-secondary');
+                const formattedKills = formatKills(loadedKills);
+                if (killsSpan) killsSpan.textContent = formattedKills;
+                if (killsSpanSecondary) killsSpanSecondary.textContent = loadedKills;
+            }).catch(e => console.warn('Ошибка загрузки убийств:', e));
+        }
+        
         const closeBtn = document.getElementById('profileModalClose');
         if (closeBtn) {
             closeBtn.addEventListener('click', closeProfileModal);
         }
         
-        // Загружаем аватар (используем avatarHash из таблицы Tab10)
         if (userData.discordId && userData.avatarHash) {
             const avatarImg = document.getElementById('profileAvatarImg');
             if (avatarImg) {
@@ -311,17 +292,11 @@
         isModalOpen = true;
         document.body.style.overflow = 'hidden';
 
-        // Загружаем историю запусков
         const launchesContainer = document.getElementById('profile-launches-container');
         if (launchesContainer && window.ProfileLaunches) {
             await window.ProfileLaunches.loadAndDisplayLaunches(userData.hwid, launchesContainer);
         } else if (launchesContainer) {
-            console.warn('ProfileLaunches модуль не загружен');
-            launchesContainer.innerHTML = `
-                <div class="profile-launches-error">
-                    <span>Модуль истории запусков не загружен</span>
-                </div>
-            `;
+            launchesContainer.innerHTML = `<div class="profile-launches-error"><span>Модуль истории запусков не загружен</span></div>`;
         }
     }
     
@@ -330,10 +305,7 @@
         modalOverlay.innerHTML = `
             <div class="profile-modal-container">
                 <div class="profile-modal-header">
-                    <div class="profile-modal-title">
-
-                        Профиль пользователя
-                    </div>
+                    <div class="profile-modal-title">Профиль пользователя</div>
                     <button class="profile-modal-close" id="profileModalCloseLoader">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M18 6L6 18M6 6l12 12"/>
@@ -349,9 +321,7 @@
             </div>
         `;
         const closeBtn = document.getElementById('profileModalCloseLoader');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeProfileModal);
-        }
+        if (closeBtn) closeBtn.addEventListener('click', closeProfileModal);
         modalOverlay.classList.add('active');
         isModalOpen = true;
         document.body.style.overflow = 'hidden';
@@ -362,13 +332,7 @@
         modalOverlay.innerHTML = `
             <div class="profile-modal-container">
                 <div class="profile-modal-header">
-                    <div class="profile-modal-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
-                        </svg>
-                        Ошибка
-                    </div>
+                    <div class="profile-modal-title">Ошибка</div>
                     <button class="profile-modal-close" id="profileModalCloseError">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M18 6L6 18M6 6l12 12"/>
@@ -383,28 +347,23 @@
             </div>
         `;
         const closeBtn = document.getElementById('profileModalCloseError');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeProfileModal);
-        }
+        if (closeBtn) closeBtn.addEventListener('click', closeProfileModal);
         modalOverlay.classList.add('active');
         isModalOpen = true;
         document.body.style.overflow = 'hidden';
     }
     
-    // Основные функции открытия профиля
     async function openProfileModalByHwid(hwid) {
         if (!hwid) return;
-        
         showProfileLoader();
-        
         try {
             const userData = await window.ProfileData.fetchUserByHwid(hwid);
             if (!userData) {
                 showProfileError('Пользователь с таким HWID не найден');
                 return;
             }
-            
             currentProfileData = userData;
+            updateURLParams({ 'profile-hwid': hwid, 'search-discord': null, 'search-telegram': null });
             await renderProfileModal(userData);
         } catch (error) {
             console.error('Ошибка открытия профиля:', error);
@@ -414,18 +373,14 @@
     
     async function searchAndOpenProfileByDiscord(discordId) {
         if (!discordId) return;
-        
         showProfileLoader();
-        
         try {
             const userData = await window.ProfileData.fetchUserByDiscordId(discordId);
             if (!userData) {
                 showProfileError('Пользователь с таким Discord ID не найден');
                 return;
             }
-            
-            updateURLParams({ 'profile-hwid': userData.hwid, 'search-discord': null });
-            
+            updateURLParams({ 'profile-hwid': userData.hwid, 'search-discord': null, 'search-telegram': null });
             currentProfileData = userData;
             await renderProfileModal(userData);
         } catch (error) {
@@ -436,18 +391,14 @@
     
     async function searchAndOpenProfileByTelegram(telegramId) {
         if (!telegramId) return;
-        
         showProfileLoader();
-        
         try {
             const userData = await window.ProfileData.fetchUserByTelegramId(telegramId);
             if (!userData) {
                 showProfileError('Пользователь с таким Telegram ID не найден');
                 return;
             }
-            
-            updateURLParams({ 'profile-hwid': userData.hwid, 'search-telegram': null });
-            
+            updateURLParams({ 'profile-hwid': userData.hwid, 'search-discord': null, 'search-telegram': null });
             currentProfileData = userData;
             await renderProfileModal(userData);
         } catch (error) {
@@ -457,39 +408,40 @@
     }
     
     function closeProfileModal() {
-        if (modalOverlay) {
-            modalOverlay.classList.remove('active');
-        }
+        if (modalOverlay) modalOverlay.classList.remove('active');
         isModalOpen = false;
         document.body.style.overflow = '';
         currentProfileData = null;
-        
         clearAllProfileParams();
     }
     
-    // Инициализация модального окна
     function initProfileModal() {
-        // Создаем DOM элемент
         modalOverlay = document.createElement('div');
         modalOverlay.id = 'profileModalOverlay';
         modalOverlay.className = 'profile-modal-overlay';
         document.body.appendChild(modalOverlay);
         
-        // Закрытие по клику на оверлей
         modalOverlay.addEventListener('click', function(e) {
-            if (e.target === modalOverlay) {
-                closeProfileModal();
-            }
+            if (e.target === modalOverlay) closeProfileModal();
         });
         
-        // Закрытие по Escape
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && isModalOpen) {
+            if (e.key === 'Escape' && isModalOpen) closeProfileModal();
+        });
+        
+        window.addEventListener('popstate', function() {
+            const params = getURLParams();
+            if (params['profile-hwid']) {
+                openProfileModalByHwid(params['profile-hwid']);
+            } else if (params['search-discord']) {
+                searchAndOpenProfileByDiscord(params['search-discord']);
+            } else if (params['search-telegram']) {
+                searchAndOpenProfileByTelegram(params['search-telegram']);
+            } else if (isModalOpen) {
                 closeProfileModal();
             }
         });
         
-        // Проверяем параметры URL при загрузке
         const params = getURLParams();
         if (params['profile-hwid']) {
             openProfileModalByHwid(params['profile-hwid']);
@@ -500,7 +452,6 @@
         }
     }
     
-    // Экспортируем функции глобально
     window.ProfileModal = {
         openByHwid: openProfileModalByHwid,
         searchByDiscord: searchAndOpenProfileByDiscord,
@@ -508,7 +459,6 @@
         close: closeProfileModal
     };
     
-    // Ждем загрузки ProfileData модуля
     function waitForProfileData() {
         if (window.ProfileData) {
             if (document.readyState === 'loading') {
@@ -517,7 +467,6 @@
                 initProfileModal();
             }
         } else {
-            console.log('ProfileModal: Ожидание загрузки ProfileData...');
             setTimeout(waitForProfileData, 100);
         }
     }

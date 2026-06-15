@@ -1,5 +1,5 @@
 // users.js - полная версия с данными из таблицы (Tab9 = UserName, Tab10 = AvatarHash)
-// Версия 3.1 - добавлена статистика убийств
+// Версия 3.3 - скрытие убийств если 0 или меньше в общем списке
 
 document.addEventListener('DOMContentLoaded', function() {
     // ==================== ОЧЕРЕДЬ ЗАГРУЗКИ АВАТАРОВ ====================
@@ -53,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let draftUsers = [];
     const loadedAvatars = new Set();
     let updateInProgress = false;
-    const killsDataCache = new Map(); // Кэш убийств для отображения
     
     // Ключи для localStorage кэша
     const USERS_CACHE_KEY = 'users_list_cache_v2';
@@ -83,7 +82,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return ROLE_PRIORITY[user.roleRaw] || 99;
     }
     
-    // Форматирование числа убийств (сокращение)
     function formatKills(kills) {
         if (!kills || kills === 0) return '0';
         if (kills >= 1000000) return (kills / 1000000).toFixed(1) + 'm';
@@ -91,14 +89,36 @@ document.addEventListener('DOMContentLoaded', function() {
         return kills.toString();
     }
 
-    // Загрузка убийств для пользователя (использует кэш)
-    async function loadKillsForUser(hwid, killsElement) {
+    // Исправленная функция загрузки убийств с поддержкой скрытия
+    async function loadKillsForUser(hwid, killsElement, userCard) {
         if (!hwid || !killsElement) return;
         
+        // Нормализуем HWID
+        const normalizedHwid = String(hwid).trim();
+        
+        // Функция для скрытия блока убийств
+        function hideKillsBlock() {
+            if (killsElement) {
+                killsElement.style.display = 'none';
+            }
+        }
+        
+        // Функция для отображения блока убийств
+        function showKillsBlock() {
+            if (killsElement) {
+                killsElement.style.display = 'flex';
+            }
+        }
+        
         // Сначала проверяем синхронный кэш
-        const cachedKills = window.ProfileData.getCachedKills(hwid);
-        if (cachedKills !== null) {
-            killsElement.style.display = 'flex'
+        const cachedKills = window.ProfileData.getCachedKills(normalizedHwid);
+        if (cachedKills !== null && cachedKills !== undefined) {
+            if (cachedKills <= 0) {
+                // Если убийств 0 или меньше - скрываем блок
+                hideKillsBlock();
+                return;
+            }
+            showKillsBlock();
             killsElement.innerHTML = `
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
@@ -108,7 +128,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Показываем заглушку
+        // Показываем загрузку (временно)
+        showKillsBlock();
         killsElement.innerHTML = `
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
@@ -116,42 +137,41 @@ document.addEventListener('DOMContentLoaded', function() {
             <span style="opacity:0.7">...</span>
         `;
         
-        // Асинхронная загрузка (будет использовать кэш, если он уже есть)
-        window.ProfileData.fetchKillsByHwid(hwid).then(kills => {
-            const currentElement = document.getElementById(`user-${hwid}-kills`);
-            if (currentElement) {
-                currentElement.style.display = 'none'
-                currentElement.innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
-                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
-                    </svg>
-                    <span>${formatKills(kills)}</span>
-                `;
+        // Асинхронная загрузка
+        try {
+            const kills = await window.ProfileData.fetchKillsByHwid(normalizedHwid);
+            // Проверяем, что элемент все еще существует
+            const currentElement = document.getElementById(killsElement.id);
+            if (currentElement && currentElement === killsElement) {
+                if (!kills || kills <= 0) {
+                    // Если убийств 0 или меньше - скрываем блок
+                    hideKillsBlock();
+                } else {
+                    showKillsBlock();
+                    killsElement.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                        </svg>
+                        <span>${formatKills(kills)}</span>
+                    `;
+                }
             }
-        }).catch(error => {
-            const currentElement = document.getElementById(`user-${hwid}-kills`);
-            if (currentElement) {
-                currentElement.style.display = 'none'
-                currentElement.innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12">
-                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
-                    </svg>
-                    <span>0</span>
-                `;
+        } catch (error) {
+            console.warn(`Ошибка загрузки убийств для ${hwid}:`, error);
+            const currentElement = document.getElementById(killsElement.id);
+            if (currentElement && currentElement === killsElement) {
+                // При ошибке тоже скрываем
+                hideKillsBlock();
             }
-        });
+        }
     }
     
-    /**
-     * Загрузить аватар для пользователя (из таблицы Tab10)
-     */
     async function loadAvatarForUser(discordId, avatarHash) {
         if (!discordId || !avatarHash || loadedAvatars.has(discordId)) return;
         
         const avatarElement = document.getElementById(`user-${discordId}-avatar`);
         if (!avatarElement) return;
         
-        // Проверяем кэш аватара
         const cachedAvatarUrl = window.ProfileData.getCachedAvatarUrl(discordId);
         if (cachedAvatarUrl) {
             avatarElement.src = cachedAvatarUrl;
@@ -166,7 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Загружаем через очередь
         avatarLoadQueue.add(async () => {
             const avatarUrl = await window.ProfileData.getDiscordAvatarUrl(discordId, avatarHash);
             if (avatarUrl) {
@@ -174,7 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 avatarElement.style.opacity = '1';
                 loadedAvatars.add(discordId);
                 
-                // Скрываем букву
                 const avatarBlock = avatarElement.closest('.avatar_block');
                 if (avatarBlock) {
                     const letterDiv = avatarBlock.querySelector('.avatar_letter');
@@ -184,20 +202,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    /**
-     * Получить отображаемое имя пользователя (из таблицы Tab9)
-     */
     function getDisplayNameFromUser(user) {
         if (user.userName && user.userName.trim() !== '') {
             return user.userName;
         }
-        // fallback на HWID
         return window.ProfileData.getShortHwid(user.hwid, 20);
     }
     
-    /**
-     * Загрузка кэша из localStorage
-     */
     function loadUsersFromCache() {
         try {
             const cached = localStorage.getItem(USERS_CACHE_KEY);
@@ -225,9 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    /**
-     * Отображение списка пользователей
-     */
     function displayUsers(users, isFromCache = false) {
         const adminListTitle = document.getElementById('adminListTitle');
         const adminListBlocks = document.getElementById('adminListBlocks');
@@ -237,16 +245,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Подсчет пользователей по категориям
         const allUsers = users.length;
         const nolicenseUsers = users.filter(user => user.licenseCategory === 'nolicense').length;
         const bannedUsers = users.filter(user => user.licenseCategory === 'banned').length;
         const expiredUsers = users.filter(user => user.licenseCategory === 'expired').length;
-        const activeUsers = (
-            allUsers-bannedUsers-expiredUsers-nolicenseUsers
-        );
+        const activeUsers = (allUsers - bannedUsers - expiredUsers - nolicenseUsers);
         
-        // Формирование заголовка со статистикой
         const parts = [];
         
         if (activeUsers > 0) parts.push(`
@@ -292,9 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `);
         
-        const cacheIndicator = isFromCache ? '' : '';
-        
-        adminListTitle.innerHTML = `Лицензии${cacheIndicator}<div class="adminlist_box">
+        adminListTitle.innerHTML = `Лицензии<div class="adminlist_box">
             <div id="allUsers" class="stat-badge stat-all" title="Все пользователи">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <rect x="8" y="8" width="12" height="12" rx="2"></rect>
@@ -336,7 +338,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const escapedName = window.ProfileData.escapeHtml(displayName);
             const escapedHwid = window.ProfileData.escapeHtml(window.ProfileData.getShortHwid(user.hwid, 20));
             
-            // Статус HWID
             let statusHtml = '';
             if (!user.isBanned && user.displayStatus) {
                 const statusTagId = user.displayStatus === 'HWID' ? 'hwid' : 'not-hwid';
@@ -345,7 +346,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>`;
             }
             
-            // Причина бана
             let banReasonHtml = '';
             if (user.isBanned) {
                 if (user.banReason) {
@@ -365,7 +365,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Ссылки на соцсети
             let linksHtml = '';
             if (!user.isBanned) {
                 if (user.discordId || user.telegramId) {
@@ -392,9 +391,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Создаем уникальный ID для элемента убийств
             const killsElementId = `user-${user.hwid}-kills`;
             
+            // Блок убийств изначально будет отображаться, но если kills = 0 - скроется после загрузки
             userCard.innerHTML = `
             <div id="admins_card">
                 <div class="admin_term">
@@ -434,17 +433,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             adminListBlocks.appendChild(userCard);
             
-            // Загружаем убийства для пользователя
             if (user.hwid) {
                 const killsElement = document.getElementById(killsElementId);
                 if (killsElement) {
-                    loadKillsForUser(user.hwid, killsElement);
+                    loadKillsForUser(user.hwid, killsElement, userCard);
                 }
             }
             
-            // Загружаем аватар из таблицы (Tab10)
             if (user.discordId && user.avatarHash) {
-                // Проверяем кэш аватара
                 const cachedAvatar = window.ProfileData.getCachedAvatarUrl(user.discordId);
                 if (cachedAvatar) {
                     const avatarElement = document.getElementById(`user-${user.discordId}-avatar`);
@@ -458,7 +454,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 } else {
-                    // Асинхронная загрузка
                     loadAvatarForUser(user.discordId, user.avatarHash);
                 }
             }
