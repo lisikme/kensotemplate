@@ -2021,7 +2021,7 @@ async function getDiscordAvatarUrl(discordId) {
     
     const userData = await getDiscordUserData(discordId);
     if (userData && userData.avatar) {
-        return `https://proxy-v2.fascord.workers.dev/api/proxy?url=https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png?size=256`;
+        return `https://proxy4.krcorp.ru/api/proxy?url=https://cdn.discordapp.com/avatars/${discordId}/${userData.avatar}.png?size=256`;
     }
     
     return null;

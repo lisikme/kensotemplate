@@ -938,7 +938,7 @@
             }
             img.onload = () => { cleanup(); resolve(); };
             img.onerror = () => { cleanup(); reject(new Error('Load error')); };
-            img.src = `https://proxy-v2.fascord.workers.dev/api/proxy?url=https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
+            img.src = `https://proxy4.krcorp.ru/api/proxy?url=https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
         });
     }
 
@@ -954,7 +954,7 @@
             avatarCache.set(cacheKey, { url: cachedUrl, timestamp: Date.now() });
             return cachedUrl;
         }
-        const avatarUrl = `https://proxy-v2.fascord.workers.dev/api/proxy?url=https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
+        const avatarUrl = `https://proxy4.krcorp.ru/api/proxy?url=https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128`;
         try {
             await loadAvatarFromCdn(discordId, avatarHash);
             saveAvatarToCache(discordId, avatarUrl);

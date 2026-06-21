@@ -611,7 +611,7 @@
             if (btnLogout) btnLogout.classList.toggle('active', isAuth);
             
             if (isAuth && user) {
-                if (avatar) avatar.src = `https://proxy-v2.fascord.workers.dev/api/proxy?url=https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+                if (avatar) avatar.src = `https://proxy4.krcorp.ru/api/proxy?url=https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
                 if (usernameSpan) usernameSpan.textContent = user.username;
             } else {
                 if (usernameSpan) usernameSpan.textContent = 'Гость';
