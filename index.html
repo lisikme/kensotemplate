@@ -32,7 +32,7 @@
         <link rel="stylesheet" href="./styles/main.css">
         <link rel="stylesheet" href="./styles/header.css">
         <link rel="stylesheet" href="./styles/input.css">
-        <link rel="stylesheet" href="./styles/market-modal.css">
+        <!-- <link rel="stylesheet" href="./styles/market-modal.css"> -->
         <link rel="stylesheet" href="./styles/profile-modal.css">
         <link rel="stylesheet" href="./styles/profile-nav.css">
         <link rel="stylesheet" href="./styles/profile-launches.css">
@@ -143,12 +143,12 @@
                         </a>
                     </div> -->
                     <script src="./scripts/nav.js"></script>
-                    <a onclick="MarketModal.open()" class="nav-link social market">
+                    <!-- <a onclick="MarketModal.open()" class="nav-link social market">
                         <svg viewBox="0 0 24 24">
                             <use href="./content/svg/ico-shop.svg"></use>
                         </svg>
                         Магазин
-                    </a>
+                    </a> -->
                     <a href="https://vk.com/kensolua" class="nav-link social" target="_blank">
                         <img src="./content/svg/link-vk.svg" width="12" height="12">
                     </a>
@@ -800,259 +800,17 @@
                                     Nixware.cc
                                 </a>
                             </div>
-                            <!-- <div class="dropdown-wrapper2" id="featuresMenu">
-                                <div class="dropdown-content">
-                                    <div class="dropdown-title">Функционал LUA скрипта</div>
-                                    <div class="features-list">
-                                        <div class="feature-category">
-                                            <h4>Утилиты</h4>
-                                            <ul>
-                                                <li>Встроенный мониторинг HVH серверов.</li>
-                                                <li>Discord Rich Presence интеграция.</li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Закупка</h4>
-                                            <ul>
-                                                <li>Настраиваемый таймер закупки оружия.</li>
-                                                <li>Есть совместимость с командой <span class="sub-tag2">!respawn</span>
-                                                    <br>на серверах с возраждениями
-                                                </li>
-                                                <li>Пистолеты:
-                                                    <br>-> <span class="sub-tag">Desert Eagle</span>
-                                                    <br>-> <span class="sub-tag">Revolver R8</span>
-                                                </li>
-                                                <li>Снайперки:
-                                                    <br>-> <span class="sub-tag">AWP</span>
-                                                    <br>-> <span class="sub-tag">S3SG1</span>
-                                                    <br>-> <span class="sub-tag">SCAR-20</span>
-                                                </li>
-                                                <li>Гранаты:
-                                                    <br>-> <span class="sub-tag">Димовые</span>
-                                                    <br>-> <span class="sub-tag">Осколочные</span>
-                                                    <br>-> <span class="sub-tag">Зажигательные</span>
-                                                    <br>-> <span class="sub-tag">Молотов</span> 
-                                                </li>
-                                                <li>Прочее:
-                                                    <br>-> <span class="sub-tag">Zeus x27</span>
-                                                    <br>-> <span class="sub-tag">Наборы сапера</span>
-                                                    <br>-> <span class="sub-tag">Бронижелет</span>
-                                                    <br>-> <span class="sub-tag">Бронижелет и шлем</span>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Убийства</h4>
-                                            <ul>
-                                                <li>Сохраниение Kill-Feed</li>
-                                                <li>Кастомные Kill-Feed статусы:
-                                                    <br>-> <span class="sub-tag">Убийство в голову</span>
-                                                    <br>-> <span class="sub-tag">С ослеплением</span>
-                                                    <br>-> <span class="sub-tag">Без прицела</span>
-                                                    <br>-> <span class="sub-tag">Прострелы</span>
-                                                    <br>-> <span class="sub-tag">Через дым</span>
-                                                    <br>-> <span class="sub-tag">Реванш</span>
-                                                    <br>-> <span class="sub-tag">Доминирование</span>
-                                                    <br>-> <span class="sub-tag">В воздухе</span>
-                                                    <br>-> <span class="sub-tag">С ножа</span>
-                                                    <br>-> <span class="sub-tag">Уничтожение отряда</span>
-                                                </li>
-                                                <li>АвтоРеспавн для серверов с возраждениями.</li>
-                                                <li>Настройка количевства респавнов.</li>
-                                                <li>Натройка респавна по бинду.</li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Звуки</h4>
-                                            <ul>
-                                                <div class="info-box">Это самая продвинутая функция которой нет e конкурентов c именно такой общирной фунциональностью.</div>
-                                                <div class="info-box2">При покупке предусмотрен уже готовый пак кастомных звуков</div>
-                                                <li>Поддерживается:
-                                                    <br>-> <span class="sub-tag">Интеграция радио KetaMeFM</span>
-                                                    <br>-> <span class="sub-tag">Музыка MVP в конце раунда</span>
-                                                    <br>-> <span class="sub-tag">Звуки попаданий по игрокам</span>
-                                                    <br>-> <span class="sub-tag">Звуки убийства игроков</span>
-                                                </li>
-                                                <li>Натройка громкости звуков/музыки/радио.</li>
-                                                <li>Режим: <span class="sub-tag2">[Game]</span> - Встроенные звуки в игру.</li>
-                                                <li>Режим: <span class="sub-tag2">[Auto]</span> - Автоматически находит звуки
-                                                    <br>в папке игры <span class="sub-tag">/sounds/hitsounds/</span>
-                                                </li>
-                                                <li>Режим: <span class="sub-tag2">[Custom]</span> - Ипользует звуки 
-                                                    <br>указаные в <span class="sub-tag">hitsounds.json</span>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Анти-Аим</h4>
-                                            <ul>
-                                                <li>
-                                                    <span class="sub-tag2">[Fake Pitch]</span>
-                                                    <br>Фейковый наклон.
-                                                </li>
-                                                <li>
-                                                    <span class="sub-tag2">[Custom Pitch]</span>
-                                                    <br>Пользовательский наклон.
-                                                </li>
-                                                <li>
-                                                    <span class="sub-tag2">[Random Yaw Offset]</span>
-                                                    <br>Случайное смещение по оси Y.
-                                                </li>
-                                                <li>
-                                                    <span class="sub-tag2">[Manual AA]</span>
-                                                    <br>Ручной анти-аим.
-                                                </li>
-                                                <li>
-                                                    <span class="sub-tag2">[Air Flick]</span>
-                                                    <br>Резкий поворот в воздухе.
-                                                </li>
-                                                <li>
-                                                    <span class="sub-tag2">[Pitch Jitter on Manual]</span>
-                                                    <br>Дрожание наклона при ручном режиме.
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Рейдж</h4>
-                                            <ul>
-                                                <li>
-                                                    <span class="sub-tag2">[Duck Peek Assist]</span>
-                                                    <br>Помогает автоматически выполнять быстрый выглядывающий пик с приседом.
-                                                </li>
-                                                <li>
-                                                    <span class="sub-tag2">[Отключить RAGE в воздухе]</span>
-                                                    <br>Выключает агрессивные функции во время прыжка для более естественного поведения.
-                                                </li>
-                                                <li>
-                                                    <span class="sub-tag2">[Auto Stop в прыжке]</span>
-                                                    <br>Автоматически останавливает движение для повышения точности в прыжке.
-                                                </li>
-                                                <li>
-                                                    <span class="sub-tag2">[AI Peek]</span>
-                                                    <br>Интеллектуально выбирает момент и способ выхода из укрытия.
-                                                </li>
-                                                <li>
-                                                    <span class="sub-tag2">[Wallbang Helper]</span>
-                                                    <br>Подсказывает возможность прострела через стены и поверхности.
-                                                </li>
-                                                <li>
-                                                    <span class="sub-tag2">[Безопастный режим]</span>
-                                                    <br>Снижает риск обнаружения за счёт более осторожных настроек.
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Интерфейс</h4>
-                                            <ul>
-                                                <li>Индикаторы:
-                                                    <br>-> <span class="sub-tag">FPS</span>
-                                                    <br>-> <span class="sub-tag">Пинг</span>
-                                                    <br>-> <span class="sub-tag">Время</span>
-                                                    <br>-> <span class="sub-tag">Список игроков</span>
-                                                    <br>-> <span class="sub-tag">Логи попаданий</span>
-                                                    <br>-> <span class="sub-tag">Индикатор замедления</span>
-                                                    <br>-> <span class="sub-tag">Индикатор SPEED</span>
-                                                    <br>-> <span class="sub-tag">MVP уведомления</span>
-                                                    <br>-> <span class="sub-tag">Отображение HP возле прицела</span>
-                                                    <br>-> <span class="sub-tag">Отображение SEED возле прицела</span>
-                                                    <br>-> <span class="sub-tag">Отображение Manual AA [Текст]</span>
-                                                    <br>-> <span class="sub-tag">Stattrack</span>
-                                                </li>
-                                                <li>Натройка размера элементов.</li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Визуалы</h4>
-                                            <ul>
-                                                <li>Камера игрока:
-                                                    <br>-> <span class="sub-tag">Угол обзора</span>
-                                                    <br>-> <span class="sub-tag">Дальность обзора</span>
-                                                </li>
-                                                <li>Камера игрок:
-                                                    <br>-> <span class="sub-tag">Угол обзора</span>
-                                                    <br>-> <span class="sub-tag">Дальность обзора</span>
-                                                </li>
-                                                <li>ESP линии до игроков.</li>
-                                                <li>Кастом скоп прицел.</li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Трассера</h4>
-                                            <div class="info-box3">
-                                                Это временное решение с трасерами, после обновы, как вы знаете,
-                                                они больше не работают но мы сделали другой метод отрисовки,
-                                                который визуально даёт тот же эффект.
-                                            </div>
-                                            <ul>
-                                                <li>Bullet Tracer:
-                                                    <br>-> <span class="sub-tag">Цвет</span>
-                                                    <br>-> <span class="sub-tag">Толщина</span>
-                                                    <br>-> <span class="sub-tag">Свечение</span>
-                                                    <br>-> <span class="sub-tag">Сегменты</span>
-                                                    <br>-> <span class="sub-tag">Время отображения</span>
-                                                    <br>-> <span class="sub-tag">Настройка лимита</span>
-                                                </li>
-                                                <li>Bullet Impact <span class="sub-tag2">[sv_cheats 1]</span>.</li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Трейлы</h4>
-                                            <ul>
-                                                <li>Настройка цвета</li>
-                                                <li>Настройка толщины</li>
-                                                <li>Настройка сегментов</li>
-                                                <li>
-                                                    <span class="sub-tag rgb">Настройка RGB режима</span>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Эффекты</h4>
-                                            <ul>
-                                                <li>
-                                                    <span class="sub-tag2">[Эффект по краям экрана]</span>
-                                                    <br>при убийстве или смерти.
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        <div class="feature-category">
-                                            <h4>Настройка</h4>
-                                            <ul>
-                                                <li>Кастомизация цветовов меню.</li>
-                                                <li>Настройки режимов API мониторинга</li>
-                                                <li>
-                                                    <span class="sub-tag rgb">Настройка RGB Элементов меню</span>
-                                                </li>
-                                                <li>Экран загрузки меню</li>
-                                                <li>Спец возможность:
-                                                    <br>-> <span class="sub-tag">Принудительный Анти-Аим</span>
-                                                    <br>-> <span class="sub-tag">Информация о HWID и подписке</span>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div> -->
-
-                            
-
-
-
-
-
-
-
-
-
-
-
-
-
+                            <style>
+                                .mascot{
+                                    height: 150px;
+                                    bottom: -14px;
+                                    left: 2px;
+                                    position: fixed;
+                                }
+                            </style>
+                            <img src="./content/svg/fox.svg" class="mascot">
                         </div>
                         <div class="table-container1">
-
-
-
 
                             <div class="dropdown-wrapper2" id="featuresMenu">
                                 <div class="dropdown-content">
