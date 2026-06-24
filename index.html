@@ -823,12 +823,6 @@
                                     border: 1px solid #303030;
                                     /* position: fixed; */
                                 }
-                                .mascot{
-                                    height: 150px;
-                                    bottom: -14px;
-                                    left: 2px;
-                                    position: fixed;
-                                }
                             </style>
                             <img src="./content/svg/fox.svg" class="mascot">
                         </div>
@@ -2604,3 +2598,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 </style>
 <a href="/market" target="_blank" id="dev-shop">Донат</a>
+
+<style>
+    .profile-ban-reason2:hover,
+    .admin_card:hover .profile-ban-reason2 {
+        max-height: 200px;
+    }
+    .profile-ban-reason2:hover::after,
+    .admin_card:hover .profile-ban-reason2::after {
+        opacity: 0;
+    }
+    .profile-ban-reason2:hover,
+    .profile-ban-reason2:hover::after,
+    .admin_card:hover .profile-ban-reason2,
+    .admin_card:hover .profile-ban-reason2::after {
+        transition-delay: 0.8s;
+    }
+    .carousel-slide:hover .gallery-overlay, 
+    .carousel-slide:hover::after{
+        transition-delay: 0.8s;
+    }
+    .mascot{
+        height: 150px;
+        bottom: -12px;
+        left: 2px;
+        z-index: 9999;
+        transition: all 0.5s;
+        position: fixed;
+        filter: drop-shadow(0 0 5px rgb(0, 0, 0));
+        
+    }
+    @media (max-width: 860px) {
+        .mascot{
+            filter: drop-shadow(0 0 2px rgb(0, 0, 0));
+            bottom: -8px;
+            height: 100px;
+        }
+    }
+</style>
