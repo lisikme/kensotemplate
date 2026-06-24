@@ -47,12 +47,5 @@ pricelist = [
         item_price: 'Пожертвование',
         item_term: 'На развитие проекта',
         pay_link: 'https://pay.cloudtips.ru/p/c6fe8558',
-    },
-    {   
-        item_id: 'invite',
-        item_discount: 98,
-        item_price: '10000 Руб',
-        item_term: 'Invite код FT (Ограничено!)',
-        pay_link: 'https://pay.cloudtips.ru/p/c6fe8558',
-    },
+    }
 ]
