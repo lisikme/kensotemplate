@@ -91,6 +91,23 @@
                         МАГАЗИН
                     </button> -->
                     <style>
+                        .mascot{
+                            height: 150px;
+                            bottom: -12px;
+                            left: 2px;
+                            z-index: 999999999999999999;
+                            transition: all 0.5s;
+                            position: fixed;
+                            filter: drop-shadow(0 0 5px rgb(0, 0, 0));
+                            
+                        }
+                        @media (max-width: 860px) {
+                            .mascot{
+                                filter: drop-shadow(0 0 2px rgb(0, 0, 0));
+                                bottom: -8px;
+                                height: 100px;
+                            }
+                        }
                         .nav-bar > a{
                             height: 26px !important;
                         }
@@ -1373,7 +1390,6 @@
         }
 
         .message {
-            /* margin-top: 20px; */
             padding: 5px 5px;
             border-radius: 5px;
             display: none;
@@ -1389,7 +1405,6 @@
         .message.error {
             background: #0e0001;
             color: #ff4759;
-            /* border: 1px solid #f5c6cb; */
             border: 1px solid #ff4759 !important;
             display: block;
         }
@@ -2618,21 +2633,410 @@ document.addEventListener('DOMContentLoaded', function() {
     .carousel-slide:hover::after{
         transition-delay: 0.8s;
     }
-    .mascot{
-        height: 150px;
-        bottom: -12px;
-        left: 2px;
-        z-index: 9999;
-        transition: all 0.5s;
-        position: fixed;
-        filter: drop-shadow(0 0 5px rgb(0, 0, 0));
-        
+    .profile-launch-box{
+        align-items: flex-start;
     }
-    @media (max-width: 860px) {
-        .mascot{
-            filter: drop-shadow(0 0 2px rgb(0, 0, 0));
-            bottom: -8px;
-            height: 100px;
-        }
+    .profile-launch-box .profile-launch-version{
+        font-size: 12px;
+        font-family: "Unbounded", sans-serif !important;
+    }
+    .profile-launch-box .profile-launch-time,
+    .profile-launch-box .profile-launch-version{
+        transition: all 0.2s;
+        opacity: 0.5;
+        font-weight: 200;
+    }
+    .profile-launch-box:hover .profile-launch-time,
+    .profile-launch-box:hover .profile-launch-version{
+        opacity: 1;
     }
 </style>
+
+<style>
+    .mascot-container-fixed {
+        position: fixed;
+        bottom: 0;
+        left: 140px;
+        z-index: 999999999999999999;
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        pointer-events: none;
+        transition: all 0.5s;
+    }
+    @media (max-width: 860px) {
+        .mascot-container-fixed {
+            left: 100px;
+        }
+    }
+    .mascot-bubble-fixed {
+        position: relative;
+        background: rgba(8, 8, 8, 0.96);
+        border: 1px solid #d7fe7b;
+        border-radius: 5px 5px 5px 5px;
+        padding: 5px 5px;
+        margin-bottom: 18px;
+        color: #f0f0f0;
+        font-size: 12px;
+        font-family: "Unbounded", sans-serif;
+        opacity: 0;
+        transition: opacity 0.6s ease;
+        box-shadow: 0 4px 30px rgba(215, 254, 123, 0.12);
+        pointer-events: auto;
+        backdrop-filter: blur(10px);
+        flex-shrink: 0;
+        order: 1;
+    }
+    
+    .mascot-bubble-fixed.show {
+        opacity: 1;
+    }
+    
+    .mascot-bubble-fixed.hide {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+    .mascot-bubble-fixed::before {
+        content: '';
+        position: absolute;
+        bottom: 12px;
+        left: -10px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-right: 10px solid rgba(8, 8, 8, 0.96);
+        filter: drop-shadow(-1px 0 0 #d7fe7b);
+    }
+    .mascot-bubble-fixed .bubble-text-fixed .highlight {
+        color: #d7fe7b;
+    }
+    
+    .mascot-bubble-fixed .bubble-text-fixed .highlight-gold {
+        color: #ffdb5c;
+    }
+    .mascot-bubble-fixed .bubble-text-fixed .highlight-pink {
+        color: #ff8a9e;
+    }
+    .mascot-bubble-fixed .bubble-text-fixed .highlight-blue {
+        color: #7cb9ff;
+    }
+    .mascot-bubble-fixed .bubble-text-fixed .emoji {
+        font-size: 16px;
+        display: inline-block;
+    }
+    .mascot-bubble-fixed .bubble-tip-fixed {
+        display: block;
+        font-size: 10px;
+        color: #5c5c5c;
+        border-top: 1px solid #1a1a1a;
+        margin-bottom: 2px;
+        font-weight: 500;
+        margin-top: 2px;
+    }
+    .mascot-wrapper {
+        order: 2;
+        pointer-events: auto;
+        cursor: pointer;
+        position: relative;
+        bottom: -4px;
+    }
+    .mascot-bubble-fixed {
+        font-weight: 300;
+        font-size: 12px;
+        padding: 1px 5px;
+        margin-bottom: 12px;
+        border-radius: 3px 3px 3px 3px;
+    }
+    .mascot-bubble-fixed::before {
+        top: 5px;
+        left: -7px;
+        border-top-width: 5px;
+        border-bottom-width: 5px;
+        border-right-width: 8px;
+    }
+</style>
+
+<div class="mascot-container-fixed" id="mascotContainer">
+    <!-- Сообщение -->
+    <div class="mascot-bubble-fixed" id="mascotBubble">
+        <div class="bubble-text-fixed" id="bubbleText">
+            <span class="emoji">🦊</span> Привет! Я <span class="highlight">KensoFox</span>
+            <span class="bubble-tip-fixed">впитываю информацию...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+        
+        // === НАСТРОЙКИ ===
+        const CONFIG = {
+            firstDelay: 2000,        // Задержка перед первым сообщением (мс)
+            displayDuration: 5000,   // Длительность показа сообщения (мс)
+            interval: 1500,          // Задержка перед следующим сообщением (мс)
+        };
+        
+        // === ЕДИНАЯ ТАБЛИЦА СООБЩЕНИЙ ===
+        const MESSAGES = [
+            {
+                text: '🦊 Привет! Я <span class="highlight">KensoFox</span> 🦊',
+                tip: 'Даю энергию... ✨'
+            },
+            {
+                text: '⚡ <span class="highlight">KensoUltra+</span> — мощь в твоих руках!',
+                tip: 'Используй и побеждай 🏆'
+            },
+            {
+                text: '🔊 Включи <span class="highlight-gold">KetaMeFM</span> и кайфуй!',
+                tip: 'У нас есть встроенное радио 🎵'
+            },
+            {
+                text: '💎 <span class="highlight-blue">Помогай проекту</span>',
+                tip: 'С вами мы становимня только лучше 👌'
+            },
+            {
+                text: '🚀 Мониторинг <span class="highlight">серверов</span> — прямо в игре!',
+                tip: 'Эта функция есть только у нас LUA 🎮'
+            },
+            {
+                text: '🎨 Большой выбор параметров <span class="highlight-pink">кастомизации</span>',
+                tip: 'Стиль и удобство во всём 🌈'
+            },
+            {
+                text: '📊 <span class="highlight">Stattrack</span> — твоя статистика',
+                tip: 'Эта функция есть только у нас LUA 🎮'
+            },
+            {
+                text: '🛡️ <span class="highlight-blue">Безопасный режим</span> — играй спокойно',
+                tip: 'Предусмотрен для legit игры 🛡️'
+            },
+            {
+                text: '🔥 <span class="highlight">KensoUltra+</span> — #1 среди скриптов!',
+                tip: 'Мы готовы удивлять уникальным функционалом 🏅'
+            },
+            {
+                text: '🎵 <span class="highlight-gold">Sounds</span> — кастомные звуки',
+                tip: 'Функционал даёт MVP/KILL/HIT звуки 👂'
+            },
+            {
+                text: '👀 <span class="highlight-blue">Wallbang Helper</span> — вижу сквозь стены',
+                tip: 'Вижу информацию о прострелах 🧱'
+            },
+            {
+                text: '🏆 <span class="highlight-gold">Доминирование</span> — ты лучший!',
+                tip: 'Даю тебе твои победы 👑'
+            },
+            {
+                text: '📦 <span class="highlight">Автозакупка</span> — всегда при оружии',
+                tip: 'Весь арсенал выдаю быстро и AWP украду 🔫'
+            },
+            {
+                text: '🎮 <span class="highlight-blue">Discord RPC</span> — покажи статус',
+                tip: 'Могу показывать статус активности 💬'
+            },
+            {
+                text: '🌟 <span class="highlight-pink">KensoUltra+</span> — создано с любовью',
+                tip: 'Получаю вашу благодарность ❤️'
+            },
+            {
+                text: '💪 Ты стал сильнее с <span class="highlight">KensoUltra+</span>!',
+                tip: 'Сила только с тобой 💥'
+            },
+            {
+                text: '🎯 Хочешь стать <span class="highlight-gold">профи</span>?',
+                tip: 'Я дам тебе это 🌟'
+            },
+            {
+                text: '🔮 Я вижу твой <span class="highlight">HWID</span>...',
+                tip: 'всё под контролем 👁️'
+            },
+            {
+                text: '💬 Напиши <span class="highlight-gold">отзыв</span> и сделай проект лучше!',
+                tip: 'Я люблю получать фидбек 📝'
+            },
+            {
+                text: '🦊 <span class="highlight">KensoFox</span> всегда на связи!',
+                tip: 'Быстро стараемся решать твои вопросы 💬'
+            },
+            {
+                text: '👋 Хаюшки! Я <span class="highlight">KensoFox</span>',
+                tip: 'Я люблю свою луашечку 💖'
+            }
+        ];
+        
+        // === DOM ЭЛЕМЕНТЫ ===
+        const bubble = document.getElementById('mascotBubble');
+        const bubbleText = document.getElementById('bubbleText');
+        const closeBtn = document.getElementById('bubbleClose');
+        
+        // === СОСТОЯНИЕ ===
+        let isVisible = false;
+        let intervalId = null;
+        let timeoutId = null;
+        let shownMessages = [];
+        let isPaused = false;
+        let isFirstMessage = true;
+        
+        // === ФУНКЦИИ ===
+        
+        function getNextMessage() {
+            if (shownMessages.length >= MESSAGES.length) {
+                shownMessages = [];
+            }
+            
+            const available = MESSAGES.filter((_, index) => !shownMessages.includes(index));
+            
+            if (available.length === 0) {
+                shownMessages = [];
+                return MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
+            }
+            
+            const randomIndex = Math.floor(Math.random() * available.length);
+            const selected = available[randomIndex];
+            const originalIndex = MESSAGES.indexOf(selected);
+            shownMessages.push(originalIndex);
+            
+            return selected;
+        }
+        
+        function showMessage(message) {
+            if (!bubble || !bubbleText || isPaused) return;
+            
+            if (isVisible) {
+                hideMessage(() => {
+                    displayNewMessage(message);
+                });
+            } else {
+                displayNewMessage(message);
+            }
+        }
+        
+        function displayNewMessage(message) {
+            bubbleText.innerHTML = message.text + `<span class="bubble-tip-fixed">${message.tip}</span>`;
+            
+            bubble.classList.remove('hide');
+            bubble.classList.add('show');
+            isVisible = true;
+            
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                hideMessage();
+            }, CONFIG.displayDuration);
+        }
+        
+        function hideMessage(callback) {
+            if (!bubble) return;
+            
+            bubble.classList.remove('show');
+            bubble.classList.add('hide');
+            isVisible = false;
+            
+            clearTimeout(timeoutId);
+            
+            setTimeout(() => {
+                if (callback) callback();
+            }, 500);
+        }
+        
+        function showNextMessage() {
+            if (isPaused) return;
+            
+            if (isFirstMessage) {
+                // Первое сообщение - всегда приветственное
+                const welcomeMsg = MESSAGES[MESSAGES.length - 1]; // "Хаюшки" сообщение
+                showMessage(welcomeMsg);
+                isFirstMessage = false;
+            } else {
+                const message = getNextMessage();
+                showMessage(message);
+            }
+        }
+        
+        // === ЗАПУСК ЦИКЛА ===
+        function startMessageLoop() {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+            
+            // Первое сообщение после задержки
+            setTimeout(() => {
+                showNextMessage();
+            }, CONFIG.firstDelay);
+            
+            // Цикл сообщений
+            intervalId = setInterval(() => {
+                showNextMessage();
+            }, CONFIG.interval + CONFIG.displayDuration);
+        }
+        
+        function stopMessageLoop() {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+            clearTimeout(timeoutId);
+        }
+        
+        function pauseMessages() {
+            isPaused = true;
+            if (isVisible) {
+                hideMessage();
+            }
+        }
+        
+        function resumeMessages() {
+            isPaused = false;
+            if (!isVisible) {
+                showNextMessage();
+            }
+        }
+        
+        // === ОБРАБОТЧИКИ ===
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                pauseMessages();
+                // Показываем скрытое состояние
+                bubble.classList.add('hidden');
+                setTimeout(() => {
+                    bubble.classList.remove('hidden');
+                    resumeMessages();
+                }, 3000);
+            });
+        }
+        
+        // Клик по пузырю для ручного показа
+        if (bubble) {
+            bubble.addEventListener('click', function(e) {
+                if (!isVisible && !isPaused) {
+                    showNextMessage();
+                }
+            });
+        }
+        
+        // === ИНИЦИАЛИЗАЦИЯ ===
+        // Скрываем пузырь изначально
+        if (bubble) {
+            bubble.classList.add('hide');
+            isVisible = false;
+        }
+        
+        // Запускаем цикл
+        startMessageLoop();
+        
+        // === API ДЛЯ УПРАВЛЕНИЯ ===
+        window.mascotController = {
+            showNext: showNextMessage,
+            pause: pauseMessages,
+            resume: resumeMessages,
+            config: CONFIG,
+            messages: MESSAGES
+        };
+        
+        console.log('🦊 KensoFox mascot initialized!');
+        console.log('📋 Настройки:', CONFIG);
+        console.log('📝 Всего сообщений:', MESSAGES.length);
+    })();
+</script>
